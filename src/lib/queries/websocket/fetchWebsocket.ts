@@ -1,29 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { UseQueryParams } from "../types";
 import { FetchWebsocketResponse } from "./types";
 
 interface IParams {
-  instanceName: string | null;
-  token: string;
+  instanceId: string | null;
 }
 
 const queryKey = (params: Partial<IParams>) => ["websocket", "fetchWebsocket", JSON.stringify(params)];
 
-export const fetchWebsocket = async ({ instanceName, token }: IParams) => {
-  const response = await api.get(`/websocket/find/${instanceName}`, {
-    headers: { apiKey: token },
-  });
+export const fetchWebsocket = async ({ instanceId }: IParams) => {
+  const response = await apiGlobal.get(`/instance/${instanceId}/websocket`);
   return response.data;
 };
 
 export const useFetchWebsocket = (props: UseQueryParams<FetchWebsocketResponse> & Partial<IParams>) => {
-  const { instanceName, token, ...rest } = props;
+  const { instanceId, ...rest } = props;
   return useQuery<FetchWebsocketResponse>({
     ...rest,
-    queryKey: queryKey({ instanceName, token }),
-    queryFn: () => fetchWebsocket({ instanceName: instanceName!, token: token! }),
-    enabled: !!instanceName,
+    queryKey: queryKey({ instanceId }),
+    queryFn: () => fetchWebsocket({ instanceId: instanceId! }),
+    enabled: !!instanceId,
   });
 };

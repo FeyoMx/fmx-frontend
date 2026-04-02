@@ -1,18 +1,15 @@
 import { Proxy } from "@/types/evolution.types";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
 
 interface IParams {
-  instanceName: string;
-  token: string;
+  instanceId: string;
   data: Proxy;
 }
 
-const createProxy = async ({ instanceName, token, data }: IParams) => {
-  const response = await api.post(`/proxy/set/${instanceName}`, data, {
-    headers: { apikey: token },
-  });
+const createProxy = async ({ instanceId, data }: IParams) => {
+  const response = await apiGlobal.put(`/instance/${instanceId}/proxy`, data);
   return response.data;
 };
 

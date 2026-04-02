@@ -30,6 +30,10 @@ export const getApiErrorMessage = (error: unknown, fallback = "Unexpected error"
       return message || "The request data is invalid.";
     }
 
+    if (status === 501) {
+      return message || "This feature is not available yet.";
+    }
+
     if (status && status >= 500) {
       return message || "The server could not process this request.";
     }

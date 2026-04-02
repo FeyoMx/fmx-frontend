@@ -1,29 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { UseQueryParams } from "../types";
 import { FetchProxyResponse } from "./types";
 
 interface IParams {
-  instanceName: string | null;
-  token: string;
+  instanceId: string | null;
 }
 
 const queryKey = (params: Partial<IParams>) => ["proxy", "fetchProxy", JSON.stringify(params)];
 
-export const fetchProxy = async ({ instanceName, token }: IParams) => {
-  const response = await api.get(`/proxy/find/${instanceName}`, {
-    headers: { apiKey: token },
-  });
+export const fetchProxy = async ({ instanceId }: IParams) => {
+  const response = await apiGlobal.get(`/instance/${instanceId}/proxy`);
   return response.data;
 };
 
 export const useFetchProxy = (props: UseQueryParams<FetchProxyResponse> & Partial<IParams>) => {
-  const { instanceName, token, ...rest } = props;
+  const { instanceId, ...rest } = props;
   return useQuery<FetchProxyResponse>({
     ...rest,
-    queryKey: queryKey({ instanceName, token }),
-    queryFn: () => fetchProxy({ instanceName: instanceName!, token: token! }),
-    enabled: !!instanceName,
+    queryKey: queryKey({ instanceId }),
+    queryFn: () => fetchProxy({ instanceId: instanceId! }),
+    enabled: !!instanceId,
   });
 };

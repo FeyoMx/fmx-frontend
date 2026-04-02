@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
+import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchRabbitmq } from "@/lib/queries/rabbitmq/fetchRabbitmq";
 import { useManageRabbitmq } from "@/lib/queries/rabbitmq/manageRabbitmq";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,7 @@ function Rabbitmq() {
 
   const { createRabbitmq } = useManageRabbitmq();
   const { data: rabbitmq } = useFetchRabbitmq({
-    instanceName: instance?.name,
-    token: instance?.token,
+    instanceId: instance?.id,
   });
 
   const form = useForm<FormSchemaType>({
@@ -65,14 +65,13 @@ function Rabbitmq() {
       };
 
       await createRabbitmq({
-        instanceName: instance.name,
-        token: instance.token,
+        instanceId: instance.id,
         data: rabbitmqData,
       });
       toast.success(t("rabbitmq.toast.success"));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(t("rabbitmq.toast.error"), error);
-      toast.error(`Error: ${error?.response?.data?.response?.message}`);
+      toast.error(getApiErrorMessage(error, t("rabbitmq.toast.error")));
     } finally {
       setLoading(false);
     }

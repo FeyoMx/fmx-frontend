@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
+import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchWebsocket } from "@/lib/queries/websocket/fetchWebsocket";
 import { useManageWebsocket } from "@/lib/queries/websocket/manageWebsocket";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,7 @@ function Websocket() {
 
   const { createWebsocket } = useManageWebsocket();
   const { data: websocket } = useFetchWebsocket({
-    instanceName: instance?.name,
-    token: instance?.token,
+    instanceId: instance?.id,
   });
 
   const form = useForm<FormSchemaType>({
@@ -65,14 +65,13 @@ function Websocket() {
       };
 
       await createWebsocket({
-        instanceName: instance.name,
-        token: instance.token,
+        instanceId: instance.id,
         data: websocketData,
       });
       toast.success(t("websocket.toast.success"));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(t("websocket.toast.error"), error);
-      toast.error(`Error: ${error?.response?.data?.response?.message}`);
+      toast.error(getApiErrorMessage(error, t("websocket.toast.error")));
     } finally {
       setLoading(false);
     }

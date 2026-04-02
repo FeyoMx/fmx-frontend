@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
+import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchProxy } from "@/lib/queries/proxy/fetchProxy";
 import { useManageProxy } from "@/lib/queries/proxy/manageProxy";
 
@@ -36,7 +37,7 @@ function Proxy() {
 
   const { createProxy } = useManageProxy();
   const { data: proxy } = useFetchProxy({
-    instanceName: instance?.name,
+    instanceId: instance?.id,
   });
 
   const form = useForm<FormSchemaType>({
@@ -45,7 +46,7 @@ function Proxy() {
       enabled: false,
       host: "",
       port: "",
-      protocol: "http",
+      protocol: "socks5",
       username: "",
       password: "",
     },
@@ -79,14 +80,13 @@ function Proxy() {
       };
 
       await createProxy({
-        instanceName: instance.name,
-        token: instance.token,
+        instanceId: instance.id,
         data: proxyData,
       });
       toast.success(t("proxy.toast.success"));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(t("proxy.toast.error"), error);
-      toast.error(`Error : ${error?.response?.data?.response?.message}`);
+      toast.error(getApiErrorMessage(error, t("proxy.toast.error")));
     } finally {
       setLoading(false);
     }

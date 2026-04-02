@@ -1,29 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { UseQueryParams } from "../types";
 import { FetchRabbitmqResponse } from "./types";
 
 interface IParams {
-  instanceName: string | null;
-  token: string;
+  instanceId: string | null;
 }
 
 const queryKey = (params: Partial<IParams>) => ["rabbitmq", "fetchRabbitmq", JSON.stringify(params)];
 
-export const fetchRabbitmq = async ({ instanceName, token }: IParams) => {
-  const response = await api.get(`/rabbitmq/find/${instanceName}`, {
-    headers: { apiKey: token },
-  });
+export const fetchRabbitmq = async ({ instanceId }: IParams) => {
+  const response = await apiGlobal.get(`/instance/${instanceId}/rabbitmq`);
   return response.data;
 };
 
 export const useFetchRabbitmq = (props: UseQueryParams<FetchRabbitmqResponse> & Partial<IParams>) => {
-  const { instanceName, token, ...rest } = props;
+  const { instanceId, ...rest } = props;
   return useQuery<FetchRabbitmqResponse>({
     ...rest,
-    queryKey: queryKey({ instanceName, token }),
-    queryFn: () => fetchRabbitmq({ instanceName: instanceName!, token: token! }),
-    enabled: !!instanceName,
+    queryKey: queryKey({ instanceId }),
+    queryFn: () => fetchRabbitmq({ instanceId: instanceId! }),
+    enabled: !!instanceId,
   });
 };

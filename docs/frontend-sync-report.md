@@ -23,6 +23,12 @@
 - `PUT /ai/settings`
 - `GET /ai/instances/:instanceID`
 - `PUT /ai/instances/:instanceID`
+- `GET /instance/:id/websocket`
+- `PUT /instance/:id/websocket`
+- `GET /instance/:id/rabbitmq`
+- `PUT /instance/:id/rabbitmq`
+- `GET /instance/:id/proxy`
+- `PUT /instance/:id/proxy`
 - `GET /instance`
 - `POST /instance`
 - `GET /instance/:id`
@@ -107,6 +113,7 @@
 - AI Settings page now uses `/ai/settings` and `/ai/instances/:instanceID`
 - API Keys page no longer calls nonexistent `/apikey` endpoints and is now informational
 - Login page surfaces backend error messages instead of generic failures
+- Instance `websocket`, `rabbitmq`, and `proxy` pages now use the new tenant-scoped `/instance/:id/...` routes
 
 ### Dead or Stale Integration Cleanup
 - Removed unused `apiLegacy` axios client
@@ -115,13 +122,10 @@
 
 ## Remaining Mismatches Not Fixed
 
-### Unsupported Legacy Instance Pages
-These frontend areas still depend on legacy routes that are not registered by the current backend:
+### Unsupported Instance And Integration Pages
+These frontend areas are still unavailable because the backend either lacks the required tenant-safe route set or intentionally returns `501 partial` for the current instance-scoped replacement:
 - Instance chat
-- WebSocket
-- RabbitMQ
 - SQS
-- Proxy
 - Chatwoot
 - OpenAI
 - Typebot
@@ -136,9 +140,6 @@ These frontend areas still depend on legacy routes that are not registered by th
 ### Gated Routes
 These routes are now protected from broken navigation:
 - Removed from instance sidebar/navigation:
-  - `/manager/instance/:instanceId/proxy`
-  - `/manager/instance/:instanceId/websocket`
-  - `/manager/instance/:instanceId/rabbitmq`
   - `/manager/instance/:instanceId/sqs`
   - `/manager/instance/:instanceId/evoai`
   - `/manager/instance/:instanceId/n8n`
@@ -151,9 +152,6 @@ These routes are now protected from broken navigation:
 - Kept as guarded placeholders with a clear "Not available yet" state:
   - `/manager/instance/:instanceId/chat`
   - `/manager/instance/:instanceId/chat/:remoteJid`
-  - `/manager/instance/:instanceId/proxy`
-  - `/manager/instance/:instanceId/websocket`
-  - `/manager/instance/:instanceId/rabbitmq`
   - `/manager/instance/:instanceId/sqs`
   - `/manager/instance/:instanceId/chatwoot`
   - `/manager/instance/:instanceId/openai`
@@ -182,6 +180,8 @@ These routes are now protected from broken navigation:
 - Backend dashboard metrics are leaner than the older UI assumptions
 - Backend instance list/detail payloads do not expose contact, chat, or message counts, so the dashboards now show `N/A` instead of synthetic zero values
 - Backend instance detail may omit runtime token data when no runtime snapshot is available, so token display is now treated as optional in the UI
+- Backend chat search, media send, audio send, and SQS still return structured `501` partial responses and must remain unavailable in the UI
+- Backend `chatwoot`, `openai`, `typebot`, `dify`, `n8n`, `evoai`, `evolutionBot`, and `flowise` routes are registered but intentionally return `501` partial responses
 
 ## Pages Fully Synced
 - `/manager/login`
@@ -190,6 +190,9 @@ These routes are now protected from broken navigation:
 - `/manager/broadcast`
 - `/manager/ai-settings`
 - `/manager/api-keys`
+- `/manager/instance/:instanceId/proxy`
+- `/manager/instance/:instanceId/websocket`
+- `/manager/instance/:instanceId/rabbitmq`
 - `/manager/instance/:instanceId/webhook`
 - `/manager/instance/:instanceId/settings`
 
@@ -198,6 +201,7 @@ These routes are now protected from broken navigation:
   - Instance payload is normalized to the current backend contract, but the backend still does not provide per-instance contact/chat/message counts
 - `/manager/instance/:instanceId/*`
   - Unsupported legacy integration pages no longer appear in sidebar navigation and are now guarded by placeholders or redirects
+  - `SQS` remains intentionally hidden because the backend route exists but returns `501 partial`
 
 ## Blockers and Assumptions
 - The backend route registry in `../fmxevolution-go/internal/server/server.go` was treated as authoritative

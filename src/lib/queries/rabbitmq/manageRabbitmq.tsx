@@ -1,16 +1,15 @@
 import { Rabbitmq } from "@/types/evolution.types";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
 
 interface IParams {
-  instanceName: string;
-  token: string;
+  instanceId: string;
   data: Rabbitmq;
 }
 
-const createRabbitmq = async ({ instanceName, token, data }: IParams) => {
-  const response = await api.post(`/rabbitmq/set/${instanceName}`, { rabbitmq: data }, { headers: { apikey: token } });
+const createRabbitmq = async ({ instanceId, data }: IParams) => {
+  const response = await apiGlobal.put(`/instance/${instanceId}/rabbitmq`, data);
   return response.data;
 };
 

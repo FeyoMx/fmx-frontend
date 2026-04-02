@@ -13,8 +13,11 @@ import { Broadcast } from "@/pages/Broadcast";
 import { AISettings } from "@/pages/AISettings";
 import { APIKeys } from "@/pages/APIKeys";
 import { DashboardInstance } from "@/pages/instance/DashboardInstance";
+import { Proxy } from "@/pages/instance/Proxy";
+import { Rabbitmq } from "@/pages/instance/Rabbitmq";
 import { Settings } from "@/pages/instance/Settings";
 import { Webhook } from "@/pages/instance/Webhook";
+import { Websocket } from "@/pages/instance/Websocket";
 import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 
@@ -156,7 +159,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <Websocket />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -166,7 +169,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <Rabbitmq />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -316,7 +319,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <Proxy />
         </InstanceLayout>
       </ProtectedRoute>
     ),

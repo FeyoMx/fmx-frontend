@@ -6,17 +6,16 @@
 - Supported instance pages such as dashboard, settings, and webhook are intentionally excluded
 
 ## Summary
-The current frontend still contains legacy instance UI contracts that expect instance-name and `apikey` based routes. The current backend `cmd/api` does not register those routes, so these pages cannot function without new backend capabilities or a new instance-scoped SaaS contract.
+The remaining unsupported instance UI falls into two buckets:
+- chat and embed flows still depend on legacy instance-name contracts that the current backend does not expose
+- `sqs`, `chatwoot`, `openai`, `typebot`, `dify`, `n8n`, `evoai`, `evolutionBot`, and `flowise` now have instance-ID SaaS routes registered, but those routes intentionally return `501 partial`
 
 ## Unsupported Frontend Pages
 - `/manager/instance/:instanceId/chat`
 - `/manager/instance/:instanceId/chat/:remoteJid`
 - `/manager/embed-chat`
 - `/manager/embed-chat/:remoteJid`
-- `/manager/instance/:instanceId/websocket`
-- `/manager/instance/:instanceId/rabbitmq`
 - `/manager/instance/:instanceId/sqs`
-- `/manager/instance/:instanceId/proxy`
 - `/manager/instance/:instanceId/chatwoot`
 - `/manager/instance/:instanceId/openai`
 - `/manager/instance/:instanceId/openai/:botId`
@@ -40,10 +39,7 @@ The current frontend still contains legacy instance UI contracts that expect ins
   - `src/components/sidebar.tsx`
 - Legacy query modules still defining the unsupported contracts:
   - `src/lib/queries/chat/*`
-  - `src/lib/queries/websocket/*`
-  - `src/lib/queries/rabbitmq/*`
   - `src/lib/queries/sqs/*`
-  - `src/lib/queries/proxy/*`
   - `src/lib/queries/chatwoot/*`
   - `src/lib/queries/openai/*`
   - `src/lib/queries/typebot/*`
@@ -83,241 +79,194 @@ The current frontend still contains legacy instance UI contracts that expect ins
     - `GET /instance?instanceName=<name>`
     - Response shape: `Instance[]`
 - Why current UI cannot support it:
-  - None of the `/chat/*` or `/message/*` routes are registered in the current backend
+  - The current backend only exposes partial chat routes under `/instance/:id/chats/search`, `/instance/:id/messages/search`, `/instance/:id/messages/media`, and `/instance/:id/messages/audio`
+  - Those instance-ID routes intentionally return `501 partial` for search/media/audio, and the old `/chat/*` plus `/message/*` routes are not registered
   - The embed flow also depends on legacy public instance lookup by name plus instance-token auth, which is outside the current SaaS contract
 
 ### 2. Event Connector Config Pages
 
-#### 2.1 WebSocket
-- Frontend page: `/manager/instance/:instanceId/websocket`
-- Required backend capabilities:
-  - `GET /websocket/find/:instanceName`
-    - Response shape: `Websocket`
-    - `Websocket`: `{ id?, enabled, events: string[] }`
-  - `POST /websocket/set/:instanceName`
-    - Request shape: `{ "websocket": { enabled, events } }`
-    - Response shape: saved `Websocket` or success envelope containing equivalent data
-- Why current UI cannot support it:
-  - The backend has no `/websocket/*` routes in the active server
-
-#### 2.2 RabbitMQ
-- Frontend page: `/manager/instance/:instanceId/rabbitmq`
-- Required backend capabilities:
-  - `GET /rabbitmq/find/:instanceName`
-    - Response shape: `Rabbitmq`
-    - `Rabbitmq`: `{ id?, enabled, events: string[] }`
-  - `POST /rabbitmq/set/:instanceName`
-    - Request shape: `{ "rabbitmq": { enabled, events } }`
-    - Response shape: saved `Rabbitmq` or success envelope
-- Why current UI cannot support it:
-  - The backend has no `/rabbitmq/*` routes in the active server
-
-#### 2.3 SQS
+#### 2.1 SQS
 - Frontend page: `/manager/instance/:instanceId/sqs`
 - Required backend capabilities:
-  - `GET /sqs/find/:instanceName`
-    - Response shape: `Sqs`
-    - `Sqs`: `{ id?, enabled, events: string[] }`
-  - `POST /sqs/set/:instanceName`
-    - Request shape: `{ "sqs": { enabled, events } }`
-    - Response shape: saved `Sqs` or success envelope
+  - `GET /instance/:id/sqs`
+    - Response shape: `{ enabled, events }`
+  - `PUT /instance/:id/sqs`
+    - Request shape: `{ enabled, events }` or `{ sqs: { enabled, events } }`
+    - Response shape: same
 - Why current UI cannot support it:
-  - The backend has no `/sqs/*` routes in the active server
+  - The backend route now exists but intentionally returns `501 partial` because there is still no tenant-safe SQS configuration implementation
 
-### 3. Proxy Page
-- Frontend page: `/manager/instance/:instanceId/proxy`
-- Required backend capabilities:
-  - `GET /proxy/find/:instanceName`
-    - Response shape: `Proxy`
-    - `Proxy`: `{ id?, enabled, host, port, protocol, username?, password? }`
-  - `POST /proxy/set/:instanceName`
-    - Request shape: `Proxy`
-    - Response shape: saved `Proxy` or success envelope
-- Why current UI cannot support it:
-  - The backend has no `/proxy/*` routes in the active server
-
-### 4. Chatwoot Page
+### 3. Chatwoot Page
 - Frontend page: `/manager/instance/:instanceId/chatwoot`
 - Required backend capabilities:
-  - `GET /chatwoot/find/:instanceName`
+  - `GET /instance/:id/chatwoot`
     - Response shape: `Chatwoot`
-  - `POST /chatwoot/set/:instanceName`
+  - `PUT /instance/:id/chatwoot`
     - Request shape: `Chatwoot`
     - `Chatwoot`: `{ enabled, accountId, token, url, signMsg, reopenConversation, conversationPending, nameInbox, mergeBrazilContacts, importContacts, importMessages, daysLimitImportMessages, signDelimiter, autoCreate, organization, logo, ignoreJids? }`
     - Response shape: saved `Chatwoot` or success envelope
 - Why current UI cannot support it:
-  - The backend has no `/chatwoot/*` routes in the active server
+  - The backend route now exists but intentionally returns `501 partial`
 
-### 5. OpenAI Page
+### 4. OpenAI Page
 - Frontend pages:
   - `/manager/instance/:instanceId/openai`
   - `/manager/instance/:instanceId/openai/:botId`
 - Required backend capabilities:
   - Credentials:
-    - `GET /openai/creds/:instanceName`
-      - Response shape: `OpenaiCreds[]`
-    - `POST /openai/creds/:instanceName`
-      - Request shape: `{ name, apiKey }`
-      - Response shape: saved `OpenaiCreds`
-    - `DELETE /openai/creds/:openaiCredsId/:instanceName`
-  - Bot CRUD:
-    - `GET /openai/find/:instanceName`
+    - `GET /instance/:id/openai`
       - Response shape: `Openai[]`
-    - `GET /openai/fetch/:openaiId/:instanceName`
+    - `POST /instance/:id/openai`
+      - Request shape: `Openai`
+      - Response shape: saved `Openai`
+    - `GET /instance/:id/openai/:resourceId`
       - Response shape: `Openai`
-    - `POST /openai/create/:instanceName`
+    - `PUT /instance/:id/openai/:resourceId`
       - Request shape: `Openai`
-    - `PUT /openai/update/:openaiId/:instanceName`
-      - Request shape: `Openai`
-    - `DELETE /openai/delete/:openaiId/:instanceName`
+    - `DELETE /instance/:id/openai/:resourceId`
   - Settings and runtime:
-    - `GET /openai/fetchSettings/:instanceName`
+    - `GET /instance/:id/openai/settings`
       - Response shape: `OpenaiSettings`
-    - `POST /openai/settings/:instanceName`
+    - `PUT /instance/:id/openai/settings`
       - Request shape: `OpenaiSettings`
-    - `GET /openai/fetchSessions/:openaiId/:instanceName`
+    - `GET /instance/:id/openai/:resourceId/sessions`
       - Response shape: `IntegrationSession[]`
-    - `POST /openai/changeStatus/:instanceName`
+    - `POST /instance/:id/openai/status`
       - Request shape: `{ remoteJid, status }`
-    - `GET /openai/getModels/:instanceName`
-      - Response shape: `ModelOpenai[]`
 - Why current UI cannot support it:
-  - The backend has no `/openai/*` routes in the active server
-  - The page expects a full credentials + bot + settings + sessions contract, not just tenant-level AI settings
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 6. Typebot Page
+### 5. Typebot Page
 - Frontend pages:
   - `/manager/instance/:instanceId/typebot`
   - `/manager/instance/:instanceId/typebot/:typebotId`
 - Required backend capabilities:
-  - `GET /typebot/find/:instanceName` -> `Typebot[]`
-  - `GET /typebot/fetch/:typebotId/:instanceName` -> `Typebot`
-  - `POST /typebot/create/:instanceName`
+  - `GET /instance/:id/typebot` -> `Typebot[]`
+  - `GET /instance/:id/typebot/:resourceId` -> `Typebot`
+  - `POST /instance/:id/typebot`
     - Request shape: `Typebot`
-  - `PUT /typebot/update/:typebotId/:instanceName`
+  - `PUT /instance/:id/typebot/:resourceId`
     - Request shape: `Typebot`
-  - `DELETE /typebot/delete/:typebotId/:instanceName`
-  - `GET /typebot/fetchSettings/:instanceName` -> `TypebotSettings`
-  - `POST /typebot/settings/:instanceName`
+  - `DELETE /instance/:id/typebot/:resourceId`
+  - `GET /instance/:id/typebot/settings` -> `TypebotSettings`
+  - `PUT /instance/:id/typebot/settings`
     - Request shape: `TypebotSettings`
-  - `GET /typebot/fetchSessions/:typebotId/:instanceName` -> `IntegrationSession[]`
-  - `POST /typebot/changeStatus/:instanceName`
+  - `GET /instance/:id/typebot/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/typebot/status`
     - Request shape: `{ remoteJid, status }`
 - `Typebot` request shape: `{ enabled, description, url, typebot, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/typebot/*` routes in the active server
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 7. Dify Page
+### 6. Dify Page
 - Frontend pages:
   - `/manager/instance/:instanceId/dify`
   - `/manager/instance/:instanceId/dify/:difyId`
 - Required backend capabilities:
-  - `GET /dify/find/:instanceName` -> `Dify[]`
-  - `GET /dify/fetch/:difyId/:instanceName` -> `Dify`
-  - `POST /dify/create/:instanceName`
+  - `GET /instance/:id/dify` -> `Dify[]`
+  - `GET /instance/:id/dify/:resourceId` -> `Dify`
+  - `POST /instance/:id/dify`
     - Request shape: `Dify`
-  - `PUT /dify/update/:difyId/:instanceName`
+  - `PUT /instance/:id/dify/:resourceId`
     - Request shape: `Dify`
-  - `DELETE /dify/delete/:difyId/:instanceName`
-  - `GET /dify/fetchSettings/:instanceName` -> `DifySettings`
-  - `POST /dify/settings/:instanceName`
+  - `DELETE /instance/:id/dify/:resourceId`
+  - `GET /instance/:id/dify/settings` -> `DifySettings`
+  - `PUT /instance/:id/dify/settings`
     - Request shape: `DifySettings`
-  - `GET /dify/fetchSessions/:difyId/:instanceName` -> `IntegrationSession[]`
-  - `POST /dify/changeStatus/:instanceName`
+  - `GET /instance/:id/dify/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/dify/status`
     - Request shape: `{ remoteJid, status }`
 - `Dify` request shape: `{ enabled, description, botType, apiUrl, apiKey, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids?, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/dify/*` routes in the active server
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 8. N8N Page
+### 7. N8N Page
 - Frontend pages:
   - `/manager/instance/:instanceId/n8n`
   - `/manager/instance/:instanceId/n8n/:n8nId`
 - Required backend capabilities:
-  - `GET /n8n/find/:instanceName` -> `N8n[]`
-  - `GET /n8n/fetch/:n8nId/:instanceName` -> `N8n`
-  - `POST /n8n/create/:instanceName`
+  - `GET /instance/:id/n8n` -> `N8n[]`
+  - `GET /instance/:id/n8n/:resourceId` -> `N8n`
+  - `POST /instance/:id/n8n`
     - Request shape: `N8n`
-  - `PUT /n8n/update/:n8nId/:instanceName`
+  - `PUT /instance/:id/n8n/:resourceId`
     - Request shape: `N8n`
-  - `DELETE /n8n/delete/:n8nId/:instanceName`
-  - `GET /instance/:instanceName/settings`
-    - Response shape: default settings compatible with `N8nSettings`
-  - `POST /n8n/settings/:instanceName`
+  - `DELETE /instance/:id/n8n/:resourceId`
+  - `GET /instance/:id/n8n/settings` -> `N8nSettings`
+  - `PUT /instance/:id/n8n/settings`
     - Request shape: `N8nSettings`
-  - `GET /n8n/fetchSessions/:n8nId/:instanceName` -> `IntegrationSession[]`
-  - `POST /n8n/changeStatus/:instanceName`
+  - `GET /instance/:id/n8n/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/n8n/status`
     - Request shape: `{ remoteJid, status }`
 - `N8n` request shape: `{ enabled, description, webhookUrl, basicAuthUser, basicAuthPass, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids?, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/n8n/*` routes in the active server
-  - The settings read path expected by the frontend is also legacy and not part of the current backend contract
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 9. EvoAI Page
+### 8. EvoAI Page
 - Frontend pages:
   - `/manager/instance/:instanceId/evoai`
   - `/manager/instance/:instanceId/evoai/:evoaiId`
 - Required backend capabilities:
-  - `GET /evoai/find/:instanceName` -> `Evoai[]`
-  - `GET /evoai/fetch/:evoaiId/:instanceName` -> `Evoai`
-  - `POST /evoai/create/:instanceName`
+  - `GET /instance/:id/evoai` -> `Evoai[]`
+  - `GET /instance/:id/evoai/:resourceId` -> `Evoai`
+  - `POST /instance/:id/evoai`
     - Request shape: `Evoai`
-  - `PUT /evoai/update/:evoaiId/:instanceName`
+  - `PUT /instance/:id/evoai/:resourceId`
     - Request shape: `Evoai`
-  - `DELETE /evoai/delete/:evoaiId/:instanceName`
-  - `GET /evoai/fetchSettings/:instanceName` -> `EvoaiSettings`
-  - `POST /evoai/settings/:instanceName`
+  - `DELETE /instance/:id/evoai/:resourceId`
+  - `GET /instance/:id/evoai/settings` -> `EvoaiSettings`
+  - `PUT /instance/:id/evoai/settings`
     - Request shape: `EvoaiSettings`
-  - `GET /evoai/fetchSessions/:evoaiId/:instanceName` -> `IntegrationSession[]`
-  - `POST /evoai/changeStatus/:instanceName`
+  - `GET /instance/:id/evoai/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/evoai/status`
     - Request shape: `{ remoteJid, status }`
 - `Evoai` request shape: `{ enabled, description, agentUrl, apiKey, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids?, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/evoai/*` routes in the active server
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 10. Evolution Bot Page
+### 9. Evolution Bot Page
 - Frontend pages:
   - `/manager/instance/:instanceId/evolutionBot`
   - `/manager/instance/:instanceId/evolutionBot/:evolutionBotId`
 - Required backend capabilities:
-  - `GET /evolutionBot/find/:instanceName` -> `EvolutionBot[]`
-  - `GET /evolutionBot/fetch/:evolutionBotId/:instanceName` -> `EvolutionBot`
-  - `POST /evolutionBot/create/:instanceName`
+  - `GET /instance/:id/evolutionBot` -> `EvolutionBot[]`
+  - `GET /instance/:id/evolutionBot/:resourceId` -> `EvolutionBot`
+  - `POST /instance/:id/evolutionBot`
     - Request shape: `EvolutionBot`
-  - `PUT /evolutionBot/update/:evolutionBotId/:instanceName`
+  - `PUT /instance/:id/evolutionBot/:resourceId`
     - Request shape: `EvolutionBot`
-  - `DELETE /evolutionBot/delete/:evolutionBotId/:instanceName`
-  - `GET /evolutionBot/fetchSettings/:instanceName` -> `EvolutionBotSettings`
-  - `POST /evolutionBot/settings/:instanceName`
+  - `DELETE /instance/:id/evolutionBot/:resourceId`
+  - `GET /instance/:id/evolutionBot/settings` -> `EvolutionBotSettings`
+  - `PUT /instance/:id/evolutionBot/settings`
     - Request shape: `EvolutionBotSettings`
-  - `GET /evolutionBot/fetchSessions/:evolutionBotId/:instanceName` -> `IntegrationSession[]`
-  - `POST /evolutionBot/changeStatus/:instanceName`
+  - `GET /instance/:id/evolutionBot/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/evolutionBot/status`
     - Request shape: `{ remoteJid, status }`
 - `EvolutionBot` request shape: `{ enabled, description, apiUrl, apiKey?, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids?, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/evolutionBot/*` routes in the active server
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
-### 11. Flowise Page
+### 10. Flowise Page
 - Frontend pages:
   - `/manager/instance/:instanceId/flowise`
   - `/manager/instance/:instanceId/flowise/:flowiseId`
 - Required backend capabilities:
-  - `GET /flowise/find/:instanceName` -> `Flowise[]`
-  - `GET /flowise/fetch/:flowiseId/:instanceName` -> `Flowise`
-  - `POST /flowise/create/:instanceName`
+  - `GET /instance/:id/flowise` -> `Flowise[]`
+  - `GET /instance/:id/flowise/:resourceId` -> `Flowise`
+  - `POST /instance/:id/flowise`
     - Request shape: `Flowise`
-  - `PUT /flowise/update/:flowiseId/:instanceName`
+  - `PUT /instance/:id/flowise/:resourceId`
     - Request shape: `Flowise`
-  - `DELETE /flowise/delete/:flowiseId/:instanceName`
-  - `GET /flowise/fetchSettings/:instanceName` -> `FlowiseSettings`
-  - `POST /flowise/settings/:instanceName`
+  - `DELETE /instance/:id/flowise/:resourceId`
+  - `GET /instance/:id/flowise/settings` -> `FlowiseSettings`
+  - `PUT /instance/:id/flowise/settings`
     - Request shape: `FlowiseSettings`
-  - `GET /flowise/fetchSessions/:flowiseId/:instanceName` -> `IntegrationSession[]`
-  - `POST /flowise/changeStatus/:instanceName`
+  - `GET /instance/:id/flowise/:resourceId/sessions` -> `IntegrationSession[]`
+  - `POST /instance/:id/flowise/status`
     - Request shape: `{ remoteJid, status }`
 - `Flowise` request shape: `{ enabled, description, apiUrl, apiKey?, triggerType, triggerOperator, triggerValue, expire, keywordFinish, delayMessage, unknownMessage, listeningFromMe, stopBotFromMe, keepOpen, debounceTime, ignoreJids?, splitMessages?, timePerChar? }`
 - Why current UI cannot support it:
-  - The backend has no `/flowise/*` routes in the active server
+  - These instance-ID routes are registered but intentionally return `501 partial`
 
 ## Recommended Backend Shape
 - If these features are brought back, prefer instance-ID SaaS routes instead of the old `:instanceName` paths

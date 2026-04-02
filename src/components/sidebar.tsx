@@ -59,6 +59,11 @@ function Sidebar() {
             title: t("sidebar.settings"),
             path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/settings`,
           },
+          {
+            id: "proxy",
+            title: t("sidebar.proxy"),
+            path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/proxy`,
+          },
         ],
       },
       {
@@ -69,6 +74,16 @@ function Sidebar() {
             id: "webhook",
             title: t("sidebar.webhook"),
             path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/webhook`,
+          },
+          {
+            id: "websocket",
+            title: t("sidebar.websocket"),
+            path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/websocket`,
+          },
+          {
+            id: "rabbitmq",
+            title: t("sidebar.rabbitmq"),
+            path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/rabbitmq`,
           },
         ],
       },

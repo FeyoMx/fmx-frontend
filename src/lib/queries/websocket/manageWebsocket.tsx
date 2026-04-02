@@ -1,16 +1,15 @@
 import { Websocket } from "@/types/evolution.types";
 
-import { api } from "../api";
+import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
 
 interface IParams {
-  instanceName: string;
-  token: string;
+  instanceId: string;
   data: Websocket;
 }
 
-const createWebsocket = async ({ instanceName, token, data }: IParams) => {
-  const response = await api.post(`/websocket/set/${instanceName}`, { websocket: data }, { headers: { apikey: token } });
+const createWebsocket = async ({ instanceId, data }: IParams) => {
+  const response = await apiGlobal.put(`/instance/${instanceId}/websocket`, data);
   return response.data;
 };
 
