@@ -1,369 +1,139 @@
-# Frontend-Backend Integration
+# Frontend Backend Integration
 
-## 📡 API Architecture
+## Auth Flow
+- Login uses `POST /auth/login`
+- Request body:
 
-### HTTP Clients
-
-#### `api` (Legacy Instance-Scoped)
-```typescript
-// For instance-specific operations with API key
-const api = axios.create({
-  baseURL: VITE_API_BASE_URL,
-  timeout: 30000
-});
-
-// Interceptors
-api.interceptors.request.use((config) => {
-  const token = getToken(TOKEN_ID.INSTANCE_TOKEN);
-  if (token) {
-    config.headers.apikey = token;
-  }
-  return config;
-});
-```
-
-#### `apiGlobal` (Modern Tenant-Scoped)
-```typescript
-// For tenant-scoped operations with JWT
-const apiGlobal = axios.create({
-  baseURL: VITE_API_BASE_URL,
-  timeout: 30000
-});
-
-// Interceptors
-apiGlobal.interceptors.request.use(async (config) => {
-  let token = getAuthToken();
-
-  // Auto-refresh token if needed
-  if (token && isTokenExpiring(token)) {
-    token = await refreshAuthToken();
-  }
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  const tenantId = getTenantId();
-  if (tenantId) {
-    config.headers['X-Tenant-ID'] = tenantId;
-  }
-
-  return config;
-});
-```
-
-## 🔐 Authentication Flow
-
-### Login Process
-```typescript
-// POST /auth/login
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
-  tenant: {
-    id: string;
-    name: string;
-  };
+```json
+{
+  "tenant_slug": "example-tenant",
+  "email": "owner@example.com",
+  "password": "secret"
 }
 ```
 
-### Token Management
-- **Access Token**: Short-lived (15-30 minutes)
-- **Refresh Token**: Long-lived (7-30 days)
-- **Storage**: LocalStorage with secure handling
-- **Auto-refresh**: Transparent token renewal on 401 responses
+- Backend returns:
 
-## 📊 Data Fetching Strategy
-
-### TanStack Query Configuration
-```typescript
-// Global query client setup
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000,   // 10 minutes
-      retry: (failureCount, error) => {
-        if (error?.response?.status === 401) return false;
-        return failureCount < 3;
-      }
-    },
-    mutations: {
-      retry: false
-    }
-  }
-});
-```
-
-### Query Keys Pattern
-```typescript
-// Consistent key structure
-const queryKeys = {
-  instance: {
-    list: ['instance', 'list'] as const,
-    detail: (id: string) => ['instance', 'detail', id] as const,
-    settings: (id: string) => ['instance', 'settings', id] as const,
-  },
-  auth: {
-    user: ['auth', 'user'] as const,
-  }
-};
-```
-
-## 🔄 Real-time Updates
-
-### WebSocket Integration
-```typescript
-// WebSocket service for real-time updates
-class WebSocketService {
-  private ws: WebSocket | null = null;
-
-  connect(instanceId: string) {
-    this.ws = new WebSocket(`${WS_BASE_URL}/instance/${instanceId}`);
-
-    this.ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      // Invalidate relevant queries
-      queryClient.invalidateQueries(['instance', 'status', instanceId]);
-    };
-  }
+```json
+{
+  "access_token": "...",
+  "refresh_token": "...",
+  "tenant_id": "ten_123",
+  "user_id": "usr_123",
+  "role": "owner",
+  "expires_in": 900
 }
 ```
 
-### Polling Fallbacks
-```typescript
-// For endpoints without WebSocket support
-useQuery({
-  queryKey: ['instance', 'status', instanceId],
-  queryFn: () => getInstanceStatus(instanceId),
-  refetchInterval: 5000, // Poll every 5 seconds
-  refetchIntervalInBackground: true,
-});
-```
+- Frontend then loads session context with:
+  - `GET /auth/me`
+  - `GET /tenant`
 
-## 📋 API Endpoints Mapping
+## Token Storage
+- Access token is stored in local storage through the shared auth helpers
+- Refresh token is stored separately and used only for token renewal
+- Tenant ID is stored after login and attached on authenticated SaaS requests
+- Legacy instance token storage still exists for unsupported instance-scoped pages, but it is no longer part of the primary SaaS flow
 
-### Authentication
-```typescript
-POST /auth/login
-POST /auth/refresh
-POST /auth/logout
-```
+## Refresh Flow
+- `apiGlobal` attaches `Authorization: Bearer <access_token>`
+- Before each request, the client checks token expiry and refreshes if the token is close to expiring
+- On a `401` response, `apiGlobal` retries once after calling `POST /auth/refresh`
+- If refresh fails, auth storage is cleared and the user is redirected to `/manager/login`
 
-### Instance Management
-```typescript
-GET    /instance                    # List instances
-POST   /instance                    # Create instance
-GET    /instance/id/:id             # Get instance details
-PUT    /instance/id/:id             # Update instance
-DELETE /instance/id/:id             # Delete instance
+## API Service Structure
 
-POST   /instance/id/:id/connect     # Connect WhatsApp
-POST   /instance/id/:id/disconnect  # Disconnect WhatsApp
-GET    /instance/id/:id/qrcode      # Get QR code
-GET    /instance/id/:id/status      # Get connection status
-POST   /instance/id/:id/restart     # Restart instance
-POST   /instance/id/:id/logout      # Logout instance
+### `src/lib/queries/api.ts`
+- `apiGlobal`
+  - Used for tenant-scoped SaaS routes
+  - Attaches `Authorization` and `X-Tenant-ID`
+  - Handles refresh-token retry
+- `api`
+  - Used by legacy instance-token pages
+  - Attaches `apikey`
+  - Exists only because several legacy pages still depend on unsupported backend routes
 
-GET    /instance/id/:id/advanced-settings    # Get advanced settings
-PUT    /instance/id/:id/advanced-settings    # Update advanced settings
-```
+### Normalizers and Adapters
+- `src/lib/queries/instance/normalize.ts`
+  - Maps backend instance payloads into existing UI `Instance` shape
+- `src/lib/queries/crm/contacts.ts`
+  - Maps backend contact rows and nested tags into `ContactView`
+- `src/lib/queries/broadcast/jobs.ts`
+  - Maps backend broadcast jobs into `BroadcastView`
+- `src/lib/queries/ai/settings.ts`
+  - Maps tenant and per-instance AI settings into frontend view models
+- `src/lib/queries/errors.ts`
+  - Centralizes backend error message extraction for consistent UI feedback
 
-### Chat Management
-```typescript
-GET    /chat/findChats/:instanceName         # List chats
-GET    /chat/findMessages/:instanceName      # Get messages
-POST   /chat/sendText/:instanceName          # Send text message
-POST   /chat/sendMedia/:instanceName         # Send media message
-```
+## Base URL Configuration
+- Preferred env var: `VITE_API_URL`
+- Backward-compatible fallback: `VITE_API_BASE_URL`
+- Default fallback: `http://localhost:8080`
 
-### Integration Endpoints
-```typescript
-# OpenAI
-GET    /openai/find/:instanceName
-POST   /openai/create/:instanceName
-PUT    /openai/update/:id/:instanceName
-DELETE /openai/delete/:id/:instanceName
+## Tenant Behavior
+- The backend is multi-tenant
+- Tenant context is derived from login response and hydrated with `GET /tenant`
+- Authenticated SaaS requests send `X-Tenant-ID` when available
+- The backend can also authenticate protected routes with a tenant API key through `X-API-Key` or `apikey`, but the frontend does not expose API key CRUD because the backend does not provide it
 
-# Typebot
-GET    /typebot/find/:instanceName
-POST   /typebot/create/:instanceName
-PUT    /typebot/update/:id/:instanceName
-DELETE /typebot/delete/:id/:instanceName
+## Endpoint Mapping
 
-# And similar patterns for all integrations...
-```
+### Current SaaS Pages
+- Dashboard
+  - `GET /dashboard/metrics`
+  - `GET /instance`
+  - `POST /instance`
+- Login
+  - `POST /auth/login`
+  - `POST /auth/refresh`
+  - `GET /auth/me`
+  - `POST /auth/logout`
+- Tenant context
+  - `GET /tenant`
+- CRM
+  - `GET /contacts`
+  - `POST /contacts`
+- Broadcast
+  - `GET /broadcast`
+  - `POST /broadcast`
+- AI settings
+  - `GET /ai/settings`
+  - `PUT /ai/settings`
+  - `GET /ai/instances/:instanceID`
+  - `PUT /ai/instances/:instanceID`
+- Webhooks
+  - `GET /webhook`
+  - `POST /webhook`
+  - `GET /webhook/:id`
+  - `PATCH /webhook/:id`
+  - `DELETE /webhook/:id`
 
-### Event Integrations
-```typescript
-# Webhook
-GET    /webhook/find/:instanceName
-POST   /webhook/create/:instanceName
-PUT    /webhook/update/:id/:instanceName
-DELETE /webhook/delete/:id/:instanceName
+### Unsupported Legacy Pages
+The following frontend pages still target legacy endpoints that are not registered in the backend route registry:
+- `/chat/*`
+- `/websocket/*`
+- `/rabbitmq/*`
+- `/sqs/*`
+- `/proxy/*`
+- `/chatwoot/*`
+- `/openai/*`
+- `/typebot/*`
+- `/dify/*`
+- `/n8n/*`
+- `/evoai/*`
+- `/evolutionBot/*`
+- `/flowise/*`
 
-# WebSocket, RabbitMQ, SQS follow same pattern
-```
+## Error Handling
+- Backend validation and auth errors are surfaced through `getApiErrorMessage`
+- Expected user-visible categories:
+  - invalid credentials
+  - expired session
+  - forbidden access
+  - validation errors
+  - network failure
 
-## 🔧 Error Handling
-
-### HTTP Error Responses
-```typescript
-// Standardized error response
-interface ApiError {
-  status: number;
-  message: string;
-  code?: string;
-  details?: any;
-}
-
-// Error handling in queries
-const query = useQuery({
-  queryKey: ['data'],
-  queryFn: fetchData,
-  onError: (error: ApiError) => {
-    if (error.status === 401) {
-      // Redirect to login
-      navigate('/login');
-    } else {
-      // Show toast notification
-      toast.error(error.message);
-    }
-  }
-});
-```
-
-### Loading States
-```typescript
-// Consistent loading UI
-const { data, isLoading, error } = useQuery(queryKey, queryFn);
-
-if (isLoading) return <LoadingSpinner />;
-if (error) return <ErrorMessage error={error} />;
-
-return <DataComponent data={data} />;
-```
-
-## 📊 Response Data Handling
-
-### Data Transformation
-```typescript
-// Handle nested response structures
-const fetchData = async () => {
-  const response = await api.get('/endpoint');
-
-  // Handle different response shapes
-  const payload = response.data?.data ?? response.data;
-
-  if (!payload) {
-    throw new Error('No data received');
-  }
-
-  return payload;
-};
-```
-
-### Type Safety
-```typescript
-// Strongly typed API responses
-interface InstanceResponse {
-  id: string;
-  name: string;
-  status: 'connected' | 'disconnected' | 'connecting';
-  settings: InstanceSettings;
-}
-
-const { data } = useQuery<InstanceResponse>({
-  queryKey: ['instance', id],
-  queryFn: () => api.get(`/instance/${id}`).then(res => res.data)
-});
-```
-
-## 🔄 Mutation Patterns
-
-### Optimistic Updates
-```typescript
-const updateSettings = useMutation({
-  mutationFn: (settings: Settings) =>
-    api.put(`/instance/${id}/settings`, settings),
-
-  onMutate: async (newSettings) => {
-    // Cancel outgoing refetches
-    await queryClient.cancelQueries(['instance', id]);
-
-    // Snapshot previous value
-    const previousSettings = queryClient.getQueryData(['instance', id]);
-
-    // Optimistically update
-    queryClient.setQueryData(['instance', id], newSettings);
-
-    return { previousSettings };
-  },
-
-  onError: (err, newSettings, context) => {
-    // Rollback on error
-    queryClient.setQueryData(['instance', id], context?.previousSettings);
-  },
-
-  onSettled: () => {
-    // Always refetch after mutation
-    queryClient.invalidateQueries(['instance', id]);
-  }
-});
-```
-
-## 🌐 CORS & Security
-
-### CORS Configuration
-```typescript
-// Backend CORS headers
-Access-Control-Allow-Origin: https://yourdomain.com
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-Access-Control-Allow-Headers: Content-Type, Authorization, X-Tenant-ID
-Access-Control-Allow-Credentials: true
-```
-
-### CSRF Protection
-- **JWT-based**: No CSRF tokens needed
-- **SameSite Cookies**: For refresh token storage (future enhancement)
-
-## 📈 Performance Optimization
-
-### Query Caching
-- **Stale Time**: 5 minutes for most data
-- **Garbage Collection**: 10 minutes
-- **Background Refetch**: Enabled for critical data
-
-### Bundle Splitting
-- **Route-based**: Automatic code splitting
-- **Vendor Chunks**: Separate third-party libraries
-- **Dynamic Imports**: Lazy load heavy components
-
-## 🧪 Testing Strategy
-
-### API Mocking
-```typescript
-// MSW for API mocking in tests
-import { rest } from 'msw';
-
-const handlers = [
-  rest.get('/api/instances', (req, res, ctx) => {
-    return res(ctx.json(mockInstances));
-  }),
-];
-```
-
-### Integration Tests
-- **Component Testing**: React Testing Library
-- **API Testing**: Mock Service Worker
-- **E2E Testing**: Playwright (future)
+## Notes for Future Sync Work
+- Hide or gate unsupported legacy instance pages rather than faking backend support
+- Continue replacing UI-specific assumptions with small view adapters near the query layer
+- Prefer route registration in the backend code over old integration docs when conflicts appear

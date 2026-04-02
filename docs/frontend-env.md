@@ -5,6 +5,7 @@
 ### Core Configuration
 ```bash
 # API Configuration
+VITE_API_URL=http://localhost:8080
 VITE_API_BASE_URL=http://localhost:8080
 
 # Optional: Enable debug mode
@@ -14,7 +15,8 @@ VITE_DEBUG=false
 ## 🌐 API Endpoints
 
 ### Base URL
-- **Variable**: `VITE_API_BASE_URL`
+- **Preferred Variable**: `VITE_API_URL`
+- **Fallback Variable**: `VITE_API_BASE_URL`
 - **Default**: `http://localhost:8080`
 - **Description**: Backend API server URL
 - **Required**: Yes
@@ -37,7 +39,7 @@ VITE_DEBUG=false
 ### Token Refresh
 - **Automatic**: Enabled on 401 responses
 - **Endpoint**: POST `/auth/refresh`
-- **Headers**: `Authorization: Bearer {refresh_token}`
+- **Request Body**: `{ "refresh_token": "..." }`
 
 ## 🌍 Internationalization
 

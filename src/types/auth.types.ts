@@ -9,7 +9,7 @@ export interface LoginResponse {
   refresh_token: string;
   tenant_id: string;
   user_id: string;
-  role: "owner" | "admin" | "manager" | "user";
+  role: "owner" | "admin" | "agent" | "manager" | "user";
   expires_in: number;
 }
 
@@ -17,7 +17,7 @@ export interface AuthMeResponse {
   user_id: string;
   tenant_id: string;
   email: string;
-  role: "owner" | "admin" | "manager" | "user";
+  role: "owner" | "admin" | "agent" | "manager" | "user";
   api_key: boolean;
 }
 
@@ -25,7 +25,7 @@ export interface User {
   id: string;
   email: string;
   name?: string; // Optional display name
-  role: "owner" | "admin" | "manager" | "user";
+  role: "owner" | "admin" | "agent" | "manager" | "user";
   tenantId: string;
   apiKey?: boolean;
 }
@@ -36,6 +36,8 @@ export interface Tenant {
   plan: "free" | "pro" | "enterprise";
   instancesCount: number;
   messagesCount: number;
+  slug?: string;
+  aiEnabled?: boolean;
   aiUsage: {
     tokensUsed: number;
     tokensLimit: number;

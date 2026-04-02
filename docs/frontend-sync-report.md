@@ -1,187 +1,165 @@
-# Frontend-Backend Sync Report
+# Frontend Sync Report
 
-## 📊 Current Integration Status
+## Scope
+- Frontend repository audited against the local sibling backend repository at `../fmxevolution-go`
+- Backend code was treated as source of truth, with `internal/server/server.go` used to confirm route registration
+- Backend docs were used only when they matched code or helped explain deprecated legacy routes
 
-### ✅ Fully Synchronized Endpoints
+## Backend Endpoints Discovered
 
-#### Authentication
-- **POST /auth/login** ✅
-  - Request: `{ email, password }`
-  - Response: `{ access_token, refresh_token, user, tenant }`
-  - Implementation: JWT token storage, tenant context
+### Public
+- `GET /healthz`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /tenant`
 
-#### Instance Management
-- **GET /instance** ✅
-  - Lists all instances for current tenant
-  - Response: `Instance[]` with settings included
-- **POST /instance/id/{id}/connect** ✅
-  - Connects WhatsApp instance
-  - Requires: `instanceId`, `token` (optional number)
-- **POST /instance/id/{id}/disconnect** ✅
-  - Disconnects WhatsApp instance
-- **GET /instance/id/{id}/qrcode** ✅
-  - Returns QR code for WhatsApp connection
-  - Response: `{ qrcode, code, status }`
-- **GET /instance/id/{id}/status** ✅
-  - Real-time connection status
-  - Response: `{ status, connected, instance_id }`
-- **POST /instance/id/{id}/restart** ✅
-  - Restarts instance service
-- **POST /instance/id/{id}/logout** ✅
-  - Logs out WhatsApp session
+### Protected SaaS Routes
+- `GET /auth/me`
+- `POST /auth/logout`
+- `GET /dashboard/metrics`
+- `GET /tenant`
+- `PATCH /tenant`
+- `GET /ai/settings`
+- `PUT /ai/settings`
+- `GET /ai/instances/:instanceID`
+- `PUT /ai/instances/:instanceID`
+- `GET /instance`
+- `POST /instance`
+- `GET /instance/:id`
+- `PATCH /instance/:id`
+- `DELETE /instance/:id`
+- `GET /instance/id/:instanceID`
+- `GET /instance/:id/settings`
+- `PUT /instance/:id/settings`
+- `GET /instance/:id/advanced-settings`
+- `PUT /instance/:id/advanced-settings`
+- `GET /instance/id/:instanceID/advanced-settings`
+- `PUT /instance/id/:instanceID/advanced-settings`
+- `POST /instance/:id/connect`
+- `POST /instance/id/:instanceID/connect`
+- `POST /instance/:id/disconnect`
+- `POST /instance/id/:instanceID/disconnect`
+- `GET /instance/:id/status`
+- `GET /instance/id/:instanceID/status`
+- `GET /instance/:id/qr`
+- `GET /instance/:id/qrcode`
+- `GET /instance/id/:instanceID/qr`
+- `GET /instance/id/:instanceID/qrcode`
+- `GET /contacts`
+- `POST /contacts`
+- `GET /contacts/:id`
+- `PATCH /contacts/:id`
+- `POST /contacts/:id/notes`
+- `POST /contacts/:id/tags`
+- `GET /broadcast`
+- `POST /broadcast`
+- `GET /broadcast/:id`
+- `PATCH /broadcast/:id`
+- `GET /webhook`
+- `POST /webhook`
+- `GET /webhook/:id`
+- `PATCH /webhook/:id`
+- `DELETE /webhook/:id`
+- `POST /webhook/inbound`
+- `POST /webhook/outbound`
 
-#### Advanced Settings
-- **GET /instance/id/{id}/advanced-settings** ✅
-  - Loads advanced instance settings
-  - Response: `{ alwaysOnline, rejectCall, msgRejectCall, readMessages, ignoreGroups, ignoreStatus }`
-- **PUT /instance/id/{id}/advanced-settings** ✅
-  - Saves advanced settings
-  - Payload matches GET response structure
+## Frontend Endpoints Updated
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `GET /auth/me`
+- `POST /auth/logout`
+- `GET /tenant`
+- `GET /dashboard/metrics`
+- `GET /instance`
+- `GET /instance/:id`
+- `POST /instance`
+- `GET /contacts`
+- `POST /contacts`
+- `GET /broadcast`
+- `POST /broadcast`
+- `GET /ai/settings`
+- `PUT /ai/settings`
+- `GET /ai/instances/:instanceID`
+- `PUT /ai/instances/:instanceID`
 
-#### Chat Management
-- **GET /chat/findChats/{instanceName}** ✅
-  - Lists all chats (individual + groups)
-- **GET /chat/findMessages/{instanceName}** ✅
-  - Message history with pagination
-- **POST /chat/sendText/{instanceName}** ✅
-  - Send text messages
+## Mismatches Fixed
 
-### 🚧 Partially Synchronized Endpoints
+### Auth and Session
+- Frontend API base URL now prefers `VITE_API_URL` and falls back to `VITE_API_BASE_URL`
+- JWT bearer auth is attached through `apiGlobal`
+- Refresh-token retry flow is centralized in the global axios client
+- Logout now clears both current and legacy token storage keys
+- Auth role types now include backend role `agent`
+- Tenant context now hydrates from `/auth/me` and `/tenant`
 
-#### Instance CRUD
-- **POST /instance** 🚧
-  - Frontend: Implemented
-  - Backend: May need verification
-- **GET /instance/id/{id}** 🚧
-  - Frontend: Used in some places
-  - Backend: May need verification
-- **PUT /instance/id/{id}** 🚧
-  - Frontend: Not fully implemented
-  - Backend: Available
-- **DELETE /instance/id/{id}** 🚧
-  - Frontend: Basic implementation
-  - Backend: Available
+### Response Shape Compatibility
+- Instance list and instance detail calls are normalized into the existing UI `Instance` shape
+- Dashboard metrics now map backend metric fields instead of assuming older SaaS counters
+- CRM contacts are normalized from backend contact and tag shapes into UI-friendly rows
+- Broadcast jobs are normalized from backend job fields into UI table rows
+- AI settings now map the flat backend tenant settings payload and per-instance settings payload
 
-#### Integration Endpoints
-- **OpenAI endpoints** 🚧
-  - Frontend: Full CRUD UI implemented
-  - Backend: Legacy `/openai/*` routes - may need migration to `/instance/id/{id}/openai/*`
-- **Typebot endpoints** 🚧
-  - Same pattern as OpenAI
-- **Dify, Flowise, N8N, EvolutionBot, EvoAI** 🚧
-  - All follow legacy `/service/*` pattern
-  - May need instance-scoped routing
+### Page-Level Sync
+- Dashboard create-instance flow now sends backend-native aliases `name` and `engine_instance_id`
+- CRM page now uses real `/contacts` endpoints and avoids unsupported delete behavior
+- Broadcast page now uses real `/broadcast` endpoints and backend-compatible payload fields
+- AI Settings page now uses `/ai/settings` and `/ai/instances/:instanceID`
+- API Keys page no longer calls nonexistent `/apikey` endpoints and is now informational
+- Login page surfaces backend error messages instead of generic failures
 
-#### Event Integrations
-- **Webhook endpoints** 🚧
-  - Frontend: Basic CRUD implemented
-  - Backend: Legacy routes, may need updates
-- **WebSocket, RabbitMQ, SQS** 🚧
-  - Frontend: UI implemented
-  - Backend: Legacy routes
+### Dead or Stale Integration Cleanup
+- Removed unused `apiLegacy` axios client
+- Removed unused legacy `verifyCreds` helper
+- Removed unused stale `src/types/saas.types.ts`
 
-### ❌ Not Yet Implemented (Backend Missing)
+## Remaining Mismatches Not Fixed
 
-#### Management Features
-- **CRM/Contacts** ❌
-  - Frontend: UI skeleton implemented
-  - Backend: No endpoints available
-  - Required: `/contacts/*` endpoints
-- **Broadcast** ❌
-  - Frontend: UI skeleton implemented
-  - Backend: No endpoints available
-  - Required: `/broadcast/*` endpoints
-- **AI Settings** ❌
-  - Frontend: UI skeleton implemented
-  - Backend: No endpoints available
-  - Required: `/ai/*` tenant-scoped endpoints
-- **API Keys** ❌
-  - Frontend: UI skeleton implemented
-  - Backend: No endpoints available
-  - Required: `/apikey/*` endpoints
+### Unsupported Legacy Instance Pages
+These frontend areas still depend on legacy routes that are not registered by the current backend:
+- Instance chat
+- WebSocket
+- RabbitMQ
+- SQS
+- Proxy
+- Chatwoot
+- OpenAI
+- Typebot
+- Dify
+- N8N
+- EvoAI
+- Evolution Bot
+- Flowise
+- Embed chat
 
-## 🔄 Response Shape Mismatches
+### API Contract Gaps
+- Backend accepts tenant API keys for authentication, but does not expose `/apikey` CRUD routes
+- Backend CRM contract does not expose contact deletion
+- Backend CRM contract does not expose pipeline-stage management
+- Backend broadcast contract does not expose legacy UI metrics like `successCount` and `failureCount`
+- Backend dashboard metrics are leaner than the older UI assumptions
 
-### Instance Settings
-- **Issue**: Legacy settings vs Advanced settings
-- **Frontend**: Expects both old and new formats
-- **Backend**: May return different structures
-- **Mitigation**: Fallback handling implemented
+## Pages Fully Synced
+- `/manager/login`
+- `/manager`
+- `/manager/contacts`
+- `/manager/broadcast`
+- `/manager/ai-settings`
+- `/manager/api-keys`
+- `/manager/instance/:instanceId/webhook`
+- `/manager/instance/:instanceId/settings`
 
-### Chat Data
-- **Issue**: Message structure variations
-- **Frontend**: Handles multiple media types
-- **Backend**: May have inconsistent response formats
-- **Mitigation**: Defensive data extraction
+## Pages Partially Synced
+- `/manager/instance/:instanceId/dashboard`
+  - Instance payload is normalized, but some cards still rely on compatibility fallbacks such as `_count`
+- `/manager/instance/:instanceId/*`
+  - Unsupported legacy integration pages still render in the UI even though their backend routes do not exist
 
-## 🔐 Authentication Headers
+## Blockers and Assumptions
+- The backend route registry in `../fmxevolution-go/internal/server/server.go` was treated as authoritative
+- Backend docs identify many legacy `/service/*` routes as stale for the current `cmd/api`
+- The frontend still contains unsupported instance integration pages because removing navigation is a user-facing behavior change and was deferred for a smaller follow-up step
+- The production build could not be completed in this environment because Vite hit a local `spawn EPERM` while loading `vite.config.ts`
 
-### Required Headers by Endpoint Type
-
-#### Tenant-Scoped (apiGlobal)
-```typescript
-Authorization: Bearer {jwt_token}
-X-Tenant-ID: {tenant_id}
-```
-
-#### Instance-Scoped (api)
-```typescript
-apikey: {instance_token}
-```
-
-### Current Implementation Status
-- ✅ JWT authentication working
-- ✅ Tenant header injection working
-- ✅ Instance token handling working
-- ✅ Auto token refresh implemented
-
-## 📋 Missing Frontend Adaptations
-
-### Route Migrations Needed
-1. **Integration Endpoints**: Migrate from `/service/*` to `/instance/id/{id}/service/*`
-2. **Event Endpoints**: Same migration pattern
-3. **Settings**: Already migrated to advanced-settings
-
-### New Feature Implementation Needed
-1. **CRM System**: Full contact management
-2. **Broadcast System**: Campaign management
-3. **AI Settings**: Global AI configuration
-4. **API Keys**: Key management interface
-
-### UI Improvements Needed
-1. **Error Boundaries**: Better error handling
-2. **Loading States**: More granular loading indicators
-3. **Offline Support**: Service worker implementation
-4. **Real-time Updates**: WebSocket integration for all features
-
-## 🎯 Next Steps Priority
-
-### High Priority
-1. **Migrate integration routes** to instance-scoped
-2. **Implement CRM backend** and connect frontend
-3. **Implement Broadcast backend** and connect frontend
-4. **Add WebSocket support** for real-time features
-
-### Medium Priority
-1. **Add AI Settings backend** and connect
-2. **Add API Keys backend** and connect
-3. **Improve error handling** and user feedback
-4. **Add comprehensive testing**
-
-### Low Priority
-1. **Performance optimizations**
-2. **Accessibility improvements**
-3. **Advanced caching strategies**
-4. **PWA features**
-
-## 📊 Integration Health Score
-
-- **Authentication**: 100% ✅
-- **Instance Management**: 90% ✅
-- **Chat Features**: 85% ✅
-- **Settings**: 95% ✅
-- **Integrations**: 70% 🚧
-- **Management Features**: 20% ❌
-- **Real-time Features**: 60% 🚧
-
-**Overall Integration Health: 75%**
+## Verification
+- `npx tsc -b` passed after the sync changes
+- Full `npm run build` remains blocked by the local Vite `spawn EPERM` issue rather than a TypeScript failure

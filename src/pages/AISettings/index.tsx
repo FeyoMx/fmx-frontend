@@ -10,51 +10,54 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-import { apiGlobal } from "@/lib/queries/api";
 import { useTenant } from "@/contexts/TenantContext";
-
-interface AISettings {
-  tenantEnabled: boolean;
-  apiKey: string;
-  model: string;
-  maxTokens: number;
-  temperature: number;
-}
-
-interface InstanceAISettings {
-  instanceId: string;
-  instanceName: string;
-  enabled: boolean;
-  model: string;
-}
+import { getApiErrorMessage } from "@/lib/queries/errors";
+import { getTenantAISettings, getInstanceAISettings, updateInstanceAISettings, updateTenantAISettings } from "@/lib/queries/ai/settings";
+import { InstanceAISettingsView, TenantAISettingsView } from "@/lib/queries/ai/types";
+import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 
 export function AISettings() {
   const { t } = useTranslation();
   const { tenant } = useTenant();
-  const [aiSettings, setAISettings] = useState<AISettings>({
-    tenantEnabled: false,
-    apiKey: "",
-    model: "gpt-4",
-    maxTokens: 2000,
-    temperature: 0.7,
+  const [aiSettings, setAISettings] = useState<TenantAISettingsView>({
+    enabled: false,
+    autoReply: false,
+    provider: "openai",
+    model: "",
+    baseUrl: "",
+    systemPrompt: "",
   });
 
-  const [instanceSettings, setInstanceSettings] = useState<InstanceAISettings[]>([]);
+  const [instanceSettings, setInstanceSettings] = useState<InstanceAISettingsView[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { data: instances } = useFetchInstances();
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    void fetchSettings();
+  }, [instances]);
 
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const response = await apiGlobal.get("/ai/settings");
-      setAISettings(response.data.tenant || aiSettings);
-      setInstanceSettings(response.data.instances || []);
+      const tenantSettings = await getTenantAISettings();
+      const perInstance = await Promise.all(
+        (instances ?? []).map(async (instance) => {
+          const settings = await getInstanceAISettings(instance.id);
+          return {
+            instanceId: instance.id,
+            instanceName: instance.name,
+            enabled: settings.enabled,
+            autoReply: settings.auto_reply,
+            model: tenantSettings.model || "tenant default",
+          } satisfies InstanceAISettingsView;
+        }),
+      );
+
+      setAISettings(tenantSettings);
+      setInstanceSettings(perInstance);
     } catch (error) {
-      toast.error(t("aiSettings.error.fetch") || "Failed to fetch AI settings");
+      toast.error(getApiErrorMessage(error, t("aiSettings.error.fetch") || "Failed to fetch AI settings"));
     } finally {
       setIsLoading(false);
     }
@@ -63,18 +66,18 @@ export function AISettings() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      await apiGlobal.put("/ai/settings", aiSettings);
+      await updateTenantAISettings(aiSettings);
       toast.success(t("aiSettings.message.saved") || "AI settings saved successfully");
     } catch (error) {
-      toast.error(t("aiSettings.error.save") || "Failed to save AI settings");
+      toast.error(getApiErrorMessage(error, t("aiSettings.error.save") || "Failed to save AI settings"));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleToggleInstance = async (instanceId: string, enabled: boolean) => {
+  const handleToggleInstance = async (instanceId: string, enabled: boolean, autoReply: boolean) => {
     try {
-      await apiGlobal.put(`/ai/instance/${instanceId}`, { enabled });
+      await updateInstanceAISettings(instanceId, enabled, autoReply);
       setInstanceSettings((prev) =>
         prev.map((inst) =>
           inst.instanceId === instanceId
@@ -84,7 +87,7 @@ export function AISettings() {
       );
       toast.success(t("aiSettings.message.updated") || "Instance settings updated");
     } catch (error) {
-      toast.error(t("aiSettings.error.updateInstance") || "Failed to update instance settings");
+      toast.error(getApiErrorMessage(error, t("aiSettings.error.updateInstance") || "Failed to update instance settings"));
     }
   };
 
@@ -95,7 +98,7 @@ export function AISettings() {
           <h1 className="text-3xl font-bold">{t("aiSettings.title") || "AI Settings"}</h1>
           <p className="text-gray-600">{tenant?.name}</p>
         </div>
-        <Button onClick={fetchSettings} variant="outline" size="icon">
+        <Button onClick={() => void fetchSettings()} variant="outline" size="icon">
           <RefreshCw size={20} />
         </Button>
       </div>
@@ -111,53 +114,38 @@ export function AISettings() {
               <label className="font-medium">{t("aiSettings.enableAI") || "Enable AI"}</label>
               <p className="text-sm text-gray-600">{t("aiSettings.enableAIDescription") || "Enable AI features for this tenant"}</p>
             </div>
-            <Switch checked={aiSettings.tenantEnabled} onCheckedChange={(checked) => setAISettings({ ...aiSettings, tenantEnabled: checked })} />
+            <Switch checked={aiSettings.enabled} onCheckedChange={(checked) => setAISettings({ ...aiSettings, enabled: checked })} />
           </div>
 
-          {aiSettings.tenantEnabled && (
+          {aiSettings.enabled && (
             <>
-              <div>
-                <label className="block text-sm font-medium mb-2">{t("aiSettings.apiKey") || "API Key"}</label>
-                <Input
-                  type="password"
-                  value={aiSettings.apiKey}
-                  onChange={(e) => setAISettings({ ...aiSettings, apiKey: e.target.value })}
-                  placeholder="Enter your API key"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">{t("aiSettings.model") || "Model"}</label>
-                <select value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} className="w-full rounded border p-2">
-                  <option value="gpt-4">GPT-4</option>
-                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  <option value="claude-3-opus">Claude 3 Opus</option>
-                  <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Provider</label>
+                  <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Model</label>
+                  <Input value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} placeholder="gpt-4o-mini" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t("aiSettings.maxTokens") || "Max Tokens"}</label>
-                  <Input
-                    type="number"
-                    value={aiSettings.maxTokens}
-                    onChange={(e) => setAISettings({ ...aiSettings, maxTokens: parseInt(e.target.value) || 0 })}
-                    min={1}
-                    max={4000}
-                  />
+                  <label className="block text-sm font-medium mb-2">Base URL</label>
+                  <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t("aiSettings.temperature") || "Temperature"}</label>
-                  <Input
-                    type="number"
-                    value={aiSettings.temperature}
-                    onChange={(e) => setAISettings({ ...aiSettings, temperature: parseFloat(e.target.value) || 0.7 })}
-                    min={0}
-                    max={1}
-                    step={0.1}
-                  />
+                  <label className="block text-sm font-medium mb-2">Tenant auto reply</label>
+                  <div className="flex h-10 items-center rounded border px-3">
+                    <Switch checked={aiSettings.autoReply} onCheckedChange={(checked) => setAISettings({ ...aiSettings, autoReply: checked })} />
+                  </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">System prompt</label>
+                <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Optional system prompt" />
               </div>
 
               <div className="flex justify-end">
@@ -204,13 +192,10 @@ export function AISettings() {
                     <TableRow key={instance.instanceId}>
                       <TableCell className="font-medium">{instance.instanceName}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{instance.model || "default"}</Badge>
+                        <Badge variant="outline">{instance.model || "tenant default"}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Switch
-                          checked={instance.enabled}
-                          onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked)}
-                        />
+                        <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} />
                       </TableCell>
                     </TableRow>
                   ))

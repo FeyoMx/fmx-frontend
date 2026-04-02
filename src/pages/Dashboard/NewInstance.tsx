@@ -64,7 +64,9 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       const instanceData: NewInstanceType = {
+        name: data.name,
         instanceName: data.name,
+        engine_instance_id: data.integration,
         integration: data.integration,
         token: data.token === "" ? null : data.token,
         number: data.number === "" ? null : data.number,

@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backend integration patterns
   - Frontend-backend sync report
   - Development worklog
+- Typed SaaS query adapters for tenant, dashboard, CRM, broadcast, AI settings, and instance normalization
+- Centralized API error parsing helper for clearer auth and validation failures
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -32,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed UI component issues (FormInput props, ResizablePanel sizes)
 - Corrected navigation URL generation (removed double slashes)
 - Updated README.md with new documentation links and FMX branding
+- Frontend API base URL now prefers `VITE_API_URL` with `VITE_API_BASE_URL` as fallback
+- Tenant session hydration now uses `/auth/me` and `/tenant` as the source of truth
+- Dashboard, CRM, Broadcast, AI Settings, and API Keys pages now align with the current backend SaaS contract
+- API Keys page was converted to informational mode because the backend currently supports API key auth but not API key management routes
+- New instance creation now sends backend-native `name` and `engine_instance_id` aliases
+- Frontend integration docs were rewritten against the current backend route registry
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -39,6 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Navigation URL generation with double slashes
 - QR code display issues with undefined data
 - React Query error handling with undefined data crashes
+- Instance list and detail parsing now tolerate the leaner backend SaaS instance payload
+- Login, dashboard, CRM, broadcast, and AI settings flows now surface backend error messages more reliably
+- AI instance settings now call `/ai/instances/:instanceID` instead of the stale singular route
+
+### Removed
+- Unused legacy `apiLegacy` client
+- Unused legacy `verifyCreds` helper
+- Unused stale `src/types/saas.types.ts`
 
 ### Security
 - Implemented JWT authentication with automatic token refresh

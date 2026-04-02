@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGlobal } from "../api";
 import { UseQueryParams } from "../types";
 import { FetchInstanceResponse } from "./types";
+import { normalizeInstance } from "./normalize";
 
 interface IParams {
   instanceId: string | null;
@@ -12,7 +13,7 @@ const queryKey = (params: Partial<IParams>) => ["instance", "fetchInstance", JSO
 
 export const fetchInstance = async ({ instanceId }: IParams) => {
   const response = await apiGlobal.get(`/instance/${instanceId}`);
-  return response.data;
+  return normalizeInstance(response.data);
 };
 
 export const useFetchInstance = (props: UseQueryParams<FetchInstanceResponse> & Partial<IParams>) => {

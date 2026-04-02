@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Tenant, User } from "@/types/auth.types";
 import { apiGlobal } from "@/lib/queries/api";
-import { getAuthToken, getTenantId, getUserData, refreshAuthToken, shouldRefreshToken } from "@/lib/auth";
+import { getAuthToken, getTenantId, getUserData, refreshAuthToken, saveUserData, shouldRefreshToken } from "@/lib/auth";
+import { getTenant } from "@/lib/queries/tenant/getTenant";
 
 interface TenantContextType {
   tenant: Tenant | null;
@@ -33,8 +34,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       const fetchUserData = async () => {
         try {
-          const response = await apiGlobal.get("/auth/me");
-          const userData = response.data;
+          const [userResponse, tenantResponse] = await Promise.all([
+            apiGlobal.get("/auth/me"),
+            getTenant(),
+          ]);
+          const userData = userResponse.data;
+          const tenantData = tenantResponse;
 
           // Update user data with fresh info from API
           const updatedUser = {
@@ -46,16 +51,17 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             apiKey: userData.api_key,
           };
           setUser(updatedUser);
+          saveUserData(updatedUser);
 
-          // For now, keep existing tenant data or create basic tenant
-          // TODO: Add separate endpoint for full tenant data if needed
-          setTenant((currentTenant) => currentTenant || {
-            id: userData.tenant_id,
-            name: "FMX Tenant",
+          setTenant({
+            id: tenantData.id,
+            name: tenantData.name,
             plan: "pro" as const,
             instancesCount: 0,
             messagesCount: 0,
             aiUsage: { tokensUsed: 0, tokensLimit: 10000 },
+            slug: tenantData.slug,
+            aiEnabled: tenantData.ai_enabled ?? false,
           });
         } catch (error) {
           console.warn("Unable to fetch user data from /auth/me API, using stored data.", error);

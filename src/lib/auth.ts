@@ -117,4 +117,5 @@ export const performLogout = async (): Promise<void> => {
     }
   }
   clearAuthTokens();
+  localStorage.removeItem("accessToken");
 };

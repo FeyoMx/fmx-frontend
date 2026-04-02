@@ -22,7 +22,9 @@ export type AdvancedSettings = {
 };
 
 export type NewInstance = {
+  name?: string;
   instanceName: string;
+  engine_instance_id?: string;
   qrcode?: boolean;
   integration: string;
   token?: string | null;

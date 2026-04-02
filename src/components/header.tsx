@@ -4,8 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { useFetchInstance } from "@/lib/queries/instance/fetchInstance";
-import { clearAuthTokens, getAuthToken } from "@/lib/auth";
-import { logout } from "@/lib/queries/auth/login";
+import { performLogout } from "@/lib/auth";
 import { useTenant } from "@/contexts/TenantContext";
 import logo from "/assets/images/fmxaiflowslogo2.png";
 
@@ -22,15 +21,7 @@ function Header({ instanceId }: { instanceId?: string }) {
   const { user } = useTenant();
 
   const handleClose = async () => {
-    const token = getAuthToken();
-    if (token) {
-      try {
-        await logout(token);
-      } catch (error) {
-        console.warn("Logout API call failed, proceeding with local logout", error);
-      }
-    }
-    clearAuthTokens();
+    await performLogout();
     navigate("/manager/login");
   };
 

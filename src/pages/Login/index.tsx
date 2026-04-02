@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { login } from "@/lib/queries/auth/login";
 import { saveAuthTokens, saveUserData } from "@/lib/auth";
 import { useTenant } from "@/contexts/TenantContext";
+import { getApiErrorMessage } from "@/lib/queries/errors";
 
 const loginSchema = z.object({
   email: z.string({ required_error: "Email is required" }).email("Invalid email"),
@@ -81,7 +82,7 @@ function Login() {
       toast.success(t("login.message.success") || "Login successful");
       navigate("/manager/");
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Login failed";
+      const errorMessage = getApiErrorMessage(error, "Login failed");
       toast.error(t("login.message.invalidCredentials") || errorMessage);
       loginForm.setError("password", {
         type: "manual",

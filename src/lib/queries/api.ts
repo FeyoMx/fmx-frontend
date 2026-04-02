@@ -1,14 +1,14 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
 import { getToken, TOKEN_ID } from "./token";
-import { getAuthToken, getTenantId, refreshAuthToken, getRefreshToken } from "@/lib/auth";
+import { getAuthToken, getTenantId, refreshAuthToken, getRefreshToken, clearAuthTokens } from "@/lib/auth";
 
-const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // API instance for instance-scoped requests (with apikey header)
 export const api: AxiosInstance = axios.create({
   timeout: 30000,
-  baseURL: VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use(
@@ -37,7 +37,7 @@ api.interceptors.request.use(
 // API instance for global/tenant requests (with JWT)
 export const apiGlobal: AxiosInstance = axios.create({
   timeout: 30000,
-  baseURL: VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
 });
 
 apiGlobal.interceptors.request.use(
@@ -93,37 +93,12 @@ apiGlobal.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, user needs to login again
+        clearAuthTokens();
         window.location.href = "/manager/login";
         return Promise.reject(refreshError);
       }
     }
 
-    return Promise.reject(error);
-  },
-);
-
-// Legacy apiGlobal for backward compatibility with apikey
-export const apiLegacy = axios.create({
-  timeout: 30000,
-});
-
-apiLegacy.interceptors.request.use(
-  async (config) => {
-    const apiUrl = getToken(TOKEN_ID.API_URL);
-    if (apiUrl) {
-      config.baseURL = apiUrl.toString();
-    }
-
-    if (!config.headers.apiKey || config.headers.apiKey === "") {
-      const token = getToken(TOKEN_ID.TOKEN);
-      if (token) {
-        config.headers.apikey = `${token}`;
-      }
-    }
-
-    return config;
-  },
-  (error) => {
     return Promise.reject(error);
   },
 );

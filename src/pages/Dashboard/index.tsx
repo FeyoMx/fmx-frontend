@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
-import { apiGlobal } from "@/lib/queries/api";
 import { useTenant } from "@/contexts/TenantContext";
+import { getDashboardMetrics } from "@/lib/queries/dashboard/getMetrics";
+import { getApiErrorMessage } from "@/lib/queries/errors";
 
 import { Instance } from "@/types/evolution.types";
 
@@ -26,8 +27,10 @@ import { TooltipWrapper } from "@/components/ui/tooltip";
 interface DashboardMetrics {
   totalInstances: number;
   totalMessages: number;
-  aiUsagePercentage: number;
+  totalContacts: number;
+  totalBroadcasts: number;
   activeInstances: number;
+  inactiveInstances: number;
 }
 
 function Dashboard() {
@@ -36,8 +39,10 @@ function Dashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalInstances: 0,
     totalMessages: 0,
-    aiUsagePercentage: 0,
+    totalContacts: 0,
+    totalBroadcasts: 0,
     activeInstances: 0,
+    inactiveInstances: 0,
   });
 
   const [deleteConfirmation, setDeleteConfirmation] = useState<{id: string, name: string} | null>(null);
@@ -53,10 +58,10 @@ function Dashboard() {
 
   const fetchMetrics = async () => {
     try {
-      const response = await apiGlobal.get("/dashboard/metrics");
-      setMetrics(response.data);
+      setMetrics(await getDashboardMetrics());
     } catch (error) {
       console.error("Error fetching metrics:", error);
+      toast.error(getApiErrorMessage(error, "Failed to fetch dashboard metrics"));
     }
   };
 
@@ -80,7 +85,7 @@ function Dashboard() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error instance delete:", error);
-      toast.error(`Error : ${error?.response?.data?.response?.message}`);
+      toast.error(getApiErrorMessage(error, "Failed to delete instance"));
     } finally {
       setDeleting(deleting.filter((item) => item !== instance.name));
     }
@@ -139,23 +144,23 @@ function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">{t("dashboard.metrics.aiUsage") || "AI Usage"}</h3>
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.contacts") || "Contacts"}</h3>
             <Zap className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.aiUsagePercentage}%</div>
-            <p className="text-xs text-gray-600">{t("dashboard.metrics.ofQuota") || "of quota used"}</p>
+            <div className="text-2xl font-bold">{(metrics.totalContacts ?? 0).toLocaleString()}</div>
+            <p className="text-xs text-gray-600">{t("dashboard.metrics.synced") || "synced from backend"}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">{t("dashboard.metrics.plan") || "Plan"}</h3>
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.broadcasts") || "Broadcasts"}</h3>
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">{tenant?.plan}</div>
-            <p className="text-xs text-gray-600">{t("dashboard.metrics.tenantPlan") || "Current plan"}</p>
+            <div className="text-2xl font-bold">{(metrics.totalBroadcasts ?? 0).toLocaleString()}</div>
+            <p className="text-xs text-gray-600">{tenant?.name}</p>
           </CardContent>
         </Card>
       </div>

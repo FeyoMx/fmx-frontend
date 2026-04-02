@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Send, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
@@ -10,80 +10,92 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-import { apiGlobal } from "@/lib/queries/api";
 import { useTenant } from "@/contexts/TenantContext";
-
-interface Broadcast {
-  id: string;
-  title: string;
-  message: string;
-  status: "draft" | "scheduled" | "sent";
-  scheduledAt?: string;
-  sentAt?: string;
-  successCount: number;
-  failureCount: number;
-  createdAt: string;
-}
+import { createBroadcastJob, getBroadcastJobs } from "@/lib/queries/broadcast/jobs";
+import { BroadcastView } from "@/lib/queries/broadcast/types";
+import { getApiErrorMessage } from "@/lib/queries/errors";
+import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 
 export function Broadcast() {
   const { t } = useTranslation();
   const { tenant } = useTenant();
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+  const [broadcasts, setBroadcasts] = useState<BroadcastView[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
+  const { data: instances } = useFetchInstances();
 
   const [formData, setFormData] = useState({
-    title: "",
+    instanceId: "",
     message: "",
-    template: "default",
-    delay: 0, // in seconds
+    ratePerHour: 60,
+    delaySec: 0,
+    maxAttempts: 3,
     scheduledTime: "",
   });
+
+  useEffect(() => {
+    void fetchBroadcasts();
+  }, []);
+
+  useEffect(() => {
+    if (!formData.instanceId && instances && instances.length > 0) {
+      setFormData((current) => ({ ...current, instanceId: instances[0].id }));
+    }
+  }, [formData.instanceId, instances]);
 
   const fetchBroadcasts = async () => {
     setIsLoading(true);
     try {
-      const response = await apiGlobal.get("/broadcast");
-      setBroadcasts(response.data || []);
+      setBroadcasts(await getBroadcastJobs());
     } catch (error) {
-      toast.error(t("broadcast.error.fetch") || "Failed to fetch broadcasts");
+      toast.error(getApiErrorMessage(error, t("broadcast.error.fetch") || "Failed to fetch broadcasts"));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSendBroadcast = async () => {
-    if (!formData.title || !formData.message) {
-      toast.error(t("broadcast.validation.requiredFields") || "Title and message are required");
+    if (!formData.instanceId || !formData.message) {
+      toast.error(t("broadcast.validation.requiredFields") || "Instance and message are required");
       return;
     }
 
     try {
-      const payload = {
-        ...formData,
-        scheduledAt: scheduleMode === "later" ? formData.scheduledTime : null,
-        delay: formData.delay,
-      };
-
-      await apiGlobal.post("/broadcast", payload);
-      toast.success(t("broadcast.message.sent") || "Broadcast sent successfully");
+      await createBroadcastJob({
+        instance_id: formData.instanceId,
+        message: formData.message,
+        rate_per_hour: formData.ratePerHour,
+        delay_sec: scheduleMode === "now" ? formData.delaySec : 0,
+        max_attempts: formData.maxAttempts,
+        scheduled_at: scheduleMode === "later" ? formData.scheduledTime : null,
+      });
+      toast.success(t("broadcast.message.sent") || "Broadcast queued successfully");
       setShowForm(false);
-      setFormData({ title: "", message: "", template: "default", delay: 0, scheduledTime: "" });
-      fetchBroadcasts();
+      setFormData({
+        instanceId: instances?.[0]?.id ?? "",
+        message: "",
+        ratePerHour: 60,
+        delaySec: 0,
+        maxAttempts: 3,
+        scheduledTime: "",
+      });
+      void fetchBroadcasts();
     } catch (error) {
-      toast.error(t("broadcast.error.send") || "Failed to send broadcast");
+      toast.error(getApiErrorMessage(error, t("broadcast.error.send") || "Failed to send broadcast"));
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: BroadcastView["status"]) => {
     switch (status) {
-      case "sent":
+      case "completed":
         return "bg-green-100 text-green-800";
-      case "scheduled":
+      case "processing":
         return "bg-blue-100 text-blue-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-amber-100 text-amber-800";
     }
   };
 
@@ -95,7 +107,7 @@ export function Broadcast() {
           <p className="text-gray-600">{tenant?.name}</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={fetchBroadcasts} variant="outline" size="icon">
+          <Button onClick={() => void fetchBroadcasts()} variant="outline" size="icon">
             <RefreshCw size={20} />
           </Button>
           <Button onClick={() => setShowForm(!showForm)}>
@@ -109,74 +121,57 @@ export function Broadcast() {
         <Card>
           <CardHeader>
             <CardTitle>{t("broadcast.form.title") || "Create Broadcast"}</CardTitle>
-            <CardDescription>{t("broadcast.form.description") || "Send a message to all contacts"}</CardDescription>
+            <CardDescription>{t("broadcast.form.description") || "Queue a message for a specific instance"}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t("broadcast.form.title") || "Title"}</label>
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder={t("broadcast.form.titlePlaceholder") || "Broadcast title"}
-              />
+              <label className="block text-sm font-medium mb-1">Instance</label>
+              <select value={formData.instanceId} onChange={(e) => setFormData({ ...formData, instanceId: e.target.value })} className="w-full rounded border p-2">
+                <option value="">Select an instance</option>
+                {(instances ?? []).map((instance) => (
+                  <option key={instance.id} value={instance.id}>
+                    {instance.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">{t("broadcast.form.message") || "Message"}</label>
-              <Textarea
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder={t("broadcast.form.messagePlaceholder") || "Your message here..."}
-                rows={5}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("broadcast.form.template") || "Template"}</label>
-              <select
-                value={formData.template}
-                onChange={(e) => setFormData({ ...formData, template: e.target.value })}
-                className="w-full rounded border p-2"
-              >
-                <option value="default">{t("broadcast.template.default") || "Default"}</option>
-                <option value="greeting">{t("broadcast.template.greeting") || "Greeting"}</option>
-                <option value="promotional">{t("broadcast.template.promotional") || "Promotional"}</option>
-              </select>
+              <Textarea value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder={t("broadcast.form.messagePlaceholder") || "Your message here..."} rows={5} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{t("broadcast.form.schedule") || "Schedule"}</label>
-                <select
-                  value={scheduleMode}
-                  onChange={(e) => setScheduleMode(e.target.value as "now" | "later")}
-                  className="w-full rounded border p-2"
-                >
+                <select value={scheduleMode} onChange={(e) => setScheduleMode(e.target.value as "now" | "later")} className="w-full rounded border p-2">
                   <option value="now">{t("broadcast.schedule.now") || "Now"}</option>
                   <option value="later">{t("broadcast.schedule.later") || "Later"}</option>
                 </select>
               </div>
 
-              {scheduleMode === "later" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("broadcast.form.scheduledTime") || "Scheduled Time"}</label>
-                    <Input type="datetime-local" value={formData.scheduledTime} onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })} />
-                  </div>
-                </>
-              )}
-
-              {scheduleMode === "now" && (
+              {scheduleMode === "later" ? (
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t("broadcast.form.scheduledTime") || "Scheduled Time"}</label>
+                  <Input type="datetime-local" value={formData.scheduledTime} onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })} />
+                </div>
+              ) : (
                 <div>
                   <label className="block text-sm font-medium mb-1">{t("broadcast.form.delay") || "Delay (seconds)"}</label>
-                  <Input
-                    type="number"
-                    value={formData.delay}
-                    onChange={(e) => setFormData({ ...formData, delay: parseInt(e.target.value) || 0 })}
-                    min={0}
-                  />
+                  <Input type="number" value={formData.delaySec} onChange={(e) => setFormData({ ...formData, delaySec: parseInt(e.target.value) || 0 })} min={0} />
                 </div>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Rate per hour</label>
+                <Input type="number" value={formData.ratePerHour} onChange={(e) => setFormData({ ...formData, ratePerHour: parseInt(e.target.value) || 0 })} min={1} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Max attempts</label>
+                <Input type="number" value={formData.maxAttempts} onChange={(e) => setFormData({ ...formData, maxAttempts: parseInt(e.target.value) || 0 })} min={1} />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -185,7 +180,7 @@ export function Broadcast() {
               </Button>
               <Button onClick={handleSendBroadcast}>
                 <Send size={20} className="mr-2" />
-                {t("broadcast.button.send") || "Send"}
+                {t("broadcast.button.send") || "Queue Broadcast"}
               </Button>
             </div>
           </CardContent>
@@ -202,10 +197,10 @@ export function Broadcast() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("broadcast.table.title") || "Title"}</TableHead>
+                  <TableHead>Instance</TableHead>
                   <TableHead>{t("broadcast.table.status") || "Status"}</TableHead>
-                  <TableHead>{t("broadcast.table.sent") || "Sent"}</TableHead>
-                  <TableHead>{t("broadcast.table.failed") || "Failed"}</TableHead>
+                  <TableHead>Attempts</TableHead>
+                  <TableHead>Schedule</TableHead>
                   <TableHead>{t("broadcast.table.date") || "Date"}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -225,13 +220,13 @@ export function Broadcast() {
                 ) : (
                   broadcasts.map((broadcast) => (
                     <TableRow key={broadcast.id}>
-                      <TableCell className="font-medium">{broadcast.title}</TableCell>
+                      <TableCell className="font-medium">{instances?.find((instance) => instance.id === broadcast.instanceId)?.name || broadcast.instanceId}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(broadcast.status)}>{broadcast.status}</Badge>
                       </TableCell>
-                      <TableCell>{broadcast.successCount}</TableCell>
-                      <TableCell>{broadcast.failureCount}</TableCell>
-                      <TableCell>{new Date(broadcast.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{broadcast.attempts}/{broadcast.maxAttempts}</TableCell>
+                      <TableCell>{broadcast.scheduledAt ? new Date(broadcast.scheduledAt).toLocaleString() : "Immediate"}</TableCell>
+                      <TableCell>{broadcast.createdAt ? new Date(broadcast.createdAt).toLocaleDateString() : "-"}</TableCell>
                     </TableRow>
                   ))
                 )}
