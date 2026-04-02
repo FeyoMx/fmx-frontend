@@ -16,7 +16,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInstance } from "@/contexts/InstanceContext";
 
 import { useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
-import { getToken, TOKEN_ID } from "@/lib/queries/token";
+import { TOKEN_ID } from "@/lib/queries/token";
+import { getApiErrorMessage } from "@/lib/queries/errors";
+import { toast } from "react-toastify";
 
 function DashboardInstance() {
   const { t, i18n } = useTranslation();
@@ -32,15 +34,13 @@ function DashboardInstance() {
   const { data: instanceStatus, refetch: refetchStatus } = useInstanceStatus(instance?.id || "");
   const { data: qrCodeData, refetch: refetchQRCode } = useInstanceQRCode(instance?.id || "");
 
-  const token = getToken(TOKEN_ID.TOKEN);
-  const instanceToken = instance?.token || getToken(TOKEN_ID.INSTANCE_TOKEN);
-  const effectiveToken = token || instanceToken;
-
   useEffect(() => {
     if (instance) {
       localStorage.setItem(TOKEN_ID.INSTANCE_ID, instance.id);
       localStorage.setItem(TOKEN_ID.INSTANCE_NAME, instance.name);
-      localStorage.setItem(TOKEN_ID.INSTANCE_TOKEN, instance.token);
+      if (instance.token) {
+        localStorage.setItem(TOKEN_ID.INSTANCE_TOKEN, instance.token);
+      }
     }
   }, [instance]);
 
@@ -62,6 +62,7 @@ function DashboardInstance() {
       await reloadInstance();
     } catch (error) {
       console.error("Error:", error);
+      toast.error(getApiErrorMessage(error, "Failed to restart instance"));
     }
   };
 
@@ -71,6 +72,7 @@ function DashboardInstance() {
       await reloadInstance();
     } catch (error) {
       console.error("Error:", error);
+      toast.error(getApiErrorMessage(error, "Failed to disconnect instance"));
     }
   };
 
@@ -79,21 +81,15 @@ function DashboardInstance() {
       setQRCode(null);
       setPairingCode("");
 
-      if (!effectiveToken) {
-        console.error("Instance token not found.");
-        return;
-      }
-
       if (pairingCode) {
         const data = await connect({
           instanceId,
-          token: effectiveToken,
           number: instance?.number,
         });
 
         setPairingCode(data.pairingCode || data.code);
       } else {
-        await connect({ instanceId, token: effectiveToken });
+        await connect({ instanceId });
       }
 
       // Refresh instance data after connect
@@ -103,6 +99,7 @@ function DashboardInstance() {
       await refetchQRCode();
     } catch (error) {
       console.error("Error:", error);
+      toast.error(getApiErrorMessage(error, "Failed to connect instance"));
     }
   };
 
@@ -113,20 +110,19 @@ function DashboardInstance() {
   };
 
   const stats = useMemo(() => {
-    if (!instance) {
-      return {
-        contacts: 0,
-        chats: 0,
-        messages: 0,
-      };
-    }
-
     return {
-      contacts: instance._count?.Contact || 0,
-      chats: instance._count?.Chat || 0,
-      messages: instance._count?.Message || 0,
+      contacts: instance?.stats.contacts ?? null,
+      chats: instance?.stats.chats ?? null,
+      messages: instance?.stats.messages ?? null,
     };
   }, [instance]);
+
+  const formatStat = (value: number | null) => {
+    if (value === null) {
+      return t("common.notAvailable") || "N/A";
+    }
+    return numberFormatter.format(value);
+  };
 
   const qrCodeColor = useMemo(() => {
     if (theme === "dark") {
@@ -284,7 +280,7 @@ function DashboardInstance() {
               {t("instance.dashboard.contacts")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{numberFormatter.format(stats.contacts)}</CardContent>
+          <CardContent>{formatStat(stats.contacts)}</CardContent>
         </Card>
         <Card className="instance-card">
           <CardHeader>
@@ -293,7 +289,7 @@ function DashboardInstance() {
               {t("instance.dashboard.chats")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{numberFormatter.format(stats.chats)}</CardContent>
+          <CardContent>{formatStat(stats.chats)}</CardContent>
         </Card>
         <Card className="instance-card">
           <CardHeader>
@@ -302,7 +298,7 @@ function DashboardInstance() {
               {t("instance.dashboard.messages")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{numberFormatter.format(stats.messages)}</CardContent>
+          <CardContent>{formatStat(stats.messages)}</CardContent>
         </Card>
       </section>
     </main>

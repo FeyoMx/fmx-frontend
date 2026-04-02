@@ -47,10 +47,10 @@ export type Instance = {
   createdAt: string;
   updatedAt: string;
   Setting: Settings;
-  _count?: {
-    Message?: number;
-    Contact?: number;
-    Chat?: number;
+  stats: {
+    messages: number | null;
+    contacts: number | null;
+    chats: number | null;
   };
 };
 

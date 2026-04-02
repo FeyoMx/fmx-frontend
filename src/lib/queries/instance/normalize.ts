@@ -1,26 +1,13 @@
 import { Instance } from "@/types/evolution.types";
+import { BackendInstanceResponse } from "./types";
 
-type RawInstance = Partial<Instance> & {
-  instance_id?: string;
-  instanceName?: string;
-  status?: string;
-  engine_instance_id?: string;
-  owner?: string;
-  jid?: string;
-  apikey?: string;
-  apiKey?: string;
-  created_at?: string;
-  updated_at?: string;
+const normalizeMetric = (value: unknown): number | null => {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 };
 
-const emptyCounts = {
-  Message: 0,
-  Contact: 0,
-  Chat: 0,
-};
-
-export const normalizeInstance = (raw: RawInstance | null | undefined): Instance => {
+export const normalizeInstance = (raw: BackendInstanceResponse | null | undefined): Instance => {
   const ownerJid = raw?.ownerJid ?? raw?.owner ?? raw?.jid ?? "";
+  const rawCounts = raw?._count;
 
   return {
     id: raw?.id ?? raw?.instance_id ?? "",
@@ -44,9 +31,10 @@ export const normalizeInstance = (raw: RawInstance | null | undefined): Instance
       readStatus: false,
       syncFullHistory: false,
     },
-    _count: {
-      ...emptyCounts,
-      ...raw?._count,
+    stats: {
+      messages: normalizeMetric(rawCounts?.Message ?? raw?.Message),
+      contacts: normalizeMetric(rawCounts?.Contact ?? raw?.Contact),
+      chats: normalizeMetric(rawCounts?.Chat ?? raw?.Chat),
     },
   };
 };
@@ -56,5 +44,5 @@ export const normalizeInstances = (payload: unknown): Instance[] => {
     return [];
   }
 
-  return payload.map((item) => normalizeInstance(item as RawInstance));
+  return payload.map((item) => normalizeInstance(item as BackendInstanceResponse));
 };

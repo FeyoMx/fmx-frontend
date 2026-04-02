@@ -98,6 +98,7 @@
 - CRM contacts are normalized from backend contact and tag shapes into UI-friendly rows
 - Broadcast jobs are normalized from backend job fields into UI table rows
 - AI settings now map the flat backend tenant settings payload and per-instance settings payload
+- Instance stats now use explicit nullable `stats` fields instead of synthetic `_count` fallbacks
 
 ### Page-Level Sync
 - Dashboard create-instance flow now sends backend-native aliases `name` and `engine_instance_id`
@@ -178,6 +179,8 @@ These routes are now protected from broken navigation:
 - Backend CRM contract does not expose pipeline-stage management
 - Backend broadcast contract does not expose legacy UI metrics like `successCount` and `failureCount`
 - Backend dashboard metrics are leaner than the older UI assumptions
+- Backend instance list/detail payloads do not expose contact, chat, or message counts, so the dashboards now show `N/A` instead of synthetic zero values
+- Backend instance detail may omit runtime token data when no runtime snapshot is available, so token display is now treated as optional in the UI
 
 ## Pages Fully Synced
 - `/manager/login`

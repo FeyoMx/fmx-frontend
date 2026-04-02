@@ -239,11 +239,11 @@ function Dashboard() {
                   <div className="flex items-center justify-end gap-4 text-sm">
                     <div className="flex flex-col items-center justify-center gap-1">
                       <CircleUser className="text-muted-foreground" size="20" />
-                      <span>{new Intl.NumberFormat("pt-BR").format(instance?._count?.Contact || 0)}</span>
+                      <span>{instance.stats.contacts === null ? (t("common.notAvailable") || "N/A") : new Intl.NumberFormat("pt-BR").format(instance.stats.contacts)}</span>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-1">
                       <MessageCircle className="text-muted-foreground" size="20" />
-                      <span>{new Intl.NumberFormat("pt-BR").format(instance?._count?.Message || 0)}</span>
+                      <span>{instance.stats.messages === null ? (t("common.notAvailable") || "N/A") : new Intl.NumberFormat("pt-BR").format(instance.stats.messages)}</span>
                     </div>
                   </div>
                 </div>

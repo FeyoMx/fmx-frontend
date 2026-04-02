@@ -42,14 +42,11 @@ const deleteInstance = async (instanceId: string) => {
 
 interface ConnectParams {
   instanceId: string;
-  token: string;
   number?: string;
 }
 
-const connect = async ({ instanceId, token, number }: ConnectParams) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/connect`, { number }, {
-    headers: { apikey: token },
-  });
+const connect = async ({ instanceId, number }: ConnectParams) => {
+  const response = await apiGlobal.post(`/instance/id/${instanceId}/connect`, { number });
   return response.data;
 };
 
@@ -97,16 +94,11 @@ const getStatus = async (instanceId: string) => {
 
 interface UpdateSettingsParams {
   instanceId: string;
-  token: string;
   data: Partial<AdvancedSettings>;
 }
 
-const updateSettings = async ({ instanceId, token, data }: UpdateSettingsParams) => {
-  const response = await apiGlobal.put(`/instance/id/${instanceId}/advanced-settings`, data, {
-    headers: {
-      apikey: token,
-    },
-  });
+const updateSettings = async ({ instanceId, data }: UpdateSettingsParams) => {
+  const response = await apiGlobal.put(`/instance/id/${instanceId}/advanced-settings`, data);
   return response.data;
 };
 

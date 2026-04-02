@@ -79,7 +79,6 @@ function Settings() {
       };
       await updateSettings({
         instanceId: instance.id,
-        token: instance.token,
         data: advancedSettingsData,
       });
       toast.success(t("settings.toast.success"));
