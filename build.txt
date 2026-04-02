@@ -1,0 +1,4 @@
+
+> evolution-manager@2.0.0 build
+> tsc -b && vite build
+
