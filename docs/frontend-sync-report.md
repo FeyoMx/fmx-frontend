@@ -150,7 +150,7 @@ These routes are now protected from broken navigation:
   - `/manager/instance/:instanceId/openai`
   - `/manager/instance/:instanceId/dify`
   - `/manager/instance/:instanceId/flowise`
-- Kept as guarded placeholders with a clear "Not available yet" state:
+- Redirected to the current instance dashboard so normal UI flows cannot remain on unsupported legacy screens:
   - `/manager/instance/:instanceId/chat`
   - `/manager/instance/:instanceId/chat/:remoteJid`
   - `/manager/instance/:instanceId/sqs`
@@ -201,7 +201,7 @@ These routes are now protected from broken navigation:
 - `/manager/instance/:instanceId/dashboard`
   - Instance payload is normalized to the current backend contract, but the backend still does not provide per-instance contact/chat/message counts
 - `/manager/instance/:instanceId/*`
-  - Unsupported legacy integration pages no longer appear in sidebar navigation and are now guarded by placeholders or redirects
+  - Unsupported legacy integration pages no longer appear in sidebar navigation and now redirect back to the instance dashboard
   - `SQS` remains intentionally hidden because the backend route exists but returns `501 partial`
 
 ## Blockers and Assumptions

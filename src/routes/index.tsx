@@ -1,8 +1,7 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter, useParams } from "react-router-dom";
 
 import ProtectedRoute from "@/components/providers/protected-route";
 import PublicRoute from "@/components/providers/public-route";
-import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 
 import { InstanceLayout } from "@/layout/InstanceLayout";
 import { MainLayout } from "@/layout/MainLayout";
@@ -20,6 +19,12 @@ import { Webhook } from "@/pages/instance/Webhook";
 import { Websocket } from "@/pages/instance/Websocket";
 import Login from "@/pages/Login";
 import Home from "@/pages/Home";
+
+function RedirectToInstanceDashboard() {
+  const { instanceId } = useParams<{ instanceId: string }>();
+
+  return <Navigate to={instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"} replace />;
+}
 
 const router = createBrowserRouter([
   {
@@ -99,7 +104,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -109,7 +114,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -129,7 +134,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -139,7 +144,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -179,7 +184,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -189,7 +194,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -199,7 +204,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -209,7 +214,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -219,7 +224,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -229,7 +234,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -239,7 +244,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -249,7 +254,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -259,7 +264,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -269,7 +274,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -279,7 +284,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -289,7 +294,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -299,7 +304,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -309,7 +314,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <UnsupportedInstanceFeature />
+          <RedirectToInstanceDashboard />
         </InstanceLayout>
       </ProtectedRoute>
     ),
