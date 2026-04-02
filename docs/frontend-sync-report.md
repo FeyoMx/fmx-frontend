@@ -114,6 +114,7 @@
 - API Keys page no longer calls nonexistent `/apikey` endpoints and is now informational
 - Login page surfaces backend error messages instead of generic failures
 - Instance `websocket`, `rabbitmq`, and `proxy` pages now use the new tenant-scoped `/instance/:id/...` routes
+- Instance dashboard now exposes text-only messaging through `POST /instance/id/:instanceID/messages/text` using the backend `{ number, text, delay? }` contract
 - Enabled instance integration pages now treat backend `501 Not Implemented` responses as a shared "This feature is not available in the current backend yet" UI state instead of falling through to generic crash or auth handling
 
 ### Dead or Stale Integration Cleanup
@@ -181,6 +182,7 @@ These routes are now protected from broken navigation:
 - Backend dashboard metrics are leaner than the older UI assumptions
 - Backend instance list/detail payloads do not expose contact, chat, or message counts, so the dashboards now show `N/A` instead of synthetic zero values
 - Backend instance detail may omit runtime token data when no runtime snapshot is available, so token display is now treated as optional in the UI
+- Backend instance messaging support is limited to text sending; frontend media/audio/chat-search flows must remain gated
 - Backend chat search, media send, audio send, and SQS still return structured `501` partial responses and must remain unavailable in the UI
 - Backend `chatwoot`, `openai`, `typebot`, `dify`, `n8n`, `evoai`, `evolutionBot`, and `flowise` routes are registered but intentionally return `501` partial responses
 
@@ -196,7 +198,8 @@ These routes are now protected from broken navigation:
 - `/manager/instance/:instanceId/rabbitmq`
 - `/manager/instance/:instanceId/webhook`
 - `/manager/instance/:instanceId/settings`
-
+- `/manager/instance/:instanceId/dashboard`
+  - Includes the newly supported text-message action for connected instances
 ## Pages Partially Synced
 - `/manager/instance/:instanceId/dashboard`
   - Instance payload is normalized to the current backend contract, but the backend still does not provide per-instance contact/chat/message counts

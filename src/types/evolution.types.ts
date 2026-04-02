@@ -103,6 +103,20 @@ export type SendText = {
   };
 };
 
+export type InstanceTextMessageInput = {
+  number: string;
+  text: string;
+  delay?: number;
+};
+
+export type InstanceTextMessageResult = {
+  messageId: string;
+  serverId: number;
+  chat: string;
+  fromMe: boolean;
+  timestamp: string;
+};
+
 export type SendMedia = {
   number: string;
   mediaMessage: {

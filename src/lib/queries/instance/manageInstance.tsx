@@ -1,4 +1,4 @@
-import { AdvancedSettings, NewInstance } from "@/types/evolution.types";
+import { AdvancedSettings, InstanceTextMessageInput, InstanceTextMessageResult, NewInstance } from "@/types/evolution.types";
 
 import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
@@ -102,6 +102,30 @@ const updateSettings = async ({ instanceId, data }: UpdateSettingsParams) => {
   return response.data;
 };
 
+interface SendTextMessageParams {
+  instanceId: string;
+  data: InstanceTextMessageInput;
+}
+
+type SendTextMessageResponse = {
+  message: string;
+  instance_id: string;
+  instanceName: string;
+  engine_instance_id?: string;
+  data: InstanceTextMessageResult;
+};
+
+const sendTextMessage = async ({ instanceId, data }: SendTextMessageParams) => {
+  const payload = {
+    number: data.number,
+    text: data.text,
+    delay: data.delay ?? 0,
+  };
+
+  const response = await apiGlobal.post<SendTextMessageResponse>(`/instance/id/${instanceId}/messages/text`, payload);
+  return response.data;
+};
+
 export function useManageInstance() {
   const connectMutation = useManageMutation(connect, {
     invalidateKeys: [
@@ -139,6 +163,7 @@ export function useManageInstance() {
   const createInstanceMutation = useManageMutation(createInstance, {
     invalidateKeys: [["instance", "fetchInstances"]],
   });
+  const sendTextMessageMutation = useManageMutation(sendTextMessage);
 
   return {
     connect: connectMutation,
@@ -148,6 +173,7 @@ export function useManageInstance() {
     logout: logoutMutation,
     restart: restartMutation,
     createInstance: createInstanceMutation,
+    sendTextMessage: sendTextMessageMutation,
   };
 }
 

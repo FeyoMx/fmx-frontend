@@ -11,7 +11,10 @@ import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
@@ -25,10 +28,14 @@ function DashboardInstance() {
   const numberFormatter = new Intl.NumberFormat(i18n.language);
   const [qrCode, setQRCode] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState("");
+  const [recipientNumber, setRecipientNumber] = useState("");
+  const [messageText, setMessageText] = useState("");
+  const [messageDelay, setMessageDelay] = useState("0");
+  const [isSendingText, setIsSendingText] = useState(false);
   const { theme } = useTheme();
 
   const { instance, reloadInstance } = useInstance();
-  const { connect, logout, restart } = useManageInstance();
+  const { connect, logout, restart, sendTextMessage } = useManageInstance();
 
   // Use React Query hooks for status and QR code
   const { data: instanceStatus, refetch: refetchStatus } = useInstanceStatus(instance?.id || "");
@@ -107,6 +114,47 @@ function DashboardInstance() {
     setQRCode(null);
     setPairingCode("");
     await reloadInstance();
+  };
+
+  const handleSendTextMessage = async () => {
+    if (!instance?.id) {
+      return;
+    }
+
+    const number = recipientNumber.trim();
+    const text = messageText.trim();
+    const parsedDelay = Number.parseInt(messageDelay, 10);
+
+    if (!number || !text) {
+      toast.error("Recipient number and message text are required.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedDelay) || parsedDelay < 0) {
+      toast.error("Delay must be zero or greater.");
+      return;
+    }
+
+    try {
+      setIsSendingText(true);
+      const response = await sendTextMessage({
+        instanceId: instance.id,
+        data: {
+          number,
+          text,
+          delay: parsedDelay,
+        },
+      });
+
+      setMessageText("");
+      setMessageDelay("0");
+      toast.success(response?.data?.messageId ? `Message sent (${response.data.messageId})` : "Message sent successfully.");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(getApiErrorMessage(error, "Failed to send text message"));
+    } finally {
+      setIsSendingText(false);
+    }
   };
 
   const stats = useMemo(() => {
@@ -299,6 +347,60 @@ function DashboardInstance() {
             </CardTitle>
           </CardHeader>
           <CardContent>{formatStat(stats.messages)}</CardContent>
+        </Card>
+      </section>
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Send text message</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This instance action uses the current backend route for text-only messaging. Media, audio, and chat search remain unavailable in the SaaS UI.
+            </p>
+            <div className="grid gap-2">
+              <Label htmlFor="instance-send-number">Recipient number</Label>
+              <Input
+                id="instance-send-number"
+                value={recipientNumber}
+                onChange={(event) => setRecipientNumber(event.target.value)}
+                placeholder="5215512345678"
+                disabled={instance.connectionStatus !== "open" || isSendingText}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="instance-send-message">Message</Label>
+              <Textarea
+                id="instance-send-message"
+                value={messageText}
+                onChange={(event) => setMessageText(event.target.value)}
+                placeholder="Write the text you want to send"
+                disabled={instance.connectionStatus !== "open" || isSendingText}
+              />
+            </div>
+            <div className="grid gap-2 md:max-w-40">
+              <Label htmlFor="instance-send-delay">Delay (ms)</Label>
+              <Input
+                id="instance-send-delay"
+                type="number"
+                min="0"
+                step="1"
+                value={messageDelay}
+                onChange={(event) => setMessageDelay(event.target.value)}
+                disabled={instance.connectionStatus !== "open" || isSendingText}
+              />
+            </div>
+            {instance.connectionStatus !== "open" && (
+              <Alert variant="warning">
+                <AlertTitle>Connect the instance before sending text messages.</AlertTitle>
+              </Alert>
+            )}
+          </CardContent>
+          <CardFooter className="justify-end">
+            <Button onClick={handleSendTextMessage} disabled={instance.connectionStatus !== "open" || isSendingText || !recipientNumber.trim() || !messageText.trim()}>
+              {isSendingText ? "Sending..." : "Send text"}
+            </Button>
+          </CardFooter>
         </Card>
       </section>
     </main>
