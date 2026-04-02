@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typed SaaS query adapters for tenant, dashboard, CRM, broadcast, AI settings, and instance normalization
 - Centralized API error parsing helper for clearer auth and validation failures
 - Consistent "not available yet" handling for backend `501 Not Implemented` responses on enabled instance integration pages
+- Tenant-safe instance text-message composer on the instance dashboard using `POST /instance/:id/messages/text`
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -51,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instance list and detail parsing now tolerate the leaner backend SaaS instance payload
 - Login, dashboard, CRM, broadcast, and AI settings flows now surface backend error messages more reliably
 - AI instance settings now call `/ai/instances/:instanceID` instead of the stale singular route
+- Instance text-message action now falls back to the standard unsupported-feature UI when the backend returns `501`
 
 ### Removed
 - Unused legacy `apiLegacy` client

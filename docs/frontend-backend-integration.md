@@ -39,6 +39,49 @@
 - `apiGlobal` attaches `Authorization: Bearer <access_token>`
 - Before each request, the client checks token expiry and refreshes if the token is close to expiring
 - On a `401` response, `apiGlobal` retries once after calling `POST /auth/refresh`
+
+## Instance Text Messaging
+
+- The frontend composer uses the canonical tenant-safe route:
+  - `POST /instance/:id/messages/text`
+- Auth requirements:
+  - same JWT-backed authenticated SaaS flow as other protected instance routes
+  - tenant scope is derived from the authenticated session, not user-supplied tenant fields
+- Request body:
+
+```json
+{
+  "number": "5215512345678",
+  "text": "Hello from FMX",
+  "delay": 0
+}
+```
+
+- Response shape:
+
+```json
+{
+  "message": "success",
+  "instance_id": "uuid",
+  "instanceName": "MyInstance",
+  "engine_instance_id": "bridge-id",
+  "data": {
+    "messageId": "wamid...",
+    "serverId": 123,
+    "chat": "5215512345678@s.whatsapp.net",
+    "fromMe": true,
+    "timestamp": "2026-04-02T12:00:00Z"
+  }
+}
+```
+
+- UI placement:
+  - the composer lives on `/manager/instance/:instanceId/dashboard`
+  - it is intentionally not exposed on legacy chat/embed flows
+- Current limitations:
+  - only plain text is supported
+  - media, audio, chat search, and message history remain gated
+  - if the backend returns `501`, the dashboard swaps to the standard unsupported-feature placeholder for this action
 - If refresh fails, auth storage is cleared and the user is redirected to `/manager/login`
 
 ## API Service Structure
@@ -83,6 +126,7 @@
   - `GET /dashboard/metrics`
   - `GET /instance`
   - `POST /instance`
+  - `POST /instance/:id/messages/text`
 - Login
   - `POST /auth/login`
   - `POST /auth/refresh`
@@ -109,12 +153,9 @@
   - `DELETE /webhook/:id`
 
 ### Unsupported Legacy Pages
-The following frontend pages still target legacy endpoints that are not registered in the backend route registry:
+The following frontend areas still depend on legacy-style capabilities that are not part of the current supported SaaS surface:
 - `/chat/*`
-- `/websocket/*`
-- `/rabbitmq/*`
 - `/sqs/*`
-- `/proxy/*`
 - `/chatwoot/*`
 - `/openai/*`
 - `/typebot/*`

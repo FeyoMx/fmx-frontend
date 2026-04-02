@@ -114,7 +114,7 @@
 - API Keys page no longer calls nonexistent `/apikey` endpoints and is now informational
 - Login page surfaces backend error messages instead of generic failures
 - Instance `websocket`, `rabbitmq`, and `proxy` pages now use the new tenant-scoped `/instance/:id/...` routes
-- Instance dashboard now exposes text-only messaging through `POST /instance/id/:instanceID/messages/text` using the backend `{ number, text, delay? }` contract
+- Instance dashboard now exposes text-only messaging through the canonical `POST /instance/:id/messages/text` route using the backend `{ number, text, delay? }` contract
 - Enabled instance integration pages now treat backend `501 Not Implemented` responses as a shared "This feature is not available in the current backend yet" UI state instead of falling through to generic crash or auth handling
 
 ### Dead or Stale Integration Cleanup

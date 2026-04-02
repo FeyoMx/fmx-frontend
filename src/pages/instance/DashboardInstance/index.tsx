@@ -6,6 +6,7 @@ import QRCode from "react-qr-code";
 
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
+import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import { useInstance } from "@/contexts/InstanceContext";
 
 import { useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
 import { TOKEN_ID } from "@/lib/queries/token";
-import { getApiErrorMessage } from "@/lib/queries/errors";
+import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
 import { toast } from "react-toastify";
 
 function DashboardInstance() {
@@ -32,6 +33,7 @@ function DashboardInstance() {
   const [messageText, setMessageText] = useState("");
   const [messageDelay, setMessageDelay] = useState("0");
   const [isSendingText, setIsSendingText] = useState(false);
+  const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
   const { theme } = useTheme();
 
   const { instance, reloadInstance } = useInstance();
@@ -148,9 +150,14 @@ function DashboardInstance() {
 
       setMessageText("");
       setMessageDelay("0");
+      setTextMessagingUnsupported(false);
       toast.success(response?.data?.messageId ? `Message sent (${response.data.messageId})` : "Message sent successfully.");
     } catch (error) {
       console.error("Error:", error);
+      if (isApiNotImplementedError(error)) {
+        setTextMessagingUnsupported(true);
+        return;
+      }
       toast.error(getApiErrorMessage(error, "Failed to send text message"));
     } finally {
       setIsSendingText(false);
@@ -350,58 +357,62 @@ function DashboardInstance() {
         </Card>
       </section>
       <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Send text message</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              This instance action uses the current backend route for text-only messaging. Media, audio, and chat search remain unavailable in the SaaS UI.
-            </p>
-            <div className="grid gap-2">
-              <Label htmlFor="instance-send-number">Recipient number</Label>
-              <Input
-                id="instance-send-number"
-                value={recipientNumber}
-                onChange={(event) => setRecipientNumber(event.target.value)}
-                placeholder="5215512345678"
-                disabled={instance.connectionStatus !== "open" || isSendingText}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="instance-send-message">Message</Label>
-              <Textarea
-                id="instance-send-message"
-                value={messageText}
-                onChange={(event) => setMessageText(event.target.value)}
-                placeholder="Write the text you want to send"
-                disabled={instance.connectionStatus !== "open" || isSendingText}
-              />
-            </div>
-            <div className="grid gap-2 md:max-w-40">
-              <Label htmlFor="instance-send-delay">Delay (ms)</Label>
-              <Input
-                id="instance-send-delay"
-                type="number"
-                min="0"
-                step="1"
-                value={messageDelay}
-                onChange={(event) => setMessageDelay(event.target.value)}
-                disabled={instance.connectionStatus !== "open" || isSendingText}
-              />
-            </div>
-            {instance.connectionStatus !== "open" && (
-              <Alert variant="warning">
-                <AlertTitle>Connect the instance before sending text messages.</AlertTitle>
-              </Alert>
-            )}
-          </CardContent>
-          <CardFooter className="justify-end">
-            <Button onClick={handleSendTextMessage} disabled={instance.connectionStatus !== "open" || isSendingText || !recipientNumber.trim() || !messageText.trim()}>
-              {isSendingText ? "Sending..." : "Send text"}
-            </Button>
-          </CardFooter>
-        </Card>
+        {textMessagingUnsupported ? (
+          <UnsupportedInstanceFeature description={NOT_IMPLEMENTED_MESSAGE} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Send text message</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                This instance action uses the current backend route for text-only messaging. Media, audio, and chat search remain unavailable in the SaaS UI.
+              </p>
+              <div className="grid gap-2">
+                <Label htmlFor="instance-send-number">Recipient number</Label>
+                <Input
+                  id="instance-send-number"
+                  value={recipientNumber}
+                  onChange={(event) => setRecipientNumber(event.target.value)}
+                  placeholder="5215512345678"
+                  disabled={instance.connectionStatus !== "open" || isSendingText}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="instance-send-message">Message</Label>
+                <Textarea
+                  id="instance-send-message"
+                  value={messageText}
+                  onChange={(event) => setMessageText(event.target.value)}
+                  placeholder="Write the text you want to send"
+                  disabled={instance.connectionStatus !== "open" || isSendingText}
+                />
+              </div>
+              <div className="grid gap-2 md:max-w-40">
+                <Label htmlFor="instance-send-delay">Delay (ms)</Label>
+                <Input
+                  id="instance-send-delay"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={messageDelay}
+                  onChange={(event) => setMessageDelay(event.target.value)}
+                  disabled={instance.connectionStatus !== "open" || isSendingText}
+                />
+              </div>
+              {instance.connectionStatus !== "open" && (
+                <Alert variant="warning">
+                  <AlertTitle>Connect the instance before sending text messages.</AlertTitle>
+                </Alert>
+              )}
+            </CardContent>
+            <CardFooter className="justify-end">
+              <Button onClick={handleSendTextMessage} disabled={instance.connectionStatus !== "open" || isSendingText || !recipientNumber.trim() || !messageText.trim()}>
+                {isSendingText ? "Sending..." : "Send text"}
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
       </section>
     </main>
   );

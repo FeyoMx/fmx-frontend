@@ -122,7 +122,7 @@ const sendTextMessage = async ({ instanceId, data }: SendTextMessageParams) => {
     delay: data.delay ?? 0,
   };
 
-  const response = await apiGlobal.post<SendTextMessageResponse>(`/instance/id/${instanceId}/messages/text`, payload);
+  const response = await apiGlobal.post<SendTextMessageResponse>(`/instance/${instanceId}/messages/text`, payload);
   return response.data;
 };
 
