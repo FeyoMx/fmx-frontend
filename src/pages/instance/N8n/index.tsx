@@ -57,7 +57,7 @@ function N8n() {
       </div>
       <Separator className="my-4" />
       <ResizablePanelGroup direction={isMD ? "horizontal" : "vertical"}>
-        <ResizablePanel defaultSize={35} className="pr-4">
+        <ResizablePanel defaultSize={30} className="pr-4">
           <div className="flex flex-col gap-3">
             {isLoading ? (
               <LoadingSpinner />
@@ -79,7 +79,7 @@ function N8n() {
         {n8nId && (
           <>
             <ResizableHandle withHandle className="border border-border" />
-            <ResizablePanel>
+            <ResizablePanel defaultSize={70}>
               <UpdateN8n n8nId={n8nId} resetTable={resetTable} />
             </ResizablePanel>
           </>

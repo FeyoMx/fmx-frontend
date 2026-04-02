@@ -13,10 +13,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security policy and vulnerability reporting process
 - Docker Compose setup for easy deployment
 - Code quality tools (Prettier, ESLint configurations)
+- FMX branding integration with new logo and branding
+- Comprehensive developer documentation suite:
+  - Frontend architecture documentation
+  - Frontend pages inventory and status
+  - Environment configuration guide
+  - Backend integration patterns
+  - Frontend-backend sync report
+  - Development worklog
 
 ### Changed
 - Updated package.json with proper metadata and repository information
 - Improved project structure for open source development
+- Migrated from API key to JWT-based authentication system
+- Updated branding from Evolution Manager to FMX Evolution Manager
+- Enhanced API client architecture with tenant support
+- Updated environment variables for JWT authentication
+- Fixed UI component issues (FormInput props, ResizablePanel sizes)
+- Corrected navigation URL generation (removed double slashes)
+- Updated README.md with new documentation links and FMX branding
+
+### Fixed
+- FormInput component invalid onCheckedChange props
+- ResizablePanel defaultSize values not summing to 100
+- Navigation URL generation with double slashes
+- QR code display issues with undefined data
+- React Query error handling with undefined data crashes
+
+### Security
+- Implemented JWT authentication with automatic token refresh
+- Added tenant context for multi-tenant security
+- Enhanced API request security with proper headers
 
 ## [2.0.0] - develop
 

@@ -140,8 +140,7 @@ const FormInput = <TFieldValues extends FieldValues = FieldValues, TName extends
                 value: field.value ?? "",
                 required,
                 readOnly,
-                checked: field.value,
-                onCheckedChange: field.onChange,
+                onChange: field.onChange,
               })}
           </FormControl>
           <FormMessage />

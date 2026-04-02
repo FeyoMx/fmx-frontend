@@ -12,10 +12,16 @@ interface IParams {
 const queryKey = (params: Partial<IParams>) => ["n8n", "fetchDefaultSettings", JSON.stringify(params)];
 
 export const fetchDefaultSettings = async ({ instanceName, token }: IParams) => {
-  const response = await api.get(`/n8n/fetchSettings/${instanceName}`, {
+  const response = await api.get(`/instance/${instanceName}/settings`, {
     headers: { apikey: token },
   });
-  return response.data;
+
+  const payload = response?.data?.data ?? response?.data;
+  if (!payload) {
+    return {} as FetchN8nSettingsResponse;
+  }
+
+  return payload;
 };
 
 export const useFetchDefaultSettings = (props: UseQueryParams<FetchN8nSettingsResponse> & Partial<IParams>) => {

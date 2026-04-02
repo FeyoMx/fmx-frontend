@@ -57,7 +57,7 @@ function EvolutionBot() {
       </div>
       <Separator className="my-4" />
       <ResizablePanelGroup direction={isMD ? "horizontal" : "vertical"}>
-        <ResizablePanel defaultSize={35} className="pr-4">
+        <ResizablePanel defaultSize={30} className="pr-4">
           <div className="flex flex-col gap-3">
             {isLoading ? (
               <LoadingSpinner />
@@ -83,7 +83,7 @@ function EvolutionBot() {
         {evolutionBotId && (
           <>
             <ResizableHandle withHandle className="border border-border" />
-            <ResizablePanel>
+            <ResizablePanel defaultSize={70}>
               <UpdateEvolutionBot evolutionBotId={evolutionBotId} resetTable={resetTable} />
             </ResizablePanel>
           </>

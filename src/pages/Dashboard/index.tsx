@@ -1,5 +1,5 @@
-import { ChevronsUpDown, CircleUser, Cog, MessageCircle, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChevronsUpDown, CircleUser, Cog, MessageCircle, RefreshCw, Users, Zap, MessageSquare } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,36 +15,66 @@ import { Input } from "@/components/ui/input";
 
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
+import { apiGlobal } from "@/lib/queries/api";
+import { useTenant } from "@/contexts/TenantContext";
 
 import { Instance } from "@/types/evolution.types";
 
 import { NewInstance } from "./NewInstance";
 import { TooltipWrapper } from "@/components/ui/tooltip";
 
+interface DashboardMetrics {
+  totalInstances: number;
+  totalMessages: number;
+  aiUsagePercentage: number;
+  activeInstances: number;
+}
+
 function Dashboard() {
   const { t } = useTranslation();
+  const { tenant } = useTenant();
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    totalInstances: 0,
+    totalMessages: 0,
+    aiUsagePercentage: 0,
+    activeInstances: 0,
+  });
 
-  const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{id: string, name: string} | null>(null);
   const { deleteInstance, logout } = useManageInstance();
   const { data: instances, refetch } = useFetchInstances();
   const [deleting, setDeleting] = useState<string[]>([]);
   const [searchStatus, setSearchStatus] = useState("all");
   const [nameSearch, setNameSearch] = useState("");
 
-  const resetTable = async () => {
-    await refetch();
+  useEffect(() => {
+    fetchMetrics();
+  }, []);
+
+  const fetchMetrics = async () => {
+    try {
+      const response = await apiGlobal.get("/dashboard/metrics");
+      setMetrics(response.data);
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+    }
   };
 
-  const handleDelete = async (instanceName: string) => {
+  const resetTable = async () => {
+    await refetch();
+    fetchMetrics();
+  };
+
+  const handleDelete = async (instance: {id: string, name: string}) => {
     setDeleteConfirmation(null);
-    setDeleting([...deleting, instanceName]);
+    setDeleting([...deleting, instance.name]);
     try {
       try {
-        await logout(instanceName);
+        await logout(instance.id);
       } catch (error) {
         console.error("Error logout:", error);
       }
-      await deleteInstance(instanceName);
+      await deleteInstance(instance.id);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       resetTable();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +82,7 @@ function Dashboard() {
       console.error("Error instance delete:", error);
       toast.error(`Error : ${error?.response?.data?.response?.message}`);
     } finally {
-      setDeleting(deleting.filter((item) => item !== instanceName));
+      setDeleting(deleting.filter((item) => item !== instance.name));
     }
   };
 
@@ -78,6 +108,59 @@ function Dashboard() {
 
   return (
     <div className="my-4 px-4">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-1">{t("dashboard.welcome") || "Welcome back"}</h1>
+        <p className="text-gray-600">{tenant?.name}</p>
+      </div>
+
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.instances") || "Total Instances"}</h3>
+            <CircleUser className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.totalInstances}</div>
+            <p className="text-xs text-gray-600">{metrics.activeInstances} {t("dashboard.metrics.active") || "active"}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.messages") || "Total Messages"}</h3>
+            <MessageSquare className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{(metrics.totalMessages ?? 0).toLocaleString()}</div>
+            <p className="text-xs text-gray-600">{t("dashboard.metrics.thisMonth") || "This month"}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.aiUsage") || "AI Usage"}</h3>
+            <Zap className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.aiUsagePercentage}%</div>
+            <p className="text-xs text-gray-600">{t("dashboard.metrics.ofQuota") || "of quota used"}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium">{t("dashboard.metrics.plan") || "Plan"}</h3>
+            <Users className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold capitalize">{tenant?.plan}</div>
+            <p className="text-xs text-gray-600">{t("dashboard.metrics.tenantPlan") || "Current plan"}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Instances Section */}
       <div className="flex w-full items-center justify-between">
         <h2 className="text-lg">{t("dashboard.title")}</h2>
         <div className="flex gap-2">
@@ -162,7 +245,7 @@ function Dashboard() {
               </CardContent>
               <CardFooter className="justify-between">
                 <InstanceStatus status={instance.connectionStatus} />
-                <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmation(instance.name)} disabled={deleting.includes(instance.name)}>
+                <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmation({id: instance.id, name: instance.name})} disabled={deleting.includes(instance.name)}>
                   {deleting.includes(instance.name) ? <span>{t("button.deleting")}</span> : <span>{t("button.delete")}</span>}
                 </Button>
               </CardFooter>
@@ -177,7 +260,7 @@ function Dashboard() {
           <DialogContent>
             <DialogClose />
             <DialogHeader>{t("modal.delete.title")}</DialogHeader>
-            <p>{t("modal.delete.message", { instanceName: deleteConfirmation })}</p>
+            <p>{t("modal.delete.message", { instanceName: deleteConfirmation.name })}</p>
             <DialogFooter>
               <div className="flex items-center gap-4">
                 <Button onClick={() => setDeleteConfirmation(null)} size="sm" variant="outline">

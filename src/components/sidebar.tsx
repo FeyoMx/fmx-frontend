@@ -20,13 +20,34 @@ function Sidebar() {
         id: "dashboard",
         title: t("sidebar.dashboard"),
         icon: LayoutDashboard,
-        path: "dashboard",
+        path: "/manager",
       },
       {
-        id: "chat",
-        title: t("sidebar.chat"),
-        icon: MessageCircle,
-        path: "chat",
+        navLabel: true,
+        title: t("sidebar.management"),
+        icon: Cog,
+        children: [
+          {
+            id: "contacts",
+            title: t("sidebar.contacts"),
+            path: "contacts",
+          },
+          {
+            id: "broadcast",
+            title: t("sidebar.broadcast"),
+            path: "broadcast",
+          },
+          {
+            id: "aiSettings",
+            title: t("sidebar.aiSettings"),
+            path: "ai-settings",
+          },
+          {
+            id: "apiKeys",
+            title: t("sidebar.apiKeys"),
+            path: "api-keys",
+          },
+        ],
       },
       {
         navLabel: true,
@@ -178,9 +199,14 @@ function Sidebar() {
   );
 
   return (
-    <ul className="flex h-full w-full flex-col gap-2 border-r border-border px-2">
-      {links.map((menu) => (
-        <li key={menu.title} className={"divider" in menu ? "mt-auto" : undefined}>
+    <div className="flex h-full w-full flex-col border-r border-border">
+      <div className="px-3 py-4 border-b border-border">
+        <div className="text-sm font-bold text-primary">FMX Evolution</div>
+        <div className="text-xs text-muted-foreground">Multi-tenant SaaS</div>
+      </div>
+      <ul className="flex h-full w-full flex-col gap-2 px-2">
+        {links.map((menu) => (
+          <li key={menu.title} className={"divider" in menu ? "mt-auto" : undefined}>
           {menu.children ? (
             <Collapsible defaultOpen={menu.isActive}>
               <CollapsibleTrigger asChild>
@@ -212,7 +238,8 @@ function Sidebar() {
           )}
         </li>
       ))}
-    </ul>
+      </ul>
+    </div>
   );
 }
 

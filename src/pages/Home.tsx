@@ -3,13 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Github, Globe, Mail, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
+import logo from "/assets/images/fmxaiflowslogo2.png";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
 
   const handleGoToManager = () => {
     navigate("/manager");
@@ -19,12 +18,9 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Header with theme toggle */}
       <header className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center">
-          <img
-            src={theme === "dark" ? "https://evolution-api.com/files/evo/evolution-logo-white.svg" : "https://evolution-api.com/files/evo/evolution-logo.svg"}
-            alt="Evolution API Logo"
-            className="h-8"
-          />
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="FMX AI Logo" className="h-8" />
+          <span className="text-xl font-bold text-primary">FMX Evolution</span>
         </div>
         <div className="flex items-center gap-4">
           <LanguageToggle />
@@ -37,17 +33,13 @@ export default function Home() {
           {/* Header */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
-              <img
-                src={theme === "dark" ? "https://evolution-api.com/files/evo/evolution-logo-white.svg" : "https://evolution-api.com/files/evo/evolution-logo.svg"}
-                alt="Evolution Manager Logo"
-                className="h-10"
-              />
+              <img src={logo} alt="FMX AI Logo" className="h-10" />
             </div>
             <h1 className="text-4xl font-bold text-foreground mb-4">
-              Evolution Manager v2
+              FMX Evolution
             </h1>
             <p className="text-xl text-muted-foreground mb-6">
-              Modern web interface for Evolution API management
+              Modern web interface for FMX AI management
             </p>
             <Badge variant="secondary" className="text-sm px-3 py-1">
               Version 2.0.0
@@ -59,10 +51,10 @@ export default function Home() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
-                Welcome to Evolution Manager
+                Welcome to FMX Evolution
               </CardTitle>
               <CardDescription>
-                A powerful, modern dashboard for managing your WhatsApp API instances with Evolution API
+                A powerful, modern dashboard for managing your WhatsApp API instances with FMX AI
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -86,7 +78,7 @@ export default function Home() {
             <CardHeader>
               <CardTitle>Resources & Support</CardTitle>
               <CardDescription>
-                Get help, contribute, or learn more about Evolution API
+                Get help, contribute, or learn more about FMX AI
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -133,7 +125,7 @@ export default function Home() {
 
           {/* Footer */}
           <div className="text-center mt-12 text-sm text-muted-foreground">
-            <p>© 2025 Evolution API. Licensed under Apache 2.0 with Evolution API custom conditions.</p>
+            <p>© 2025 FMX AI. Licensed under Apache 2.0 with FMX AI custom conditions.</p>
           </div>
         </div>
       </div>

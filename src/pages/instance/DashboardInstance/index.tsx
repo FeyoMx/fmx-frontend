@@ -8,15 +8,14 @@ import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
 import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
-import { useManageInstance } from "@/lib/queries/instance/manageInstance";
+import { useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
 import { getToken, TOKEN_ID } from "@/lib/queries/token";
 
 function DashboardInstance() {
@@ -24,11 +23,18 @@ function DashboardInstance() {
   const numberFormatter = new Intl.NumberFormat(i18n.language);
   const [qrCode, setQRCode] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState("");
-  const token = getToken(TOKEN_ID.TOKEN);
   const { theme } = useTheme();
 
-  const { connect, logout, restart } = useManageInstance();
   const { instance, reloadInstance } = useInstance();
+  const { connect, logout, restart } = useManageInstance();
+
+  // Use React Query hooks for status and QR code
+  const { data: instanceStatus, refetch: refetchStatus } = useInstanceStatus(instance?.id || "");
+  const { data: qrCodeData, refetch: refetchQRCode } = useInstanceQRCode(instance?.id || "");
+
+  const token = getToken(TOKEN_ID.TOKEN);
+  const instanceToken = instance?.token || getToken(TOKEN_ID.INSTANCE_TOKEN);
+  const effectiveToken = token || instanceToken;
 
   useEffect(() => {
     if (instance) {
@@ -38,50 +44,63 @@ function DashboardInstance() {
     }
   }, [instance]);
 
+  // Determine if we should be actively polling (React Query handles this with refetchInterval)
+  useEffect(() => {
+    if (!instance?.id) return;
+
+    // React Query will handle polling via refetchInterval automatically
+    // This effect can be used for any additional UI state management if needed
+  }, [instance?.id]);
+
   const handleReload = async () => {
     await reloadInstance();
   };
 
-  const handleRestart = async (instanceName: string) => {
+  const handleRestart = async (instanceId: string) => {
     try {
-      await restart(instanceName);
+      await restart(instanceId);
       await reloadInstance();
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const handleLogout = async (instanceName: string) => {
+  const handleLogout = async (instanceId: string) => {
     try {
-      await logout(instanceName);
+      await logout(instanceId);
       await reloadInstance();
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const handleConnect = async (instanceName: string, pairingCode: boolean) => {
+  const handleConnect = async (instanceId: string, pairingCode: boolean) => {
     try {
       setQRCode(null);
+      setPairingCode("");
 
-      if (!token) {
-        console.error("Token not found.");
+      if (!effectiveToken) {
+        console.error("Instance token not found.");
         return;
       }
 
       if (pairingCode) {
         const data = await connect({
-          instanceName,
-          token,
+          instanceId,
+          token: effectiveToken,
           number: instance?.number,
         });
 
-        setPairingCode(data.pairingCode);
+        setPairingCode(data.pairingCode || data.code);
       } else {
-        const data = await connect({ instanceName, token });
-
-        setQRCode(data.code);
+        await connect({ instanceId, token: effectiveToken });
       }
+
+      // Refresh instance data after connect
+      await reloadInstance();
+      // Refetch status and QR code
+      await refetchStatus();
+      await refetchQRCode();
     } catch (error) {
       console.error("Error:", error);
     }
@@ -119,6 +138,28 @@ function DashboardInstance() {
     return "#189d68";
   }, [theme]);
 
+  // Determine QR code display value
+  const displayQRCode = useMemo(() => {
+    if (qrCodeData?.qrcode) {
+      // If it's already a data URL, use it directly
+      if (qrCodeData.qrcode.startsWith('data:image/')) {
+        return qrCodeData.qrcode;
+      }
+      // If it's base64, construct data URL
+      if (qrCodeData.qrcode.match(/^[A-Za-z0-9+/=]+$/)) {
+        return `data:image/png;base64,${qrCodeData.qrcode}`;
+      }
+      // Otherwise, treat as text for QR generation
+      return qrCodeData.qrcode;
+    }
+    return qrCode || qrCodeData?.code || pairingCode;
+  }, [qrCodeData, qrCode, pairingCode]);
+
+  // Determine if QR should be shown as image or generated
+  const isQRImage = useMemo(() => {
+    return displayQRCode?.startsWith('data:image/') || displayQRCode?.match(/^data:image\/png;base64,/);
+  }, [displayQRCode]);
+
   if (!instance) {
     return <LoadingSpinner />;
   }
@@ -138,15 +179,30 @@ function DashboardInstance() {
               <InstanceToken token={instance.token} />
             </div>
 
-            {instance.profileName && (
-              <div className="flex flex-1 gap-2">
-                <Avatar>
-                  <AvatarImage src={instance.profilePicUrl} alt="" />
-                </Avatar>
-                <div className="space-y-1">
-                  <strong>{instance.profileName}</strong>
-                  <p className="break-all text-sm text-muted-foreground">{instance.ownerJid}</p>
+            {instance.connectionStatus !== "open" && displayQRCode && (
+              <div className="flex flex-col items-center gap-4 p-4 border rounded-lg">
+                <h3 className="text-lg font-semibold">{t("instance.dashboard.qr.title") || "QR Code for Connection"}</h3>
+                <div className="flex items-center justify-center">
+                  {isQRImage ? (
+                    <img src={displayQRCode} alt="QR Code" className="max-w-64 max-h-64" />
+                  ) : (
+                    <QRCode value={displayQRCode} size={256} bgColor="transparent" fgColor={qrCodeColor} className="rounded-sm" />
+                  )}
                 </div>
+                {pairingCode && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">{t("instance.dashboard.pairingCode.title") || "Or use pairing code:"}</p>
+                    <p className="text-lg font-mono font-bold">
+                      {pairingCode.substring(0, 4)}-{pairingCode.substring(4, 8)}
+                    </p>
+                  </div>
+                )}
+                {(instanceStatus?.status === "connecting" || instanceStatus?.status === "qrcode" || instance?.connectionStatus === "connecting" || instance?.connectionStatus === "qrcode") && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoadingSpinner size={16} />
+                    <span>{t("instance.dashboard.connecting") || "Connecting..."}</span>
+                  </div>
+                )}
               </div>
             )}
             {instance.connectionStatus !== "open" && (
@@ -154,30 +210,46 @@ function DashboardInstance() {
                 <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
 
                 <Dialog>
-                  <DialogTrigger onClick={() => handleConnect(instance.name, false)} asChild>
+                  <DialogTrigger onClick={() => handleConnect(instance.id, false)} asChild>
                     <Button variant="warning">{t("instance.dashboard.button.qrcode.label")}</Button>
                   </DialogTrigger>
                   <DialogContent onCloseAutoFocus={closeQRCodePopup}>
-                    <DialogHeader>{t("instance.dashboard.button.qrcode.title")}</DialogHeader>
-                    <div className="flex items-center justify-center">{qrCode && <QRCode value={qrCode} size={256} bgColor="transparent" fgColor={qrCodeColor} className="rounded-sm" />}</div>
+                    <DialogHeader>
+                      <DialogTitle>{t("instance.dashboard.button.qrcode.title")}</DialogTitle>
+                      <DialogDescription>
+                        {t("instance.dashboard.button.qrcode.description") || "Scan this QR code with WhatsApp to connect your instance"}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center justify-center">
+                      {displayQRCode ? (
+                        isQRImage ? (
+                          <img src={displayQRCode} alt="QR Code" className="max-w-64 max-h-64" />
+                        ) : (
+                          <QRCode value={displayQRCode} size={256} bgColor="transparent" fgColor={qrCodeColor} className="rounded-sm" />
+                        )
+                      ) : (
+                        <LoadingSpinner />
+                      )}
+                    </div>
                   </DialogContent>
                 </Dialog>
 
                 {instance.number && (
                   <Dialog>
-                    <DialogTrigger className="connect-code-button" onClick={() => handleConnect(instance.name, true)}>
+                    <DialogTrigger className="connect-code-button" onClick={() => handleConnect(instance.id, true)}>
                       {t("instance.dashboard.button.pairingCode.label")}
                     </DialogTrigger>
                     <DialogContent onCloseAutoFocus={closeQRCodePopup}>
                       <DialogHeader>
+                        <DialogTitle>{t("instance.dashboard.button.pairingCode.title")}</DialogTitle>
                         <DialogDescription>
-                          {pairingCode ? (
+                          {displayQRCode ? (
                             <div className="py-3">
                               <p className="text-center">
                                 <strong>{t("instance.dashboard.button.pairingCode.title")}</strong>
                               </p>
                               <p className="pairing-code text-center">
-                                {pairingCode.substring(0, 4)}-{pairingCode.substring(4, 8)}
+                                {displayQRCode.substring(0, 4)}-{displayQRCode.substring(4, 8)}
                               </p>
                             </div>
                           ) : (
@@ -195,10 +267,10 @@ function DashboardInstance() {
             <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload}>
               <RefreshCw size="20" />
             </Button>
-            <Button className="action-button" variant="secondary" onClick={() => handleRestart(instance.name)}>
+            <Button className="action-button" variant="secondary" onClick={() => handleRestart(instance.id)}>
               {t("instance.dashboard.button.restart").toUpperCase()}
             </Button>
-            <Button variant="destructive" onClick={() => handleLogout(instance.name)} disabled={instance.connectionStatus === "close"}>
+            <Button variant="destructive" onClick={() => handleLogout(instance.id)} disabled={instance.connectionStatus === "close"}>
               {t("instance.dashboard.button.disconnect").toUpperCase()}
             </Button>
           </CardFooter>

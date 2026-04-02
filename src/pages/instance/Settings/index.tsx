@@ -14,18 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInstance } from "@/contexts/InstanceContext";
 
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
-import { useFetchSettings } from "@/lib/queries/instance/settingsFind";
+import { useFetchAdvancedSettings } from "@/lib/queries/instance/settingsFind";
 
-import { Settings as SettingsType } from "@/types/evolution.types";
+import { AdvancedSettings } from "@/types/evolution.types";
 
 const FormSchema = z.object({
   rejectCall: z.boolean(),
-  msgCall: z.string().optional(),
-  groupsIgnore: z.boolean(),
+  msgRejectCall: z.string().optional(),
+  ignoreGroups: z.boolean(),
+  ignoreStatus: z.boolean(),
   alwaysOnline: z.boolean(),
   readMessages: z.boolean(),
-  syncFullHistory: z.boolean(),
-  readStatus: z.boolean(),
 });
 
 function Settings() {
@@ -34,21 +33,19 @@ function Settings() {
 
   const { instance } = useInstance();
   const { updateSettings } = useManageInstance();
-  const { data: settings, isLoading: loading } = useFetchSettings({
-    instanceName: instance?.name,
-    token: instance?.token,
+  const { data: settings, isLoading: loading } = useFetchAdvancedSettings({
+    instanceId: instance?.id,
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       rejectCall: false,
-      msgCall: "",
-      groupsIgnore: false,
+      msgRejectCall: "",
+      ignoreGroups: false,
+      ignoreStatus: false,
       alwaysOnline: false,
       readMessages: false,
-      syncFullHistory: false,
-      readStatus: false,
     },
   });
 
@@ -56,12 +53,11 @@ function Settings() {
     if (settings) {
       form.reset({
         rejectCall: settings.rejectCall,
-        msgCall: settings.msgCall || "",
-        groupsIgnore: settings.groupsIgnore,
+        msgRejectCall: settings.msgRejectCall ?? "",
+        ignoreGroups: settings.ignoreGroups ?? (settings as any).groupsIgnore ?? false,
+        ignoreStatus: settings.ignoreStatus ?? (settings as any).readStatus ?? false,
         alwaysOnline: settings.alwaysOnline,
         readMessages: settings.readMessages,
-        syncFullHistory: settings.syncFullHistory,
-        readStatus: settings.readStatus,
       });
     }
   }, [form, settings]);
@@ -73,19 +69,18 @@ function Settings() {
       }
 
       setUpdating(true);
-      const settingData: SettingsType = {
+      const advancedSettingsData: AdvancedSettings = {
         rejectCall: data.rejectCall,
-        msgCall: data.msgCall,
-        groupsIgnore: data.groupsIgnore,
+        msgRejectCall: data.msgRejectCall || "",
+        ignoreGroups: data.ignoreGroups,
+        ignoreStatus: data.ignoreStatus,
         alwaysOnline: data.alwaysOnline,
         readMessages: data.readMessages,
-        syncFullHistory: data.syncFullHistory,
-        readStatus: data.readStatus,
       };
       await updateSettings({
-        instanceName: instance.name,
+        instanceId: instance.id,
         token: instance.token,
-        data: settingData,
+        data: advancedSettingsData,
       });
       toast.success(t("settings.toast.success"));
     } catch (error) {
@@ -98,9 +93,14 @@ function Settings() {
 
   const fields = [
     {
-      name: "groupsIgnore",
+      name: "ignoreGroups",
       label: t("settings.form.groupsIgnore.label"),
       description: t("settings.form.groupsIgnore.description"),
+    },
+    {
+      name: "ignoreStatus",
+      label: t("settings.form.readStatus.label"),
+      description: t("settings.form.readStatus.description"),
     },
     {
       name: "alwaysOnline",
@@ -111,16 +111,6 @@ function Settings() {
       name: "readMessages",
       label: t("settings.form.readMessages.label"),
       description: t("settings.form.readMessages.description"),
-    },
-    {
-      name: "syncFullHistory",
-      label: t("settings.form.syncFullHistory.label"),
-      description: t("settings.form.syncFullHistory.description"),
-    },
-    {
-      name: "readStatus",
-      label: t("settings.form.readStatus.label"),
-      description: t("settings.form.readStatus.description"),
     },
   ];
 
@@ -142,7 +132,7 @@ function Settings() {
                 <FormSwitch name="rejectCall" label={t("settings.form.rejectCall.label")} className="w-full justify-between" helper={t("settings.form.rejectCall.description")} />
                 {isRejectCall && (
                   <div className="mr-16 mt-2">
-                    <FormInput name="msgCall">
+                    <FormInput name="msgRejectCall">
                       <Textarea placeholder={t("settings.form.msgCall.description")} />
                     </FormInput>
                   </div>

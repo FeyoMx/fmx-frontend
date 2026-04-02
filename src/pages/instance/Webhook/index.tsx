@@ -38,7 +38,6 @@ function Webhook() {
   const { createWebhook } = useManageWebhook();
   const { data: webhook } = useFetchWebhook({
     instanceName: instance?.name,
-    token: instance?.token,
   });
 
   const form = useForm<FormSchemaType>({
@@ -78,7 +77,6 @@ function Webhook() {
 
       await createWebhook({
         instanceName: instance.name,
-        token: instance.token,
         data: webhookData,
       });
       toast.success(t("webhook.toast.success"));

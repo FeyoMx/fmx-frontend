@@ -12,6 +12,15 @@ export type Settings = {
   instanceId?: string;
 };
 
+export type AdvancedSettings = {
+  alwaysOnline: boolean;
+  rejectCall: boolean;
+  msgRejectCall?: string;
+  readMessages: boolean;
+  ignoreGroups: boolean;
+  ignoreStatus: boolean;
+};
+
 export type NewInstance = {
   instanceName: string;
   qrcode?: boolean;

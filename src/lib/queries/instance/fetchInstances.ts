@@ -7,7 +7,7 @@ import { FetchInstancesResponse } from "./types";
 const queryKey = ["instance", "fetchInstances"];
 
 export const fetchInstances = async () => {
-  const response = await apiGlobal.get(`/instance/fetchInstances`);
+  const response = await apiGlobal.get(`/instance`);
   return response.data;
 };
 

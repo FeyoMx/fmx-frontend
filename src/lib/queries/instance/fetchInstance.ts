@@ -11,12 +11,7 @@ interface IParams {
 const queryKey = (params: Partial<IParams>) => ["instance", "fetchInstance", JSON.stringify(params)];
 
 export const fetchInstance = async ({ instanceId }: IParams) => {
-  const response = await apiGlobal.get(`/instance/fetchInstances`, {
-    params: { instanceId },
-  });
-  if (Array.isArray(response.data)) {
-    return response.data[0];
-  }
+  const response = await apiGlobal.get(`/instance/${instanceId}`);
   return response.data;
 };
 

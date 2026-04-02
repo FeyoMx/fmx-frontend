@@ -42,9 +42,12 @@ export function EmbedInstanceProvider({ children }: { children: React.ReactNode 
         localStorage.setItem(TOKEN_ID.API_URL, formattedUrl);
         localStorage.setItem(TOKEN_ID.INSTANCE_TOKEN, token);
 
-        const { data } = await axios.get(`${formattedUrl}/instance/fetchInstances?instanceName=${instanceName}`, {
+        const { data } = await axios.get(`${formattedUrl}/instance`, {
           headers: {
             apikey: token,
+          },
+          params: {
+            instanceName,
           },
         });
 

@@ -9,6 +9,7 @@ import { RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import { ThemeProvider } from "./components/theme-provider.tsx";
+import { TenantProvider } from "./contexts/TenantContext";
 import { queryClient } from "./lib/queries/react-query.ts";
 import router from "./routes/index.tsx";
 import i18n from "./translate/i18n";
@@ -17,9 +18,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <I18nextProvider i18n={i18n}>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
+        <TenantProvider>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </TenantProvider>
       </ThemeProvider>
     </I18nextProvider>
     <ToastContainer theme="colored" />

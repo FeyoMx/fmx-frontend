@@ -58,7 +58,7 @@ function Typebot() {
       </div>
       <Separator className="my-4" />
       <ResizablePanelGroup direction={isMD ? "horizontal" : "vertical"}>
-        <ResizablePanel defaultSize={35} className="pr-4">
+        <ResizablePanel defaultSize={30} className="pr-4">
           <div className="flex flex-col gap-3">
             {isLoading ? (
               <LoadingSpinner />
@@ -96,7 +96,7 @@ function Typebot() {
         {typebotId && (
           <>
             <ResizableHandle withHandle className="border border-black" />
-            <ResizablePanel>
+            <ResizablePanel defaultSize={70}>
               <UpdateTypebot typebotId={typebotId} resetTable={resetTable} />
             </ResizablePanel>
           </>

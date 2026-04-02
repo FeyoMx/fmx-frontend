@@ -7,6 +7,10 @@ import { InstanceLayout } from "@/layout/InstanceLayout";
 import { MainLayout } from "@/layout/MainLayout";
 
 import Dashboard from "@/pages/Dashboard";
+import { CRM } from "@/pages/CRM";
+import { Broadcast } from "@/pages/Broadcast";
+import { AISettings } from "@/pages/AISettings";
+import { APIKeys } from "@/pages/APIKeys";
 import { Chat } from "@/pages/instance/Chat";
 import { Chatwoot } from "@/pages/instance/Chatwoot";
 import { DashboardInstance } from "@/pages/instance/DashboardInstance";
@@ -46,6 +50,46 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <MainLayout>
           <Dashboard />
+        </MainLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/manager/contacts",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <CRM />
+        </MainLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/manager/broadcast",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <Broadcast />
+        </MainLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/manager/ai-settings",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <AISettings />
+        </MainLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/manager/api-keys",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <APIKeys />
         </MainLayout>
       </ProtectedRoute>
     ),

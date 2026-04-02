@@ -1,8 +1,8 @@
-# Evolution Manager v2
+# FMX Evolution Manager v2
 
 <div align="center">
 
-![Evolution Manager Logo](public/assets/images/evolution-logo.png)
+![FMX Logo](public/assets/images/fmxaiflowslogo2.png)
 
 **Modern Web Interface for Evolution API Management**
 
@@ -19,6 +19,7 @@
 
 - [About](#about)
 - [Features](#features)
+- [Documentation](#documentation)
 - [Screenshots](#screenshots)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
@@ -87,7 +88,24 @@ Evolution Manager v2 is a modern, responsive web interface built with React and 
 - Keyboard shortcuts
 - Accessibility features
 
-## 📸 Screenshots
+## � Documentation
+
+### Developer Documentation
+
+- **[Frontend Architecture](docs/frontend-architecture.md)** - Technical stack, authentication, and system design
+- **[Frontend Pages](docs/frontend-pages.md)** - Complete page inventory and feature status
+- **[Environment Configuration](docs/frontend-env.md)** - Environment variables and deployment setup
+- **[Backend Integration](docs/frontend-backend-integration.md)** - API architecture and data flow
+- **[Sync Report](docs/frontend-sync-report.md)** - Frontend-backend synchronization status
+- **[Worklog](docs/frontend-worklog.md)** - Change history and development notes
+
+### API Documentation
+
+- **[Evolution API Docs](https://doc.evolution-api.com)** - Official API documentation
+- **[Integration Guide](docs/INTEGRATION.md)** - Third-party service integrations
+- **[Migration Guide](docs/MIGRATION.md)** - Version migration instructions
+
+## �📸 Screenshots
 
 <details>
 <summary>Click to view screenshots</summary>
@@ -176,31 +194,29 @@ npm run preview
 Create a `.env` file in the root directory:
 
 ```env
-# Evolution API Configuration
-VITE_EVOLUTION_API_URL=http://localhost:8080
-VITE_EVOLUTION_API_KEY=your-api-key
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8080
+VITE_DEBUG=false
 
 # Application Configuration
-VITE_APP_NAME="Evolution Manager"
+VITE_APP_NAME="FMX Evolution Manager"
 VITE_APP_VERSION="2.0.0"
 
 # Optional: Custom Branding
-VITE_LOGO_URL="/assets/images/custom-logo.png"
+VITE_LOGO_URL="/assets/images/fmxaiflowslogo2.png"
 VITE_FAVICON_URL="/assets/images/custom-favicon.ico"
 
 # Optional: Analytics
 VITE_GOOGLE_ANALYTICS_ID=GA_MEASUREMENT_ID
 ```
 
-### API Connection
+### JWT Authentication
 
-The manager connects to your Evolution API instance. Configure the connection in the login screen or via environment variables.
+The application uses JWT-based authentication with automatic token refresh. Configure your backend to provide JWT tokens upon login.
 
-### Customization
+### Tenant Context
 
-- **Themes**: Modify `src/index.css` for custom styling
-- **Languages**: Add translations in `src/translate/languages/`
-- **Components**: Extend UI components in `src/components/ui/`
+Multi-tenant support is enabled through tenant headers. The application automatically includes tenant information in API requests.
 
 ## 🛠️ Development
 
@@ -279,27 +295,29 @@ docker run -p 3000:80 my-evolution-manager
 
 ### Connecting to Evolution API
 
-1. **Login Screen**: Enter your Evolution API URL and credentials
-2. **Environment**: Set `VITE_EVOLUTION_API_URL` and `VITE_EVOLUTION_API_KEY`
+1. **Login Screen**: Enter your API URL and credentials to obtain JWT token
+2. **Environment**: Set `VITE_API_BASE_URL` for the base API endpoint
 3. **Runtime**: Configure via the settings page
 
 ### API Endpoints
 
 The manager uses the following Evolution API endpoints:
 
+- `POST /auth/login` - JWT authentication
 - `GET /instance` - List instances
 - `POST /instance` - Create instance
-- `GET /instance/:name` - Get instance details
+- `GET /instance/:id` - Get instance details
 - `POST /message/sendText` - Send messages
 - `GET /chat` - List chats
 - And many more...
 
 ### Authentication
 
-Supports multiple authentication methods:
-- API Key authentication
-- JWT tokens
-- Instance-specific tokens
+Supports JWT-based authentication with automatic token refresh:
+- JWT tokens with expiration
+- Automatic token refresh
+- Tenant-specific headers
+- Secure token storage
 
 ## 🌍 Internationalization
 
