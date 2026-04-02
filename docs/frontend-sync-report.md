@@ -131,6 +131,47 @@ These frontend areas still depend on legacy routes that are not registered by th
 - Flowise
 - Embed chat
 
+### Gated Routes
+These routes are now protected from broken navigation:
+- Removed from instance sidebar/navigation:
+  - `/manager/instance/:instanceId/proxy`
+  - `/manager/instance/:instanceId/websocket`
+  - `/manager/instance/:instanceId/rabbitmq`
+  - `/manager/instance/:instanceId/sqs`
+  - `/manager/instance/:instanceId/evoai`
+  - `/manager/instance/:instanceId/n8n`
+  - `/manager/instance/:instanceId/evolutionBot`
+  - `/manager/instance/:instanceId/chatwoot`
+  - `/manager/instance/:instanceId/typebot`
+  - `/manager/instance/:instanceId/openai`
+  - `/manager/instance/:instanceId/dify`
+  - `/manager/instance/:instanceId/flowise`
+- Kept as guarded placeholders with a clear "Not available yet" state:
+  - `/manager/instance/:instanceId/chat`
+  - `/manager/instance/:instanceId/chat/:remoteJid`
+  - `/manager/instance/:instanceId/proxy`
+  - `/manager/instance/:instanceId/websocket`
+  - `/manager/instance/:instanceId/rabbitmq`
+  - `/manager/instance/:instanceId/sqs`
+  - `/manager/instance/:instanceId/chatwoot`
+  - `/manager/instance/:instanceId/openai`
+  - `/manager/instance/:instanceId/openai/:botId`
+  - `/manager/instance/:instanceId/typebot`
+  - `/manager/instance/:instanceId/typebot/:typebotId`
+  - `/manager/instance/:instanceId/dify`
+  - `/manager/instance/:instanceId/dify/:difyId`
+  - `/manager/instance/:instanceId/n8n`
+  - `/manager/instance/:instanceId/n8n/:n8nId`
+  - `/manager/instance/:instanceId/evoai`
+  - `/manager/instance/:instanceId/evoai/:evoaiId`
+  - `/manager/instance/:instanceId/evolutionBot`
+  - `/manager/instance/:instanceId/evolutionBot/:evolutionBotId`
+  - `/manager/instance/:instanceId/flowise`
+  - `/manager/instance/:instanceId/flowise/:flowiseId`
+- Redirected to a safe page instead of rendering legacy UI:
+  - `/manager/embed-chat`
+  - `/manager/embed-chat/:remoteJid`
+
 ### API Contract Gaps
 - Backend accepts tenant API keys for authentication, but does not expose `/apikey` CRUD routes
 - Backend CRM contract does not expose contact deletion
@@ -152,12 +193,12 @@ These frontend areas still depend on legacy routes that are not registered by th
 - `/manager/instance/:instanceId/dashboard`
   - Instance payload is normalized, but some cards still rely on compatibility fallbacks such as `_count`
 - `/manager/instance/:instanceId/*`
-  - Unsupported legacy integration pages still render in the UI even though their backend routes do not exist
+  - Unsupported legacy integration pages no longer appear in sidebar navigation and are now guarded by placeholders or redirects
 
 ## Blockers and Assumptions
 - The backend route registry in `../fmxevolution-go/internal/server/server.go` was treated as authoritative
 - Backend docs identify many legacy `/service/*` routes as stale for the current `cmd/api`
-- The frontend still contains unsupported instance integration pages because removing navigation is a user-facing behavior change and was deferred for a smaller follow-up step
+- Unsupported instance integration routes were intentionally kept as guarded placeholders so existing deep links do not fail silently
 - The production build could not be completed in this environment because Vite hit a local `spawn EPERM` while loading `vite.config.ts`
 
 ## Verification

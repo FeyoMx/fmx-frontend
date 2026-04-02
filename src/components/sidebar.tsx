@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CircleHelp, Cog, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle, Zap, ChevronDown } from "lucide-react";
+import { ChevronDown, CircleHelp, Cog, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ function Sidebar() {
         id: "dashboard",
         title: t("sidebar.dashboard"),
         icon: LayoutDashboard,
-        path: "/manager",
+        path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"),
       },
       {
         navLabel: true,
@@ -30,22 +30,22 @@ function Sidebar() {
           {
             id: "contacts",
             title: t("sidebar.contacts"),
-            path: "contacts",
+            path: "/manager/contacts",
           },
           {
             id: "broadcast",
             title: t("sidebar.broadcast"),
-            path: "broadcast",
+            path: "/manager/broadcast",
           },
           {
             id: "aiSettings",
             title: t("sidebar.aiSettings"),
-            path: "ai-settings",
+            path: "/manager/ai-settings",
           },
           {
             id: "apiKeys",
             title: t("sidebar.apiKeys"),
-            path: "api-keys",
+            path: "/manager/api-keys",
           },
         ],
       },
@@ -57,12 +57,7 @@ function Sidebar() {
           {
             id: "settings",
             title: t("sidebar.settings"),
-            path: "settings",
-          },
-          {
-            id: "proxy",
-            title: t("sidebar.proxy"),
-            path: "proxy",
+            path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/settings`,
           },
         ],
       },
@@ -73,68 +68,7 @@ function Sidebar() {
           {
             id: "webhook",
             title: t("sidebar.webhook"),
-            path: "webhook",
-          },
-          {
-            id: "websocket",
-            title: t("sidebar.websocket"),
-            path: "websocket",
-          },
-          {
-            id: "rabbitmq",
-            title: t("sidebar.rabbitmq"),
-            path: "rabbitmq",
-          },
-          {
-            id: "sqs",
-            title: t("sidebar.sqs"),
-            path: "sqs",
-          },
-        ],
-      },
-      {
-        title: t("sidebar.integrations"),
-        icon: Zap,
-        children: [
-          {
-            id: "evoai",
-            title: t("sidebar.evoai"),
-            path: "evoai",
-          },
-          {
-            id: "n8n",
-            title: t("sidebar.n8n"),
-            path: "n8n",
-          },
-          {
-            id: "evolutionBot",
-            title: t("sidebar.evolutionBot"),
-            path: "evolutionBot",
-          },
-          {
-            id: "chatwoot",
-            title: t("sidebar.chatwoot"),
-            path: "chatwoot",
-          },
-          {
-            id: "typebot",
-            title: t("sidebar.typebot"),
-            path: "typebot",
-          },
-          {
-            id: "openai",
-            title: t("sidebar.openai"),
-            path: "openai",
-          },
-          {
-            id: "dify",
-            title: t("sidebar.dify"),
-            path: "dify",
-          },
-          {
-            id: "flowise",
-            title: t("sidebar.flowise"),
-            path: "flowise",
+            path: ({ instanceId }: { instanceId?: string }) => `/manager/instance/${instanceId}/webhook`,
           },
         ],
       },
@@ -172,10 +106,16 @@ function Sidebar() {
 
   const { instance } = useInstance();
 
-  const handleNavigate = (menu?: any) => {
-    if (!menu || !instance) return;
+  const resolvePath = (path: string | ((args: { instanceId?: string }) => string) | undefined) => {
+    if (!path) return undefined;
+    return typeof path === "function" ? path({ instanceId: instance?.id }) : path;
+  };
 
-    if (menu.path) navigate(`/manager/instance/${instance.id}/${menu.path}`);
+  const handleNavigate = (menu?: any) => {
+    if (!menu) return;
+
+    const nextPath = resolvePath(menu.path);
+    if (nextPath) navigate(nextPath);
     if (menu.link) window.open(menu.link, "_blank");
   };
 
@@ -187,15 +127,17 @@ function Sidebar() {
           "children" in menu
             ? menu.children?.map((child) => ({
                 ...child,
-                isActive: "path" in child ? pathname.includes(child.path) : false,
+                resolvedPath: resolvePath(child.path),
+                isActive: "path" in child ? pathname === resolvePath(child.path) : false,
               }))
             : undefined,
-        isActive: "path" in menu && menu.path ? pathname.includes(menu.path) : false,
+        resolvedPath: "path" in menu ? resolvePath(menu.path) : undefined,
+        isActive: "path" in menu && menu.path ? pathname === resolvePath(menu.path) : false,
       })).map((menu) => ({
         ...menu,
         isActive: menu.isActive || ("children" in menu && menu.children?.some((child) => child.isActive)),
       })),
-    [Menus, pathname],
+    [Menus, instance?.id, pathname],
   );
 
   return (
@@ -231,7 +173,7 @@ function Sidebar() {
           ) : (
             <Button className={cn("relative flex w-full items-center justify-start gap-2", menu.isActive && "pointer-events-none")} variant={menu.isActive ? "secondary" : "link"}>
               {"link" in menu && <a href={menu.link} target="_blank" rel="noreferrer" className="absolute inset-0 h-full w-full" />}
-              {"path" in menu && <Link to={`/manager/instance/${instance?.id}/${menu.path}`} className="absolute inset-0 h-full w-full" />}
+              {"resolvedPath" in menu && menu.resolvedPath && <Link to={menu.resolvedPath} className="absolute inset-0 h-full w-full" />}
               {menu.icon && <menu.icon size="15" />}
               <span>{menu.title}</span>
             </Button>
