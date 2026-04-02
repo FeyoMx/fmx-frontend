@@ -10,10 +10,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormInput, FormSwitch } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
-import { getApiErrorMessage } from "@/lib/queries/errors";
+import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
 import { useFetchProxy } from "@/lib/queries/proxy/fetchProxy";
 import { useManageProxy } from "@/lib/queries/proxy/manageProxy";
 
@@ -36,7 +37,7 @@ function Proxy() {
   const [loading, setLoading] = useState(false);
 
   const { createProxy } = useManageProxy();
-  const { data: proxy } = useFetchProxy({
+  const { data: proxy, error } = useFetchProxy({
     instanceId: instance?.id,
   });
 
@@ -91,6 +92,10 @@ function Proxy() {
       setLoading(false);
     }
   };
+
+  if (isApiNotImplementedError(error)) {
+    return <UnsupportedInstanceFeature description={NOT_IMPLEMENTED_MESSAGE} />;
+  }
 
   return (
     <>

@@ -8,6 +8,18 @@ type ErrorPayload = {
   };
 };
 
+export const NOT_IMPLEMENTED_MESSAGE = "This feature is not available in the current backend yet";
+
+export const isApiStatus = (error: unknown, status: number): boolean => {
+  if (!isAxiosError(error)) {
+    return false;
+  }
+
+  return error.response?.status === status;
+};
+
+export const isApiNotImplementedError = (error: unknown): boolean => isApiStatus(error, 501);
+
 export const getApiErrorMessage = (error: unknown, fallback = "Unexpected error"): string => {
   if (isAxiosError<ErrorPayload>(error)) {
     const status = error.response?.status;
@@ -31,7 +43,7 @@ export const getApiErrorMessage = (error: unknown, fallback = "Unexpected error"
     }
 
     if (status === 501) {
-      return message || "This feature is not available yet.";
+      return message || NOT_IMPLEMENTED_MESSAGE;
     }
 
     if (status && status >= 500) {

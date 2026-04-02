@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Development worklog
 - Typed SaaS query adapters for tenant, dashboard, CRM, broadcast, AI settings, and instance normalization
 - Centralized API error parsing helper for clearer auth and validation failures
+- Consistent "not available yet" handling for backend `501 Not Implemented` responses on enabled instance integration pages
 
 ### Changed
 - Updated package.json with proper metadata and repository information

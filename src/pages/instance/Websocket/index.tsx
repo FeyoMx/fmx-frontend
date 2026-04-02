@@ -10,10 +10,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormSwitch } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
-import { getApiErrorMessage } from "@/lib/queries/errors";
+import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
 import { useFetchWebsocket } from "@/lib/queries/websocket/fetchWebsocket";
 import { useManageWebsocket } from "@/lib/queries/websocket/manageWebsocket";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ function Websocket() {
   const [loading, setLoading] = useState(false);
 
   const { createWebsocket } = useManageWebsocket();
-  const { data: websocket } = useFetchWebsocket({
+  const { data: websocket, error } = useFetchWebsocket({
     instanceId: instance?.id,
   });
 
@@ -113,6 +114,10 @@ function Websocket() {
   const handleDeselectAll = () => {
     form.setValue("events", []);
   };
+
+  if (isApiNotImplementedError(error)) {
+    return <UnsupportedInstanceFeature description={NOT_IMPLEMENTED_MESSAGE} />;
+  }
 
   return (
     <>

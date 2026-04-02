@@ -10,10 +10,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormSwitch } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
-import { getApiErrorMessage } from "@/lib/queries/errors";
+import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
 import { useFetchRabbitmq } from "@/lib/queries/rabbitmq/fetchRabbitmq";
 import { useManageRabbitmq } from "@/lib/queries/rabbitmq/manageRabbitmq";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ function Rabbitmq() {
   const [loading, setLoading] = useState(false);
 
   const { createRabbitmq } = useManageRabbitmq();
-  const { data: rabbitmq } = useFetchRabbitmq({
+  const { data: rabbitmq, error } = useFetchRabbitmq({
     instanceId: instance?.id,
   });
 
@@ -113,6 +114,10 @@ function Rabbitmq() {
   const handleDeselectAll = () => {
     form.setValue("events", []);
   };
+
+  if (isApiNotImplementedError(error)) {
+    return <UnsupportedInstanceFeature description={NOT_IMPLEMENTED_MESSAGE} />;
+  }
 
   return (
     <>
