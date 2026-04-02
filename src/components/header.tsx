@@ -1,24 +1,36 @@
 import { DoorOpen } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useFetchInstance } from "@/lib/queries/instance/fetchInstance";
-import { logout } from "@/lib/queries/token";
+import { clearAuthTokens, getAuthToken } from "@/lib/auth";
+import { logout } from "@/lib/queries/auth/login";
+import { useTenant } from "@/contexts/TenantContext";
+import logo from "/assets/images/fmxaiflowslogo2.png";
 
 import { LanguageToggle } from "./language-toggle";
 import { ModeToggle } from "./mode-toggle";
-import { useTheme } from "./theme-provider";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader } from "./ui/dialog";
 
 function Header({ instanceId }: { instanceId?: string }) {
+  const { t } = useTranslation();
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const { user } = useTenant();
 
-  const handleClose = () => {
-    logout();
+  const handleClose = async () => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await logout(token);
+      } catch (error) {
+        console.warn("Logout API call failed, proceeding with local logout", error);
+      }
+    }
+    clearAuthTokens();
     navigate("/manager/login");
   };
 
@@ -29,15 +41,25 @@ function Header({ instanceId }: { instanceId?: string }) {
   const { data: instance } = useFetchInstance({ instanceId });
 
   return (
-    <header className="flex items-center justify-between px-4 py-2">
+    <header className="flex items-center justify-between px-4 py-2 border-b">
       <Link to="/manager" onClick={navigateToDashboard} className="flex h-8 items-center gap-4">
-        <img src={theme === "dark" ? "https://evolution-api.com/files/evo/evolution-logo-white.svg" : "https://evolution-api.com/files/evo/evolution-logo.svg"} alt="Logo" className="h-full" />
+        <img src={logo} alt="FMX AI Logo" className="h-full" />
+        <span className="text-lg font-semibold text-primary">FMX Evolution</span>
       </Link>
       <div className="flex items-center gap-4">
         {instanceId && (
           <Avatar className="h-8 w-8">
             <AvatarImage src={instance?.profilePicUrl || "/assets/images/evolution-logo.png"} alt={instance?.name} />
           </Avatar>
+        )}
+        {user && !instanceId && (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8 bg-gray-600">
+              <AvatarImage src="" alt={user.name || user.email} />
+              <span className="flex items-center justify-center w-full h-full text-white text-xs">{(user.name || user.email).charAt(0).toUpperCase()}</span>
+            </Avatar>
+            <span className="text-sm font-medium">{user.name || user.email}</span>
+          </div>
         )}
         <LanguageToggle />
         <ModeToggle />
@@ -50,14 +72,14 @@ function Header({ instanceId }: { instanceId?: string }) {
         <Dialog onOpenChange={setLogoutConfirmation} open={logoutConfirmation}>
           <DialogContent>
             <DialogClose />
-            <DialogHeader>Deseja realmente sair?</DialogHeader>
+            <DialogHeader>{t("header.logout.confirm") || "Are you sure you want to logout?"}</DialogHeader>
             <DialogFooter>
               <div className="flex items-center gap-4">
                 <Button onClick={() => setLogoutConfirmation(false)} size="sm" variant="outline">
-                  Cancelar
+                  {t("common.cancel") || "Cancel"}
                 </Button>
                 <Button onClick={handleClose} variant="destructive">
-                  Sair
+                  {t("header.logout.button") || "Logout"}
                 </Button>
               </div>
             </DialogFooter>
