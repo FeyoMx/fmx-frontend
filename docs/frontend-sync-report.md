@@ -131,6 +131,7 @@ These frontend areas still depend on legacy routes that are not registered by th
 - Evolution Bot
 - Flowise
 - Embed chat
+- Detailed backend work needed for these pages is documented in `docs/backend-gap-report-for-instance-ui.md`
 
 ### Gated Routes
 These routes are now protected from broken navigation:
@@ -194,7 +195,7 @@ These routes are now protected from broken navigation:
 
 ## Pages Partially Synced
 - `/manager/instance/:instanceId/dashboard`
-  - Instance payload is normalized, but some cards still rely on compatibility fallbacks such as `_count`
+  - Instance payload is normalized to the current backend contract, but the backend still does not provide per-instance contact/chat/message counts
 - `/manager/instance/:instanceId/*`
   - Unsupported legacy integration pages no longer appear in sidebar navigation and are now guarded by placeholders or redirects
 
