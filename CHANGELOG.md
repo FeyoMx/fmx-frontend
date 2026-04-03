@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Centralized API error parsing helper for clearer auth and validation failures
 - Consistent "not available yet" handling for backend `501 Not Implemented` responses on enabled instance integration pages
 - Tenant-safe instance text-message composer on the instance dashboard using `POST /instance/:id/messages/text`
+- Frontend product readiness summary in `docs/frontend-product-readiness.md`
 
 ### Changed
 - Updated package.json with proper metadata and repository information

@@ -97,6 +97,7 @@ Evolution Manager v2 is a modern, responsive web interface built with React and 
 - **[Environment Configuration](docs/frontend-env.md)** - Environment variables and deployment setup
 - **[Backend Integration](docs/frontend-backend-integration.md)** - API architecture and data flow
 - **[Sync Report](docs/frontend-sync-report.md)** - Frontend-backend synchronization status
+- **[Product Readiness](docs/frontend-product-readiness.md)** - Current working, partial, and gated product areas
 - **[Worklog](docs/frontend-worklog.md)** - Change history and development notes
 
 ### API Documentation
