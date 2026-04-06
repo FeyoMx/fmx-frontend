@@ -6,6 +6,27 @@ export type FetchInstanceResponse = Instance;
 
 export type FetchSettingsResponse = Settings;
 
+export type InstanceRuntimeState = {
+  state: string;
+  lastObservedStatus?: string;
+  lastUpdatedAt?: string;
+  bridgeHealthy?: boolean;
+  raw: unknown;
+};
+
+export type InstanceRuntimeHistoryEvent = {
+  id: string;
+  event: string;
+  status?: string;
+  timestamp: string;
+  detail?: string;
+  raw: unknown;
+};
+
+export type FetchInstanceRuntimeResponse = InstanceRuntimeState;
+
+export type FetchInstanceRuntimeHistoryResponse = InstanceRuntimeHistoryEvent[];
+
 export interface BackendInstanceResponse {
   id?: string;
   instance_id?: string;

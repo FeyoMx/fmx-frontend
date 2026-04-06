@@ -139,12 +139,16 @@ export function useManageInstance() {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
     ],
   });
   const disconnectMutation = useManageMutation(disconnect, {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
     ],
   });
   const updateSettingsMutation = useManageMutation(updateSettings, {
@@ -154,18 +158,24 @@ export function useManageInstance() {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
     ],
   });
   const logoutMutation = useManageMutation(logout, {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
     ],
   });
   const restartMutation = useManageMutation(restart, {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
     ],
   });
   const createInstanceMutation = useManageMutation(createInstance, {

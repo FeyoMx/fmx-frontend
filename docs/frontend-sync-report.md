@@ -25,6 +25,7 @@ Updated on 2026-04-06.
 - text-only instance messaging with async status polling
 - tenant-safe chat list and conversation history on supported instance chat routes
 - tenant-safe media/audio send wiring inside the active conversation composer
+- tenant-safe instance runtime state and runtime history observability on the dashboard
 
 ## Backend-Partial Surfaces Kept Honest
 
@@ -96,6 +97,7 @@ Frontend handling after this sync:
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
+- Instance dashboard now refreshes runtime state/history after reconnect, pairing, restart, and logout actions so operators can see lifecycle truth in one place.
 
 ### API / adapter alignment
 

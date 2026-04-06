@@ -46,6 +46,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - status and QR handling
   - pairing code flow
   - refresh / restart / disconnect controls
+  - runtime observability panel with current runtime state, last observed status, and recent lifecycle history
   - text-only outbound send flow
   - async status polling against `status_endpoint`
 - `/manager/instance/:instanceId/settings`
@@ -123,6 +124,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - internal tenant operations
   - operational instance management
   - connection troubleshooting
+  - runtime state and lifecycle event inspection from the instance dashboard
   - connector configuration for webhook/websocket/rabbitmq/proxy
   - CRM-lite usage
   - text/media/audio outbound dispatch from supported instance surfaces

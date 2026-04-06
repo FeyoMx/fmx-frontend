@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { CircleUser, MessageCircle, RefreshCw, UsersRound } from "lucide-react";
+import { Activity, CircleUser, Clock3, Link2Off, LogOut, MessageCircle, RefreshCw, SmartphoneCharging, UsersRound, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -20,10 +21,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInstance } from "@/contexts/InstanceContext";
 
 import { getTextMessageJobStatus, useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
+import { useInstanceRuntime, useInstanceRuntimeHistory } from "@/lib/queries/instance/runtime";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
 import { InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 import { toast } from "react-toastify";
+import { FetchInstanceRuntimeHistoryResponse } from "@/lib/queries/instance/types";
 
 type MessageSendUiStatus = "queued" | "sending" | "provider_sent" | "delivered" | "read" | "error";
 
@@ -32,6 +35,12 @@ type MessageSendFeedback = {
   title: string;
   detail?: string;
   jobId?: string;
+};
+
+type LifecycleFeedback = {
+  status: "idle" | "running" | "success" | "error";
+  title: string;
+  detail?: string;
 };
 
 const MESSAGE_JOB_POLL_INTERVAL_MS = 2500;
@@ -148,6 +157,95 @@ function getMessageSendAlertVariant(status: MessageSendUiStatus): "warning" | "i
   }
 }
 
+function getRuntimeBadgeVariant(state: string): "default" | "secondary" | "warning" | "destructive" | "outline" {
+  if (state === "connected" || state === "open" || state === "paired") {
+    return "default";
+  }
+
+  if (state === "connecting" || state === "pairing_started" || state === "reconnect_requested") {
+    return "warning";
+  }
+
+  if (state === "disconnected" || state === "logout" || state === "close" || state === "closed") {
+    return "destructive";
+  }
+
+  if (state === "status_observed") {
+    return "secondary";
+  }
+
+  return "outline";
+}
+
+function formatRuntimeLabel(value?: string): string {
+  if (!value) {
+    return "Unknown";
+  }
+
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function formatOptionalTimestamp(value?: string): string {
+  if (!value) {
+    return "Not observed yet";
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "Not observed yet" : parsed.toLocaleString();
+}
+
+function runtimeEventIcon(event: string) {
+  switch (event) {
+    case "connected":
+    case "paired":
+      return Wifi;
+    case "pairing_started":
+      return SmartphoneCharging;
+    case "reconnect_requested":
+      return RefreshCw;
+    case "logout":
+      return LogOut;
+    case "disconnected":
+      return WifiOff;
+    case "status_observed":
+      return Activity;
+    default:
+      return Clock3;
+  }
+}
+
+function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryResponse }) {
+  return (
+    <div className="space-y-3">
+      {events.map((event) => {
+        const Icon = runtimeEventIcon(event.event);
+
+        return (
+          <div key={event.id} className="flex items-start gap-3 rounded-lg border p-3">
+            <div className="rounded-full border p-2">
+              <Icon className={`h-4 w-4 ${event.event === "reconnect_requested" ? "animate-pulse" : ""}`} />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="font-medium">{formatRuntimeLabel(event.event)}</div>
+                {event.status && (
+                  <Badge variant={getRuntimeBadgeVariant(event.status)}>
+                    {formatRuntimeLabel(event.status)}
+                  </Badge>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">{formatOptionalTimestamp(event.timestamp)}</div>
+              {event.detail && <div className="text-sm text-muted-foreground">{event.detail}</div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardInstance() {
   const { t, i18n } = useTranslation();
   const numberFormatter = new Intl.NumberFormat(i18n.language);
@@ -159,6 +257,7 @@ function DashboardInstance() {
   const [isSendingText, setIsSendingText] = useState(false);
   const [messageSendFeedback, setMessageSendFeedback] = useState<MessageSendFeedback | null>(null);
   const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
+  const [lifecycleFeedback, setLifecycleFeedback] = useState<LifecycleFeedback | null>(null);
   const messageSendAttemptRef = useRef(0);
   const { theme } = useTheme();
 
@@ -168,6 +267,18 @@ function DashboardInstance() {
   // Use React Query hooks for status and QR code
   const { data: instanceStatus, refetch: refetchStatus } = useInstanceStatus(instance?.id || "");
   const { data: qrCodeData, refetch: refetchQRCode } = useInstanceQRCode(instance?.id || "");
+  const {
+    data: runtimeState,
+    isLoading: runtimeLoading,
+    error: runtimeError,
+    refetch: refetchRuntime,
+  } = useInstanceRuntime({ instanceId: instance?.id || "" });
+  const {
+    data: runtimeHistory,
+    isLoading: runtimeHistoryLoading,
+    error: runtimeHistoryError,
+    refetch: refetchRuntimeHistory,
+  } = useInstanceRuntimeHistory({ instanceId: instance?.id || "" });
 
   useEffect(() => {
     if (instance) {
@@ -189,30 +300,71 @@ function DashboardInstance() {
 
   const handleReload = async () => {
     await reloadInstance();
+    await refetchRuntime();
+    await refetchRuntimeHistory();
   };
 
   const handleRestart = async (instanceId: string) => {
     try {
+      setLifecycleFeedback({
+        status: "running",
+        title: "Restarting runtime",
+        detail: "Waiting for the bridge to acknowledge the restart request.",
+      });
       await restart(instanceId);
       await reloadInstance();
+      await refetchRuntime();
+      await refetchRuntimeHistory();
+      setLifecycleFeedback({
+        status: "success",
+        title: "Restart requested",
+        detail: "Runtime state and recent lifecycle history have been refreshed.",
+      });
     } catch (error) {
       console.error("Error:", error);
+      setLifecycleFeedback({
+        status: "error",
+        title: "Restart failed",
+        detail: getApiErrorMessage(error, "Failed to restart instance"),
+      });
       toast.error(getApiErrorMessage(error, "Failed to restart instance"));
     }
   };
 
   const handleLogout = async (instanceId: string) => {
     try {
+      setLifecycleFeedback({
+        status: "running",
+        title: "Disconnecting instance",
+        detail: "Waiting for logout and runtime refresh.",
+      });
       await logout(instanceId);
       await reloadInstance();
+      await refetchRuntime();
+      await refetchRuntimeHistory();
+      setLifecycleFeedback({
+        status: "success",
+        title: "Disconnect requested",
+        detail: "Runtime state and lifecycle history were refreshed after logout.",
+      });
     } catch (error) {
       console.error("Error:", error);
+      setLifecycleFeedback({
+        status: "error",
+        title: "Disconnect failed",
+        detail: getApiErrorMessage(error, "Failed to disconnect instance"),
+      });
       toast.error(getApiErrorMessage(error, "Failed to disconnect instance"));
     }
   };
 
   const handleConnect = async (instanceId: string, pairingCode: boolean) => {
     try {
+      setLifecycleFeedback({
+        status: "running",
+        title: pairingCode ? "Requesting pairing code" : "Requesting reconnect",
+        detail: "Refreshing runtime state as soon as the backend responds.",
+      });
       setQRCode(null);
       setPairingCode("");
 
@@ -232,8 +384,20 @@ function DashboardInstance() {
       // Refetch status and QR code
       await refetchStatus();
       await refetchQRCode();
+      await refetchRuntime();
+      await refetchRuntimeHistory();
+      setLifecycleFeedback({
+        status: "success",
+        title: pairingCode ? "Pairing requested" : "Reconnect requested",
+        detail: "Runtime state and lifecycle history have been refreshed.",
+      });
     } catch (error) {
       console.error("Error:", error);
+      setLifecycleFeedback({
+        status: "error",
+        title: pairingCode ? "Pairing request failed" : "Reconnect failed",
+        detail: getApiErrorMessage(error, "Failed to connect instance"),
+      });
       toast.error(getApiErrorMessage(error, "Failed to connect instance"));
     }
   };
@@ -538,6 +702,107 @@ function DashboardInstance() {
             </CardTitle>
           </CardHeader>
           <CardContent>{formatStat(stats.messages)}</CardContent>
+        </Card>
+      </section>
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity size="20" />
+              Runtime status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This panel reflects the durable runtime endpoint. It is the best current operator view, but final truth can still lag when the bridge is temporarily unavailable.
+            </p>
+            {runtimeLoading ? (
+              <div className="flex min-h-32 items-center justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : runtimeError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Runtime status unavailable</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeError, "Unable to load runtime state.")}</AlertDescription>
+              </Alert>
+            ) : runtimeState ? (
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-lg border p-4">
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Current runtime state</div>
+                  <Badge variant={getRuntimeBadgeVariant(runtimeState.state)}>{formatRuntimeLabel(runtimeState.state)}</Badge>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Last observed status</div>
+                  <Badge variant={getRuntimeBadgeVariant(runtimeState.lastObservedStatus || "unknown")}>
+                    {formatRuntimeLabel(runtimeState.lastObservedStatus)}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Bridge signal</div>
+                  {runtimeState.bridgeHealthy === undefined ? (
+                    <Badge variant="outline">Not reported</Badge>
+                  ) : runtimeState.bridgeHealthy ? (
+                    <Badge variant="default">Healthy</Badge>
+                  ) : (
+                    <Badge variant="warning">Degraded</Badge>
+                  )}
+                </div>
+                <div className="rounded-lg border p-4 md:col-span-3">
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Last updated</div>
+                  <div className="text-sm">{formatOptionalTimestamp(runtimeState.lastUpdatedAt)}</div>
+                </div>
+              </div>
+            ) : (
+              <Alert variant="warning">
+                <AlertTitle>No runtime status returned</AlertTitle>
+                <AlertDescription>The backend runtime endpoint is active, but it did not return a current state for this instance yet.</AlertDescription>
+              </Alert>
+            )}
+            {lifecycleFeedback && lifecycleFeedback.status !== "idle" && (
+              <Alert
+                variant={
+                  lifecycleFeedback.status === "running"
+                    ? "info"
+                    : lifecycleFeedback.status === "success"
+                      ? "success"
+                      : "destructive"
+                }>
+                <AlertTitle>{lifecycleFeedback.title}</AlertTitle>
+                {lifecycleFeedback.detail && <AlertDescription>{lifecycleFeedback.detail}</AlertDescription>}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock3 size="20" />
+              Runtime history
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Recent lifecycle events help explain why an instance is connected, disconnected, pairing, or recovering. Event completeness still depends on bridge availability.
+            </p>
+            {runtimeHistoryLoading ? (
+              <div className="flex min-h-32 items-center justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : runtimeHistoryError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Runtime history unavailable</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeHistoryError, "Unable to load runtime history.")}</AlertDescription>
+              </Alert>
+            ) : runtimeHistory && runtimeHistory.length > 0 ? (
+              <RuntimeHistoryList events={runtimeHistory.slice(0, 10)} />
+            ) : (
+              <Alert variant="warning">
+                <AlertTitle>No runtime history yet</AlertTitle>
+                <AlertDescription>The runtime history endpoint is active, but there are no recent lifecycle events stored for this instance yet.</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
         </Card>
       </section>
       <section>
