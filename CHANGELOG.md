@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consistent "not available yet" handling for backend `501 Not Implemented` responses on enabled instance integration pages
 - Tenant-safe instance text-message composer on the instance dashboard using `POST /instance/:id/messages/text`
 - Frontend product readiness summary in `docs/frontend-product-readiness.md`
+- Frontend parity audit in `docs/frontend-parity-report.md`
+- Guarded placeholder routes for unsupported upstream surfaces such as chat inbox, embed chat, SQS, Chatwoot, and legacy AI/integration suites
+- Operational instance status charting on the main dashboard using tenant-safe backend instance data
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -43,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API Keys page was converted to informational mode because the backend currently supports API key auth but not API key management routes
 - New instance creation now sends backend-native `name` and `engine_instance_id` aliases
 - Frontend integration docs were rewritten against the current backend route registry
+- Dashboard now distinguishes real operational metrics from backend-limited aggregate counters instead of implying full analytics parity
+- Unsupported deep links now land on explanatory placeholders instead of silently redirecting away from the requested surface
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -54,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Login, dashboard, CRM, broadcast, and AI settings flows now surface backend error messages more reliably
 - AI instance settings now call `/ai/instances/:instanceID` instead of the stale singular route
 - Instance text-message action now falls back to the standard unsupported-feature UI when the backend returns `501`
+- Shared API error parsing now includes clearer `404` and `429` feedback
 
 ### Removed
 - Unused legacy `apiLegacy` client

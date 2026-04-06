@@ -1,113 +1,114 @@
 # Frontend Product Readiness
 
+Updated on 2026-04-05.
+
 ## Summary
 
-The current frontend is usable for the core tenant-safe SaaS flow: authentication, tenant-scoped dashboard access, contacts, broadcasts, AI settings, and the supported instance configuration pages. The product is not yet ready as a full replacement for the older manager UI because several legacy instance/integration areas are still gated or only partially backed by the current backend.
+The frontend is product-usable for the tenant-safe SaaS workflows that the current backend truly supports:
 
-## Working Features
+- login and tenant session handling
+- dashboard and instance list
+- instance detail, QR, pairing, and status
+- advanced settings
+- webhook, websocket, rabbitmq, and proxy
+- CRM contacts
+- broadcast jobs
+- tenant AI settings
+- text-only outbound messaging with backend-truth async delivery polling
 
-### Core SaaS access
-- Login with JWT session handling
-- Token refresh and session rehydration
-- Tenant-aware authenticated routing
-- Tenant context hydration from `/auth/me` and `/tenant`
+It is not yet a full replacement for the upstream Evolution Manager v2 experience because several legacy chat and integration surfaces still rely on backend `501 partial` routes or have no tenant-safe SaaS implementation yet.
 
-### Main management pages
-- Dashboard
-- Contacts
-- Broadcast creation and listing
-- AI settings
-- API keys informational page
+## What Is Ready Now
 
-### Instance management
-- Instance list and instance detail loading
-- Instance connect and disconnect flows
-- QR code and pairing-code display
-- Advanced settings and instance settings pages
-- Instance dashboard with:
-  - connection state
-  - token display when available
-  - text-only message composer for connected instances
+### Core tenant-safe flow
 
-### Instance integration pages currently supported
-- Webhook
-- Websocket
-- Rabbitmq
-- Proxy
+- JWT auth, refresh, and tenant hydration
+- tenant-aware routing and instance scoping
+- shared backend error parsing for `401`, `403`, `404`, `429`, `501`, and generic validation/server failures
 
-## Partially Supported Features
+### Main product surfaces
 
-### Instance dashboard
-- The dashboard works for operational controls and text messaging
-- Per-instance stats such as contacts, chats, and messages may show `N/A` because the backend does not provide full counters yet
+- `/manager`
+  - operational dashboard cards
+  - instance list
+  - new status overview chart based on real instance statuses
+  - explicit notice that aggregate counters are still backend-limited
+- `/manager/contacts`
+- `/manager/broadcast`
+- `/manager/ai-settings`
+- `/manager/api-keys`
+  - informational by design
 
-### Webhook and runtime-derived instance detail
-- Token and runtime-derived values can be missing when no runtime snapshot is available
-- The UI already tolerates this, but users may see incomplete operational metadata
+### Instance operations
 
-### Unsupported-feature handling
-- The frontend correctly distinguishes `501 Not Implemented` from auth failures
-- Supported pages that encounter backend `501` fall back to the shared unsupported-feature experience instead of crashing
+- `/manager/instance/:instanceId/dashboard`
+  - status and QR handling
+  - pairing code flow
+  - refresh / restart / disconnect controls
+  - text-only outbound send flow
+  - async status polling against `status_endpoint`
+- `/manager/instance/:instanceId/settings`
+- `/manager/instance/:instanceId/webhook`
+- `/manager/instance/:instanceId/websocket`
+- `/manager/instance/:instanceId/rabbitmq`
+- `/manager/instance/:instanceId/proxy`
 
-## Gated Features
+## What Is Only Partial
 
-These areas are intentionally hidden from navigation or redirected away from legacy pages because the backend does not support them safely in the current SaaS contract:
+### Dashboard analytics
 
-- Instance chat
-- Embed chat
+- instance totals and status distribution are reliable
+- message, contact, and broadcast aggregate counters are still backend placeholders or backend-limited summaries
+
+### CRM
+
+- contacts, tags, and notes work
+- no delete flow
+- no pipeline/workflow management
+
+### Text messaging
+
+- works from the instance dashboard
+- reflects true async delivery state now
+- still does not provide the upstream inbox/thread experience
+
+## What Is Intentionally Gated
+
+These routes now show a guarded unsupported placeholder instead of silently redirecting:
+
+- instance chat inbox and thread routes
 - SQS
 - Chatwoot
-- OpenAI bot CRUD pages
+- OpenAI resource CRUD
 - Typebot
 - Dify
 - N8N
 - EvoAI
 - Evolution Bot
 - Flowise
+- embed chat
 
-Current gating behavior:
-- Unsupported items are removed from normal instance sidebar navigation
-- Existing deep links to unsupported instance pages redirect back to the instance dashboard or a safe manager page
-- Media/audio/chat-search flows remain unavailable even though plain text sending is now supported
+This keeps old bookmarks and upstream page surface references from breaking while still being honest about backend reality.
 
-## User-Visible Limitations
+## Backend-Driven Blockers
 
-- The messaging experience is text-only
-- There is no supported in-product chat inbox, chat search, or message history view
-- Media messages and WhatsApp audio are not available in the current SaaS UI
-- Several legacy integration pages from the older manager experience are absent by design
-- Broadcast metrics and dashboard metrics are leaner than older UI expectations
-- Contact deletion and pipeline-stage style CRM workflows are not available in the current backend contract
-- Full production build verification remains environment-sensitive because Vite has previously hit a local `spawn EPERM` issue in this workspace, even when TypeScript passes
-
-## Next Recommended Frontend Priorities
-
-### High priority
-- Add a small sent-message confirmation/history panel for the instance dashboard text composer
-- Improve validation and formatting guidance for recipient numbers in the text composer
-- Add clearer empty states around missing runtime-derived instance fields such as token and owner metadata
-
-### Medium priority
-- Improve dashboard messaging around unavailable counters so users understand `N/A` is backend-limited, not broken
-- Add better UI affordances around supported integrations:
-  - last saved state
-  - clearer save feedback
-  - more explicit unsupported-event messaging where relevant
-- Audit any remaining dead code from legacy chat/integration pages and reduce maintenance surface
-
-### Backend-dependent priorities
-- Re-enable instance chat only after tenant-safe backend support exists for:
-  - chat search
-  - message history retrieval
-  - text/media/audio parity
-- Reintroduce legacy integration pages only after their SaaS contracts move beyond `501 partial`
-- Expand CRM and dashboard UI once backend counters and delete/workflow operations are formally supported
+- tenant-safe chat/message repository and search APIs
+- tenant-safe media and audio send APIs
+- tenant-safe support for Chatwoot, SQS, and legacy AI/integration CRUD suites
+- richer aggregate metrics for messages, contacts, and broadcasts
+- Kafka support
 
 ## Readiness Assessment
 
 - Suitable now for:
   - internal tenant operations
-  - instance connection management
-  - webhook/websocket/rabbitmq/proxy configuration
-  - basic outbound text sending from an instance
-- Not yet suitable as a complete feature-parity replacement for the old manager UI
+  - operational instance management
+  - connection troubleshooting
+  - connector configuration for webhook/websocket/rabbitmq/proxy
+  - CRM-lite usage
+  - text-only outbound message dispatch
+- Not yet suitable for:
+  - full upstream-manager parity
+  - production chat inbox operations
+  - media/audio sending
+  - legacy integration management parity

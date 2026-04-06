@@ -1,53 +1,47 @@
 # Frontend Backend Integration
 
+Updated on 2026-04-05.
+
 ## Auth Flow
+
 - Login uses `POST /auth/login`
-- Request body:
-
-```json
-{
-  "tenant_slug": "example-tenant",
-  "email": "owner@example.com",
-  "password": "secret"
-}
-```
-
-- Backend returns:
-
-```json
-{
-  "access_token": "...",
-  "refresh_token": "...",
-  "tenant_id": "ten_123",
-  "user_id": "usr_123",
-  "role": "owner",
-  "expires_in": 900
-}
-```
-
-- Frontend then loads session context with:
+- Session hydration uses:
   - `GET /auth/me`
   - `GET /tenant`
-
-## Token Storage
-- Access token is stored in local storage through the shared auth helpers
-- Refresh token is stored separately and used only for token renewal
-- Tenant ID is stored after login and attached on authenticated SaaS requests
-- Legacy instance token storage still exists for unsupported instance-scoped pages, but it is no longer part of the primary SaaS flow
+- `apiGlobal` attaches:
+  - `Authorization: Bearer <access_token>`
+  - `X-Tenant-ID` when available
 
 ## Refresh Flow
-- `apiGlobal` attaches `Authorization: Bearer <access_token>`
-- Before each request, the client checks token expiry and refreshes if the token is close to expiring
-- On a `401` response, `apiGlobal` retries once after calling `POST /auth/refresh`
+
+- Access tokens are refreshed before expiry when possible
+- `apiGlobal` retries once on `401` after `POST /auth/refresh`
+- On refresh failure, auth storage is cleared and the user is redirected to `/manager/login`
+
+## Shared Error Handling
+
+`src/lib/queries/errors.ts` is the shared adapter for user-facing backend errors.
+
+Handled explicitly:
+
+- `401`
+- `403`
+- `404`
+- `429`
+- `400`
+- `422`
+- `501`
+- generic `5xx`
 
 ## Instance Text Messaging
 
-- The frontend composer uses the canonical tenant-safe route:
-  - `POST /instance/:id/messages/text`
-- Auth requirements:
-  - same JWT-backed authenticated SaaS flow as other protected instance routes
-  - tenant scope is derived from the authenticated session, not user-supplied tenant fields
-- Request body:
+The current tenant-safe messaging flow is text-only and async.
+
+### Send route
+
+- `POST /instance/:id/messages/text`
+
+Request body:
 
 ```json
 {
@@ -57,124 +51,109 @@
 }
 ```
 
-- Response shape:
+Accepted response:
 
 ```json
 {
-  "message": "success",
+  "message": "message queued; delivery pending",
+  "queued": true,
+  "accepted_only": true,
+  "sent": false,
+  "delivery_confirmed": false,
+  "delivery_status": "queued",
+  "job_id": "job_123",
+  "status_endpoint": "/instance/id/uuid/messages/text/job_123",
   "instance_id": "uuid",
-  "instanceName": "MyInstance",
-  "engine_instance_id": "bridge-id",
-  "data": {
-    "messageId": "wamid...",
-    "serverId": 123,
-    "chat": "5215512345678@s.whatsapp.net",
-    "fromMe": true,
-    "timestamp": "2026-04-02T12:00:00Z"
-  }
+  "instanceName": "MyInstance"
 }
 ```
 
-- UI placement:
-  - the composer lives on `/manager/instance/:instanceId/dashboard`
-  - it is intentionally not exposed on legacy chat/embed flows
-- Current limitations:
-  - only plain text is supported
-  - media, audio, chat search, and message history remain gated
-  - if the backend returns `501`, the dashboard swaps to the standard unsupported-feature placeholder for this action
-- If refresh fails, auth storage is cleared and the user is redirected to `/manager/login`
+### Status route
 
-## API Service Structure
+- `GET /instance/id/:instanceID/messages/text/:jobID`
+- or the relative path returned by `status_endpoint`
 
-### `src/lib/queries/api.ts`
-- `apiGlobal`
-  - Used for tenant-scoped SaaS routes
-  - Attaches `Authorization` and `X-Tenant-ID`
-  - Handles refresh-token retry
-- `api`
-  - Used by legacy instance-token pages
-  - Attaches `apikey`
-  - Exists only because several legacy pages still depend on unsupported backend routes
+Status payload can include:
 
-### Normalizers and Adapters
-- `src/lib/queries/instance/normalize.ts`
-  - Maps backend instance payloads into existing UI `Instance` shape
-- `src/lib/queries/crm/contacts.ts`
-  - Maps backend contact rows and nested tags into `ContactView`
-- `src/lib/queries/broadcast/jobs.ts`
-  - Maps backend broadcast jobs into `BroadcastView`
-- `src/lib/queries/ai/settings.ts`
-  - Maps tenant and per-instance AI settings into frontend view models
-- `src/lib/queries/errors.ts`
-  - Centralizes backend error message extraction for consistent UI feedback
+```json
+{
+  "job_id": "job_123",
+  "status": "queued",
+  "delivery_status": "queued",
+  "sent": false,
+  "delivery_confirmed": false,
+  "queued_at": "2026-04-05T12:00:00Z",
+  "started_at": "2026-04-05T12:00:02Z",
+  "finished_at": "2026-04-05T12:00:03Z",
+  "delivered_at": "2026-04-05T12:00:05Z",
+  "read_at": "2026-04-05T12:00:08Z"
+}
+```
 
-## Base URL Configuration
-- Preferred env var: `VITE_API_URL`
-- Backward-compatible fallback: `VITE_API_BASE_URL`
-- Default fallback: `http://localhost:8080`
+### Frontend behavior
 
-## Tenant Behavior
-- The backend is multi-tenant
-- Tenant context is derived from login response and hydrated with `GET /tenant`
-- Authenticated SaaS requests send `X-Tenant-ID` when available
-- The backend can also authenticate protected routes with a tenant API key through `X-API-Key` or `apikey`, but the frontend does not expose API key CRUD because the backend does not provide it
+- `202 Accepted` is never treated as final success
+- UI immediately shows `En cola`
+- frontend polls `status_endpoint` every 2.5 seconds
+- polling stops on:
+  - `delivery_status === "delivered"`
+  - `delivery_status === "read"`
+  - `delivery_confirmed === true`
+  - `status === "failed"`
+  - UI timeout
 
-## Endpoint Mapping
+### Current limitations
 
-### Current SaaS Pages
-- Dashboard
-  - `GET /dashboard/metrics`
-  - `GET /instance`
-  - `POST /instance`
-  - `POST /instance/:id/messages/text`
-- Login
-  - `POST /auth/login`
-  - `POST /auth/refresh`
-  - `GET /auth/me`
-  - `POST /auth/logout`
-- Tenant context
-  - `GET /tenant`
-- CRM
-  - `GET /contacts`
-  - `POST /contacts`
-- Broadcast
-  - `GET /broadcast`
-  - `POST /broadcast`
-- AI settings
-  - `GET /ai/settings`
-  - `PUT /ai/settings`
-  - `GET /ai/instances/:instanceID`
-  - `PUT /ai/instances/:instanceID`
-- Webhooks
+- no tenant-safe inbox/thread browsing
+- no media send
+- no audio send
+- no chat search/message history
+
+## Supported Instance Connectors
+
+Frontend pages currently wired to real tenant-safe SaaS routes:
+
+- Webhook
   - `GET /webhook`
   - `POST /webhook`
   - `GET /webhook/:id`
   - `PATCH /webhook/:id`
   - `DELETE /webhook/:id`
+- Websocket
+  - `GET /instance/:id/websocket`
+  - `PUT /instance/:id/websocket`
+- RabbitMQ
+  - `GET /instance/:id/rabbitmq`
+  - `PUT /instance/:id/rabbitmq`
+- Proxy
+  - `GET /instance/:id/proxy`
+  - `PUT /instance/:id/proxy`
+- Advanced settings
+  - `GET /instance/id/:instanceID/advanced-settings`
+  - `PUT /instance/id/:instanceID/advanced-settings`
 
-### Unsupported Legacy Pages
-The following frontend areas still depend on legacy-style capabilities that are not part of the current supported SaaS surface:
-- `/chat/*`
-- `/sqs/*`
-- `/chatwoot/*`
-- `/openai/*`
-- `/typebot/*`
-- `/dify/*`
-- `/n8n/*`
-- `/evoai/*`
-- `/evolutionBot/*`
-- `/flowise/*`
+## Explicit Backend-Partial Surfaces
 
-## Error Handling
-- Backend validation and auth errors are surfaced through `getApiErrorMessage`
-- Expected user-visible categories:
-  - invalid credentials
-  - expired session
-  - forbidden access
-  - validation errors
-  - network failure
+The backend intentionally exposes the following as `501 partial`, and the frontend keeps them gated or placeholder-backed instead of faking parity:
 
-## Notes for Future Sync Work
-- Hide or gate unsupported legacy instance pages rather than faking backend support
-- Continue replacing UI-specific assumptions with small view adapters near the query layer
-- Prefer route registration in the backend code over old integration docs when conflicts appear
+- `POST /instance/:id/chats/search`
+- `POST /instance/:id/messages/search`
+- `POST /instance/:id/messages/media`
+- `POST /instance/:id/messages/audio`
+- `GET/PUT /instance/:id/sqs`
+- `GET/PUT /instance/:id/chatwoot`
+- `GET/POST /instance/:id/openai`
+- `GET/POST /instance/:id/typebot`
+- `GET/POST /instance/:id/dify`
+- `GET/POST /instance/:id/n8n`
+- `GET/POST /instance/:id/evoai`
+- `GET/POST /instance/:id/evolutionBot`
+- `GET/POST /instance/:id/flowise`
+
+## Current Integration Principles
+
+- prefer backend route registration over stale legacy manager assumptions
+- keep adapters centralized near `src/lib/queries/*`
+- preserve tenant-safe routing and auth
+- show guarded placeholders for backend-partial surfaces
+- do not revive legacy instance-token CRUD flows unless the SaaS backend truly supports them
