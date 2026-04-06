@@ -14,7 +14,8 @@ The frontend is product-usable for the tenant-safe SaaS workflows that the curre
 - CRM contacts
 - broadcast jobs
 - tenant AI settings
-- text-only outbound messaging with backend-truth async delivery polling
+- text outbound messaging with backend-truth async delivery polling
+- chat readiness shell with real chat list plus media/audio/text composer wiring
 
 It is not yet a full replacement for the upstream Evolution Manager v2 experience because several legacy chat and integration surfaces still rely on backend `501 partial` routes or have no tenant-safe SaaS implementation yet.
 
@@ -52,6 +53,11 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/instance/:instanceId/websocket`
 - `/manager/instance/:instanceId/rabbitmq`
 - `/manager/instance/:instanceId/proxy`
+- `/manager/instance/:instanceId/chat`
+  - real tenant-safe chat list
+  - thread-ready shell architecture
+  - text, media, and audio composers already pointed at SaaS routes
+  - conversation history still disabled until backend `messages/search` becomes truthful
 
 ## What Is Only Partial
 
@@ -72,11 +78,16 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - reflects true async delivery state now
 - still does not provide the upstream inbox/thread experience
 
+### Chat shell
+
+- thread list is now backed by the current tenant-safe backend route
+- text, media, and audio sending are already reusable inside the shell
+- conversation history panel is prepared but remains backend-blocked
+
 ## What Is Intentionally Gated
 
 These routes now show a guarded unsupported placeholder instead of silently redirecting:
 
-- instance chat inbox and thread routes
 - SQS
 - Chatwoot
 - OpenAI resource CRUD
@@ -88,12 +99,13 @@ These routes now show a guarded unsupported placeholder instead of silently redi
 - Flowise
 - embed chat
 
+Chat inbox routes are no longer hard placeholders. They now resolve to a readiness shell that stays honest about missing history support.
+
 This keeps old bookmarks and upstream page surface references from breaking while still being honest about backend reality.
 
 ## Backend-Driven Blockers
 
-- tenant-safe chat/message repository and search APIs
-- tenant-safe media and audio send APIs
+- tenant-safe message history/search API
 - tenant-safe support for Chatwoot, SQS, and legacy AI/integration CRUD suites
 - richer aggregate metrics for messages, contacts, and broadcasts
 - Kafka support
@@ -106,9 +118,8 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - connection troubleshooting
   - connector configuration for webhook/websocket/rabbitmq/proxy
   - CRM-lite usage
-  - text-only outbound message dispatch
+  - text/media/audio outbound dispatch from supported instance surfaces
 - Not yet suitable for:
   - full upstream-manager parity
-  - production chat inbox operations
-  - media/audio sending
+  - production chat history operations
   - legacy integration management parity

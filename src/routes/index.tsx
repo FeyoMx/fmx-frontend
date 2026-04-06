@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "@/components/providers/protected-route";
 import PublicRoute from "@/components/providers/public-route";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
+import { ChatShell } from "@/features/chat/ChatShell";
 
 import { InstanceLayout } from "@/layout/InstanceLayout";
 import { MainLayout } from "@/layout/MainLayout";
@@ -116,10 +117,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <InstancePlaceholderRoute
-            title="Chat inbox not available yet"
-            description="The current SaaS backend still returns partial responses for tenant-safe chat search and message history, so this route stays gated instead of showing a broken inbox."
-          />
+          <ChatShell />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -129,10 +127,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <InstancePlaceholderRoute
-            title="Message thread not available yet"
-            description="Direct thread browsing depends on tenant-safe chat and message-history APIs that are not implemented in the current backend."
-          />
+          <ChatShell />
         </InstanceLayout>
       </ProtectedRoute>
     ),

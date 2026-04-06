@@ -23,15 +23,14 @@ Updated on 2026-04-05.
 - broadcast jobs
 - tenant AI settings
 - text-only instance messaging with async status polling
+- tenant-safe chat list through the new chat readiness shell
+- tenant-safe media/audio send wiring inside the chat readiness shell
 
 ## Backend-Partial Surfaces Kept Honest
 
 The following routes exist in the backend but still return `501 partial` or otherwise remain unsupported in a tenant-safe SaaS contract:
 
-- chat search
 - message history search
-- media send
-- audio send
 - SQS
 - Chatwoot
 - OpenAI resource CRUD
@@ -63,11 +62,12 @@ Frontend handling after this sync:
 - `/manager/instance/:instanceId/websocket`
 - `/manager/instance/:instanceId/rabbitmq`
 - `/manager/instance/:instanceId/proxy`
+- `/manager/instance/:instanceId/chat`
+- `/manager/instance/:instanceId/chat/:remoteJid`
+  - active as a readiness shell, not as full history parity
 
 ### Guarded placeholders
 
-- `/manager/instance/:instanceId/chat`
-- `/manager/instance/:instanceId/chat/:remoteJid`
 - `/manager/instance/:instanceId/sqs`
 - `/manager/instance/:instanceId/chatwoot`
 - `/manager/instance/:instanceId/openai`
@@ -94,19 +94,20 @@ Frontend handling after this sync:
 - Dashboard now shows an operational status overview chart using real instance status data from the backend.
 - Dashboard now explicitly warns when aggregate counters are backend-limited instead of implying those numbers are trustworthy.
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
+- Chat routes now use a real readiness shell backed by tenant-safe chat list data.
+- Chat shell composers now prepare text, media, and audio sending through current SaaS routes while keeping history honest.
 
 ### API / adapter alignment
 
 - Shared API error handling now includes clearer `404` and `429` messages.
 - Text-message delivery state stays aligned with the async backend contract introduced on the instance dashboard flow.
+- Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
 
 ## Remaining Gaps
 
 ### Blocked by backend
 
-- chat inbox parity
-- thread view parity
-- media/audio send parity
+- message history parity
 - Kafka surface
 - integration CRUD parity for Chatwoot, OpenAI, Typebot, Dify, N8N, EvoAI, Evolution Bot, and Flowise
 - richer aggregate analytics

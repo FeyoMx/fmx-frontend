@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend parity audit in `docs/frontend-parity-report.md`
 - Guarded placeholder routes for unsupported upstream surfaces such as chat inbox, embed chat, SQS, Chatwoot, and legacy AI/integration suites
 - Operational instance status charting on the main dashboard using tenant-safe backend instance data
+- Chat readiness shell module with prepared conversation panel, message list, composer, capability status, and empty-state components
+- Tenant-safe chat query adapters for chat list, future message history, and text/media/audio send flows
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -48,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend integration docs were rewritten against the current backend route registry
 - Dashboard now distinguishes real operational metrics from backend-limited aggregate counters instead of implying full analytics parity
 - Unsupported deep links now land on explanatory placeholders instead of silently redirecting away from the requested surface
+- Instance chat routes now resolve to a readiness shell backed by the real chat-list route while message history remains honestly blocked behind backend capability detection
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -60,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AI instance settings now call `/ai/instances/:instanceID` instead of the stale singular route
 - Instance text-message action now falls back to the standard unsupported-feature UI when the backend returns `501`
 - Shared API error parsing now includes clearer `404` and `429` feedback
+- Chat architecture no longer depends on legacy `instanceName` chat contracts for the future SaaS-ready shell
 
 ### Removed
 - Unused legacy `apiLegacy` client
