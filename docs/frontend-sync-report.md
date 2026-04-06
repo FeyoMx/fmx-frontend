@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-05.
+Updated on 2026-04-06.
 
 ## Scope
 
@@ -23,14 +23,13 @@ Updated on 2026-04-05.
 - broadcast jobs
 - tenant AI settings
 - text-only instance messaging with async status polling
-- tenant-safe chat list through the new chat readiness shell
-- tenant-safe media/audio send wiring inside the chat readiness shell
+- tenant-safe chat list and conversation history on supported instance chat routes
+- tenant-safe media/audio send wiring inside the active conversation composer
 
 ## Backend-Partial Surfaces Kept Honest
 
 The following routes exist in the backend but still return `501 partial` or otherwise remain unsupported in a tenant-safe SaaS contract:
 
-- message history search
 - SQS
 - Chatwoot
 - OpenAI resource CRUD
@@ -64,7 +63,7 @@ Frontend handling after this sync:
 - `/manager/instance/:instanceId/proxy`
 - `/manager/instance/:instanceId/chat`
 - `/manager/instance/:instanceId/chat/:remoteJid`
-  - active as a readiness shell, not as full history parity
+  - active as a real conversation route backed by message history search
 
 ### Guarded placeholders
 
@@ -94,8 +93,8 @@ Frontend handling after this sync:
 - Dashboard now shows an operational status overview chart using real instance status data from the backend.
 - Dashboard now explicitly warns when aggregate counters are backend-limited instead of implying those numbers are trustworthy.
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
-- Chat routes now use a real readiness shell backed by tenant-safe chat list data.
-- Chat shell composers now prepare text, media, and audio sending through current SaaS routes while keeping history honest.
+- Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
+- Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 
 ### API / adapter alignment
 
@@ -107,7 +106,9 @@ Frontend handling after this sync:
 
 ### Blocked by backend
 
-- message history parity
+- historical backfill for older chat sessions
+- full inbound history completeness when runtime events were not captured
+- complete media preview/download metadata for all stored messages
 - Kafka surface
 - integration CRUD parity for Chatwoot, OpenAI, Typebot, Dify, N8N, EvoAI, Evolution Bot, and Flowise
 - richer aggregate analytics

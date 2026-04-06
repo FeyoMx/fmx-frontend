@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operational instance status charting on the main dashboard using tenant-safe backend instance data
 - Chat readiness shell module with prepared conversation panel, message list, composer, capability status, and empty-state components
 - Tenant-safe chat query adapters for chat list, future message history, and text/media/audio send flows
+- Real tenant-safe chat conversation route on `/manager/instance/:instanceId/chat/:remoteJid` backed by `POST /instance/:id/messages/search`
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -50,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend integration docs were rewritten against the current backend route registry
 - Dashboard now distinguishes real operational metrics from backend-limited aggregate counters instead of implying full analytics parity
 - Unsupported deep links now land on explanatory placeholders instead of silently redirecting away from the requested surface
-- Instance chat routes now resolve to a readiness shell backed by the real chat-list route while message history remains honestly blocked behind backend capability detection
+- Instance chat routes now resolve to a real conversation view backed by tenant-safe chat list and message history routes
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -64,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instance text-message action now falls back to the standard unsupported-feature UI when the backend returns `501`
 - Shared API error parsing now includes clearer `404` and `429` feedback
 - Chat architecture no longer depends on legacy `instanceName` chat contracts for the future SaaS-ready shell
+- Chat conversation rendering now tolerates partial message payloads while exposing timestamps, direction, status, and available media/audio metadata
 
 ### Removed
 - Unused legacy `apiLegacy` client

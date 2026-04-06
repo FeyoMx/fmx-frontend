@@ -1,4 +1,5 @@
 import { ChangeEvent, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 import { getApiErrorMessage } from "@/lib/queries/errors";
-import { fetchTenantChatTextStatus, useTenantChatAudio, useTenantChatMedia, useTenantChatText } from "@/lib/queries/chat/tenantChat";
-import { ChatCapabilities, ChatSendResult } from "@/lib/queries/chat/types";
+import { chatHistoryKey, fetchTenantChatTextStatus, useTenantChatAudio, useTenantChatMedia, useTenantChatText } from "@/lib/queries/chat/tenantChat";
+import { ChatCapabilities, ChatHistoryMessage, ChatHistoryResponse, ChatSendResult } from "@/lib/queries/chat/types";
 
 type ComposerFeedbackStatus = "queued" | "sending" | "provider_sent" | "delivered" | "read" | "success" | "error";
 
@@ -59,11 +60,14 @@ function ChatComposer({
   instanceId,
   remoteJid,
   capabilities,
+  onMessageSent,
 }: {
   instanceId: string;
   remoteJid: string;
   capabilities: ChatCapabilities;
+  onMessageSent?: (message: ChatHistoryMessage) => void;
 }) {
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<"text" | "media" | "audio">("text");
   const [text, setText] = useState("");
   const [caption, setCaption] = useState("");
@@ -78,11 +82,52 @@ function ChatComposer({
   const recipientNumber = useMemo(() => remoteJid.split("@")[0] ?? "", [remoteJid]);
   const parsedDelay = Number.parseInt(delay, 10);
 
+  const appendMessage = (message: ChatHistoryMessage) => {
+    onMessageSent?.(message);
+    queryClient.setQueryData<ChatHistoryResponse>(chatHistoryKey(instanceId, remoteJid), (current) => {
+      const next = current ? [...current.filter((item) => item.id !== message.id), message] : [message];
+      return next.sort((left, right) => {
+        const leftTime = left.timestamp ? new Date(left.timestamp).getTime() : 0;
+        const rightTime = right.timestamp ? new Date(right.timestamp).getTime() : 0;
+        return leftTime - rightTime;
+      });
+    });
+  };
+
+  const invalidateHistory = () => queryClient.invalidateQueries({ queryKey: chatHistoryKey(instanceId, remoteJid) });
+
+  const createLocalMessage = (overrides: Partial<ChatHistoryMessage>): ChatHistoryMessage => ({
+    id: overrides.id || `local-${Date.now()}`,
+    remoteJid,
+    fromMe: true,
+    pushName: "You",
+    messageType: overrides.messageType || "conversation",
+    contentType: overrides.contentType || "text",
+    text: overrides.text || "",
+    caption: overrides.caption,
+    fileName: overrides.fileName,
+    mimeType: overrides.mimeType,
+    mediaUrl: overrides.mediaUrl,
+    status: overrides.status,
+    timestamp: overrides.timestamp || new Date().toISOString(),
+    isPartial: overrides.isPartial ?? false,
+    raw: overrides.raw ?? null,
+  });
+
   const handleTextSend = async () => {
     if (!text.trim()) {
       toast.error("Write a message before sending.");
       return;
     }
+
+    const localMessageId = `local-text-${Date.now()}`;
+    appendMessage(
+      createLocalMessage({
+        id: localMessageId,
+        text: text.trim(),
+        status: "queued",
+      }),
+    );
 
     try {
       setFeedback({
@@ -108,6 +153,13 @@ function ChatComposer({
           const status = await fetchTenantChatTextStatus(response.status_endpoint);
 
           if (status.status === "failed") {
+            appendMessage(
+              createLocalMessage({
+                id: status.message_id || localMessageId,
+                text: text.trim(),
+                status: "failed",
+              }),
+            );
             setFeedback({
               status: "error",
               title: "Error al enviar",
@@ -117,6 +169,14 @@ function ChatComposer({
           }
 
           if (status.delivery_status === "read") {
+            appendMessage(
+              createLocalMessage({
+                id: status.message_id || localMessageId,
+                text: text.trim(),
+                status: "read",
+                timestamp: status.read_at || new Date().toISOString(),
+              }),
+            );
             setFeedback({
               status: "read",
               title: "Leído",
@@ -127,6 +187,14 @@ function ChatComposer({
           }
 
           if (status.delivery_status === "delivered" || status.delivery_confirmed) {
+            appendMessage(
+              createLocalMessage({
+                id: status.message_id || localMessageId,
+                text: text.trim(),
+                status: "delivered",
+                timestamp: status.delivered_at || new Date().toISOString(),
+              }),
+            );
             setFeedback({
               status: "delivered",
               title: "Entregado",
@@ -137,6 +205,13 @@ function ChatComposer({
           }
 
           if (status.delivery_status === "sent") {
+            appendMessage(
+              createLocalMessage({
+                id: status.message_id || localMessageId,
+                text: text.trim(),
+                status: "sent",
+              }),
+            );
             setFeedback({
               status: "provider_sent",
               title: "Enviado al proveedor",
@@ -146,6 +221,13 @@ function ChatComposer({
           }
 
           if (status.status === "running") {
+            appendMessage(
+              createLocalMessage({
+                id: status.message_id || localMessageId,
+                text: text.trim(),
+                status: "running",
+              }),
+            );
             setFeedback({
               status: "sending",
               title: "Enviando",
@@ -158,24 +240,34 @@ function ChatComposer({
         setFeedback({
           status: "provider_sent",
           title: "Seguimiento pendiente",
-          detail: "The message send is still in progress. History will surface here automatically once backend message retrieval becomes available.",
+          detail: "The message send is still in progress. The thread will refresh again as delivery state settles.",
         });
         setText("");
+        void invalidateHistory();
         return;
       }
 
+      appendMessage(
+        createLocalMessage({
+          id: response.message_id || localMessageId,
+          text: text.trim(),
+          status: response.delivery_status || (response.sent ? "sent" : "queued"),
+        }),
+      );
       setFeedback({
         status: "success",
         title: "Message accepted",
         detail: response.message,
       });
       setText("");
+      void invalidateHistory();
     } catch (error) {
       setFeedback({
         status: "error",
         title: "Error al enviar",
         detail: getApiErrorMessage(error, "Unable to send text message."),
       });
+      void invalidateHistory();
     }
   };
 
@@ -201,9 +293,25 @@ function ChatComposer({
         },
       });
 
+      appendMessage(
+        createLocalMessage({
+          id: result.message_id || `local-media-${Date.now()}`,
+          messageType: `${mediaType}Message`,
+          contentType: mediaType === "document" ? "document" : mediaType,
+          text: caption.trim(),
+          caption: caption.trim() || undefined,
+          fileName: mediaFile.name,
+          mimeType: mediaFile.type,
+          mediaUrl: URL.createObjectURL(mediaFile),
+          status: "sent",
+          isPartial: true,
+          raw: result,
+        }),
+      );
       setFeedback(buildSendResultFeedback(result, "Media sent"));
       setMediaFile(null);
       setCaption("");
+      void invalidateHistory();
     } catch (error) {
       setFeedback({
         status: "error",
@@ -230,8 +338,22 @@ function ChatComposer({
         },
       });
 
+      appendMessage(
+        createLocalMessage({
+          id: result.message_id || `local-audio-${Date.now()}`,
+          messageType: "audioMessage",
+          contentType: "audio",
+          fileName: audioFile.name,
+          mimeType: audioFile.type,
+          mediaUrl: URL.createObjectURL(audioFile),
+          status: "sent",
+          isPartial: true,
+          raw: result,
+        }),
+      );
       setFeedback(buildSendResultFeedback(result, "Audio sent"));
       setAudioFile(null);
+      void invalidateHistory();
     } catch (error) {
       setFeedback({
         status: "error",

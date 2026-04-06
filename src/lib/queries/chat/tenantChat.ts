@@ -22,8 +22,8 @@ type SendTextResponse = InstanceTextMessageResult & {
   httpStatus: number;
 };
 
-const chatThreadsKey = (instanceId?: string, search?: string) => ["chat", "threads", instanceId ?? "", search ?? ""];
-const chatHistoryKey = (instanceId?: string, remoteJid?: string) => ["chat", "history", instanceId ?? "", remoteJid ?? ""];
+export const chatThreadsKey = (instanceId?: string, search?: string) => ["chat", "threads", instanceId ?? "", search ?? ""];
+export const chatHistoryKey = (instanceId?: string, remoteJid?: string) => ["chat", "history", instanceId ?? "", remoteJid ?? ""];
 
 const buildChatListPayload = (search: string): ChatHistorySearchPayload => ({
   where: search.trim() ? { query: search.trim() } : {},
@@ -190,7 +190,7 @@ export const useTenantChatAudio = () => {
 
 export const getChatHistoryCapabilityMessage = (error: unknown): string => {
   if (!error) {
-    return "Conversation history will unlock here as soon as the backend starts returning tenant-safe Message[] history.";
+    return "Conversation history is active for this route. Older or inbound messages may still be missing when the runtime never captured them.";
   }
 
   return getApiErrorMessage(error, "Conversation history is still unavailable.");

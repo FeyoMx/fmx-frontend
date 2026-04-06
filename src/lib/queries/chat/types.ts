@@ -27,8 +27,15 @@ export type ChatHistoryMessage = {
   fromMe: boolean;
   pushName: string;
   messageType: string;
+  contentType: "text" | "image" | "video" | "audio" | "document" | "unknown";
   text: string;
+  caption?: string;
+  fileName?: string;
+  mimeType?: string;
+  mediaUrl?: string;
+  status?: string;
   timestamp: string;
+  isPartial: boolean;
   raw: unknown;
 };
 

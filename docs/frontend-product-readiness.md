@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-05.
+Updated on 2026-04-06.
 
 ## Summary
 
@@ -15,7 +15,7 @@ The frontend is product-usable for the tenant-safe SaaS workflows that the curre
 - broadcast jobs
 - tenant AI settings
 - text outbound messaging with backend-truth async delivery polling
-- chat readiness shell with real chat list plus media/audio/text composer wiring
+- active chat conversation routes with real list/detail history plus media/audio/text composer wiring
 
 It is not yet a full replacement for the upstream Evolution Manager v2 experience because several legacy chat and integration surfaces still rely on backend `501 partial` routes or have no tenant-safe SaaS implementation yet.
 
@@ -55,9 +55,10 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/instance/:instanceId/proxy`
 - `/manager/instance/:instanceId/chat`
   - real tenant-safe chat list
-  - thread-ready shell architecture
+  - real conversation detail route on `/manager/instance/:instanceId/chat/:remoteJid`
+  - normalized history loaded from `POST /instance/:id/messages/search`
   - text, media, and audio composers already pointed at SaaS routes
-  - conversation history still disabled until backend `messages/search` becomes truthful
+  - honest empty/error states when persisted history is missing or partial
 
 ## What Is Only Partial
 
@@ -78,11 +79,15 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - reflects true async delivery state now
 - still does not provide the upstream inbox/thread experience
 
-### Chat shell
+### Chat conversations
 
-- thread list is now backed by the current tenant-safe backend route
-- text, media, and audio sending are already reusable inside the shell
-- conversation history panel is prepared but remains backend-blocked
+- thread list is backed by the current tenant-safe backend route
+- conversation history is active and rendered from the tenant-safe backend route
+- outbound text, media, and audio actions refresh or append safely inside the active thread
+- remaining limits are backend-driven:
+- no historical backfill for older sessions
+- inbound history completeness depends on runtime event capture
+- media history may be partial when preview/download metadata is missing
 
 ## What Is Intentionally Gated
 
@@ -99,13 +104,12 @@ These routes now show a guarded unsupported placeholder instead of silently redi
 - Flowise
 - embed chat
 
-Chat inbox routes are no longer hard placeholders. They now resolve to a readiness shell that stays honest about missing history support.
+Chat inbox routes are no longer hard placeholders. They now resolve to a real conversation experience that stays honest about history completeness limits.
 
 This keeps old bookmarks and upstream page surface references from breaking while still being honest about backend reality.
 
 ## Backend-Driven Blockers
 
-- tenant-safe message history/search API
 - tenant-safe support for Chatwoot, SQS, and legacy AI/integration CRUD suites
 - richer aggregate metrics for messages, contacts, and broadcasts
 - Kafka support
@@ -119,7 +123,8 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - connector configuration for webhook/websocket/rabbitmq/proxy
   - CRM-lite usage
   - text/media/audio outbound dispatch from supported instance surfaces
+  - tenant-safe chat list/detail conversation handling on supported instance chat routes
 - Not yet suitable for:
   - full upstream-manager parity
-  - production chat history operations
+  - chat parity for older sessions that were never captured by the runtime
   - legacy integration management parity

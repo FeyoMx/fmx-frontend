@@ -31,7 +31,20 @@ function ChatShell() {
     search,
   });
 
-  const activeThread = useMemo<ChatThread | null>(() => threads?.find((thread) => thread.remoteJid === remoteJid) ?? null, [remoteJid, threads]);
+  const activeThread = useMemo<ChatThread | null>(() => {
+    const matched = threads?.find((thread) => thread.remoteJid === remoteJid) ?? null;
+    if (matched || !remoteJid) {
+      return matched;
+    }
+
+    return {
+      id: remoteJid,
+      remoteJid,
+      pushName: remoteJid.split("@")[0] || "Unknown contact",
+      profilePicUrl: "",
+      labels: [],
+    };
+  }, [remoteJid, threads]);
 
   const {
     data: historyMessages,
@@ -65,8 +78,8 @@ function ChatShell() {
           <Card className="h-full rounded-r-none border-r-0">
             <CardHeader className="space-y-4">
               <div>
-                <CardTitle>Chat readiness shell</CardTitle>
-                <p className="text-sm text-muted-foreground">Prepared for real history activation. Honest until backend message history becomes tenant-safe.</p>
+                <CardTitle>Chats</CardTitle>
+                <p className="text-sm text-muted-foreground">Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID.</p>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -127,6 +140,7 @@ function ChatShell() {
                 activeThread={activeThread}
                 capabilities={capabilities}
                 historyMessages={historyMessages}
+                historyLoading={historyLoading}
                 historyError={historyError}
               />
             )}

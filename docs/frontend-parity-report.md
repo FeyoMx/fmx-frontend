@@ -24,7 +24,6 @@ This report measures parity against the upstream manager experience, but only co
   - CRM contacts
   - tenant AI settings
 - Product-visible legacy surfaces remain unavailable because the backend still returns `501 partial` or does not expose tenant-safe equivalents:
-  - message history/search
   - Chatwoot
   - SQS
   - OpenAI resource CRUD
@@ -35,7 +34,7 @@ This report measures parity against the upstream manager experience, but only co
   - Evolution Bot
   - Flowise
 - Frontend parity work this pass focused on:
-  - a chat readiness shell backed by the real chat-list route
+  - a real chat conversation route backed by tenant-safe chat list and message history routes
   - honest route-level placeholders instead of silent redirects
   - stronger dashboard operational visibility using real backend-supported status data
   - stricter shared error handling for `404` and `429`
@@ -47,10 +46,10 @@ This report measures parity against the upstream manager experience, but only co
 | Dashboard | rich instance cards, counts, charts | `GET /dashboard/metrics` plus `GET /instance` implemented | live dashboard, instance list, new status overview chart, honest metric caveats | partial | Instance counts are real; non-instance counters are still backend-limited placeholders. |
 | Instance list/detail | full list and instance dashboard | tenant-safe CRUD + detail/status/qr/settings implemented | enabled | near parity | Main operational flows are usable; edit-in-place and deeper analytics are still leaner than upstream. |
 | QR / pairing / status | supported | connect, disconnect, status, qr/qrcode implemented | enabled | parity | Current UI handles QR image/text and pairing code flows. |
-| Chat inbox | full inbox and thread browsing | chat list works, message history still `501 partial` | readiness shell enabled on chat routes | partial | The new shell uses real chat list data but keeps thread history honest until backend parity lands. |
-| Chat search / message history | supported upstream | `POST /instance/:id/chats/search` works, `POST /instance/:id/messages/search` is still `501 partial` | chat list active, history still gated inside shell | blocked by backend | Architecture is prepared so real conversation view can activate with minimal code changes once history becomes truthful. |
-| Text messaging | text send from chat and instance surfaces | `POST /instance/:id/messages/text` and status polling endpoint implemented | enabled on instance dashboard and chat shell composer | partial | Functional for text-only sending with async delivery feedback. |
-| Media / audio messaging | upstream supports both | media/audio SaaS routes implemented | enabled in chat shell composer | partial | Sending is real, but full parity still needs message history and conversation rendering. |
+| Chat inbox | full inbox and thread browsing | `POST /instance/:id/chats/search` and `POST /instance/:id/messages/search` implemented | active list/detail conversation flow on chat routes | partial | Real thread browsing is live, but older sessions are not historically backfilled and inbound completeness depends on runtime capture. |
+| Chat search / message history | supported upstream | `POST /instance/:id/chats/search` and `POST /instance/:id/messages/search` implemented | chat list and normalized history are active | partial | Thread rendering is real, but partial backend payloads still limit historical completeness and some media metadata. |
+| Text messaging | text send from chat and instance surfaces | `POST /instance/:id/messages/text` and status polling endpoint implemented | enabled on instance dashboard and active chat composer | partial | Functional with async delivery feedback and safe local refresh/append inside the active conversation. |
+| Media / audio messaging | upstream supports both | media/audio SaaS routes implemented | enabled in the active chat composer | partial | Sending is real and thread rendering shows available metadata, but historical media previews depend on backend-provided URLs/fields. |
 | Webhook | supported | implemented | enabled | parity | Tenant-safe CRUD is live. |
 | Websocket | supported | implemented | enabled | parity | Current page works and preserves `501` handling. |
 | RabbitMQ | supported | implemented | enabled | parity | Current page works and preserves `501` handling. |
@@ -93,19 +92,17 @@ This report measures parity against the upstream manager experience, but only co
 - Instance dashboard text messaging
   - async polling now reflects backend truth
   - still not a full chat/inbox experience
-- Chat readiness shell
-  - tenant-safe chat list is now live on `/manager/instance/:instanceId/chat`
-  - text, media, and audio composers already use SaaS routes
-  - message history stays backend-blocked until `messages/search` becomes truthful
+- Chat conversation route
+  - tenant-safe chat list is live on `/manager/instance/:instanceId/chat`
+  - `/manager/instance/:instanceId/chat/:remoteJid` now loads normalized message history from `POST /instance/:id/messages/search`
+  - text, media, and audio composers refresh the active thread safely after send
+  - older sessions are not backfilled and inbound/media completeness still depends on captured runtime metadata
 - API keys
   - intentionally informational only because backend supports API-key auth but not API-key CRUD routes
 
 ## Pages / Features Missing
 
 - Kafka configuration page
-- tenant-safe chat inbox
-- tenant-safe message history browser
-- tenant-safe media/audio send UI
 - upstream-style integration CRUD editors backed by real SaaS storage/runtime
 - embed chat experience
 
@@ -132,15 +129,18 @@ This report measures parity against the upstream manager experience, but only co
 
 These routes now resolve to a shared unsupported placeholder with backend-accurate copy instead of silently redirecting users back to the dashboard.
 
-Chat routes are no longer full placeholders. They now resolve to a readiness shell that:
+Chat routes are no longer placeholders. They now resolve to a real conversation experience that:
 
 - uses the tenant-safe chat list route
-- keeps message history honest while it is still backend-partial
+- uses the tenant-safe message history route as the thread source of truth
 - exposes text, media, and audio composers through the supported SaaS routes
+- stays honest about remaining gaps:
+- no historical backfill for older sessions
+- inbound history completeness depends on runtime event capture
+- media history can still be partial when the backend omits preview/download metadata
 
 ## Pages Blocked By Backend
 
-- Message history
 - SQS
 - Chatwoot
 - Kafka
@@ -165,15 +165,13 @@ Remaining frontend-only gaps are UX depth rather than route availability:
 
 ## Recommended Order To Close Remaining Parity Gaps
 
-1. Backend-first: tenant-safe chat repository and search APIs
-   - unlock inbox, thread view, search, and message history
-2. Backend-first: tenant-safe media/audio send routes
-   - unlock the biggest visible messaging gap versus upstream
+1. Backend-first: improve chat history persistence and backfill strategy
+   - older sessions still do not retroactively appear
+2. Backend-first: enrich inbound/media event capture and preview metadata
+   - unlock more complete thread parity and media rendering
 3. Backend-first: decide which integration suites will be truly supported in SaaS
    - Chatwoot, SQS, OpenAI CRUD, Typebot, Dify, N8N, EvoAI, Evolution Bot, Flowise
-4. Frontend-next: once chat APIs exist, revive inbox and thread pages from gated placeholder state
-5. Frontend-next: once media/audio APIs exist, extend the current text composer into upstream-like send flows
-6. Frontend-next: keep improving dashboard operational reporting
+4. Frontend-next: keep improving dashboard operational reporting
    - status trends
    - last sync timestamps
    - per-instance health summaries

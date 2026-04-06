@@ -12,6 +12,23 @@ const readBoolean = (value: unknown): boolean => {
   return typeof value === "boolean" ? value : false;
 };
 
+const readNumber = (value: unknown): number | undefined => {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+};
+
+const firstString = (...values: unknown[]): string => {
+  for (const value of values) {
+    const parsed = readString(value);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return "";
+};
+
+const extractMessageRecord = (message: unknown): Record<string, unknown> => asRecord(message) ?? {};
+
 const extractMessageText = (message: unknown): string => {
   if (!message) {
     return "";
@@ -52,6 +69,87 @@ const extractMessageText = (message: unknown): string => {
   }
 
   return readString(record.text);
+};
+
+const detectContentType = (messageType: string, message: unknown): ChatHistoryMessage["contentType"] => {
+  const record = extractMessageRecord(message);
+
+  if (record.imageMessage || messageType === "imageMessage") {
+    return "image";
+  }
+
+  if (record.videoMessage || messageType === "videoMessage") {
+    return "video";
+  }
+
+  if (record.audioMessage || messageType === "audioMessage") {
+    return "audio";
+  }
+
+  if (record.documentMessage || messageType === "documentMessage") {
+    return "document";
+  }
+
+  if (extractMessageText(message)) {
+    return "text";
+  }
+
+  return "unknown";
+};
+
+const extractMediaDetails = (
+  messageType: string,
+  message: unknown,
+): Pick<ChatHistoryMessage, "caption" | "fileName" | "mimeType" | "mediaUrl" | "isPartial"> => {
+  const record = extractMessageRecord(message);
+  const image = asRecord(record.imageMessage);
+  const video = asRecord(record.videoMessage);
+  const audio = asRecord(record.audioMessage);
+  const document = asRecord(record.documentMessage);
+  const selected = image ?? video ?? audio ?? document ?? {};
+
+  const mimeType = firstString(selected.mimetype, selected.mimeType, record.mimetype, record.mimeType);
+  const mediaUrl = firstString(
+    record.mediaUrl,
+    record.url,
+    selected.url,
+    selected.mediaUrl,
+    selected.directPath,
+    selected.thumbnailDirectPath,
+  );
+  const caption = firstString(selected.caption, record.caption);
+  const fileName = firstString(selected.fileName, selected.title, record.fileName, messageType === "audioMessage" ? "Audio" : undefined);
+  const hasPartialMedia =
+    messageType === "imageMessage" || messageType === "videoMessage" || messageType === "audioMessage" || messageType === "documentMessage"
+      ? !mediaUrl
+      : false;
+
+  return {
+    caption: caption || undefined,
+    fileName: fileName || undefined,
+    mimeType: mimeType || undefined,
+    mediaUrl: mediaUrl || undefined,
+    isPartial: hasPartialMedia,
+  };
+};
+
+const normalizeStatus = (record: Record<string, unknown>): string | undefined => {
+  const status = firstString(record.status, record.delivery_status, record.messageStatus);
+  if (status) {
+    return status;
+  }
+
+  const ack = readNumber(record.statusAck) ?? readNumber(record.ack);
+  switch (ack) {
+    case 1:
+      return "sent";
+    case 2:
+      return "delivered";
+    case 3:
+      return "read";
+    default:
+      return undefined;
+  }
 };
 
 const normalizeTimestamp = (value: unknown): string => {
@@ -106,15 +204,25 @@ const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {
     const record = asRecord(item) ?? {};
     const key = asRecord(record.key) ?? {};
     const message = record.message;
+    const messageType = readString(record.messageType) || "unknown";
+    const media = extractMediaDetails(messageType, message);
+    const text = extractMessageText(message);
 
     return {
       id: readString(record.id) || readString(key.id) || `message-${index}`,
       remoteJid: readString(key.remoteJid),
       fromMe: readBoolean(key.fromMe),
       pushName: readString(record.pushName),
-      messageType: readString(record.messageType) || "unknown",
-      text: extractMessageText(message),
+      messageType,
+      contentType: detectContentType(messageType, message),
+      text,
+      caption: media.caption,
+      fileName: media.fileName,
+      mimeType: media.mimeType,
+      mediaUrl: media.mediaUrl,
+      status: normalizeStatus(record),
       timestamp: normalizeTimestamp(record.messageTimestamp),
+      isPartial: media.isPartial || (!text && messageType === "unknown"),
       raw: item,
     } satisfies ChatHistoryMessage;
   });
