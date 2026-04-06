@@ -1,4 +1,4 @@
-import { AdvancedSettings, InstanceTextMessageInput, InstanceTextMessageResult, NewInstance } from "@/types/evolution.types";
+import { AdvancedSettings, InstanceTextMessageInput, InstanceTextMessageJobStatus, InstanceTextMessageResult, NewInstance } from "@/types/evolution.types";
 
 import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
@@ -108,12 +108,12 @@ interface SendTextMessageParams {
 }
 
 type SendTextMessageResponse = {
+  httpStatus: number;
   message: string;
   instance_id: string;
   instanceName: string;
   engine_instance_id?: string;
-  data: InstanceTextMessageResult;
-};
+} & InstanceTextMessageResult;
 
 const sendTextMessage = async ({ instanceId, data }: SendTextMessageParams) => {
   const payload = {
@@ -123,6 +123,14 @@ const sendTextMessage = async ({ instanceId, data }: SendTextMessageParams) => {
   };
 
   const response = await apiGlobal.post<SendTextMessageResponse>(`/instance/${instanceId}/messages/text`, payload);
+  return {
+    ...response.data,
+    httpStatus: response.status,
+  };
+};
+
+const getTextMessageJobStatus = async (statusEndpoint: string) => {
+  const response = await apiGlobal.get<InstanceTextMessageJobStatus>(statusEndpoint);
   return response.data;
 };
 
@@ -196,6 +204,8 @@ export function useInstanceStatus(instanceId: string) {
     refetchIntervalInBackground: true,
   });
 }
+
+export { getTextMessageJobStatus };
 
 /*
 Usage Examples:
