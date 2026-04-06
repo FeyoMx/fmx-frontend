@@ -1,14 +1,17 @@
-import { ChevronsUpDown, CircleUser, Cog, MessageCircle, RefreshCw, Users, Zap, MessageSquare } from "lucide-react";
+import { Activity, ChevronsUpDown, CircleAlert, CircleUser, Cog, MessageCircle, RefreshCw, Users, Zap, MessageSquare } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts";
 
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -32,6 +35,13 @@ interface DashboardMetrics {
   activeInstances: number;
   inactiveInstances: number;
 }
+
+const statusChartConfig = {
+  count: {
+    label: "Instances",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig;
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -104,6 +114,55 @@ function Dashboard() {
     return instancesList;
   }, [instances, nameSearch, searchStatus]);
 
+  const statusBreakdown = useMemo(() => {
+    const summary = {
+      open: 0,
+      attention: 0,
+      disconnected: 0,
+      other: 0,
+    };
+
+    (instances ?? []).forEach((instance) => {
+      const status = instance.connectionStatus;
+
+      if (status === "open") {
+        summary.open += 1;
+        return;
+      }
+
+      if (status === "connecting" || status === "qrcode") {
+        summary.attention += 1;
+        return;
+      }
+
+      if (status === "close" || status === "disconnected") {
+        summary.disconnected += 1;
+        return;
+      }
+
+      summary.other += 1;
+    });
+
+    return [
+      { key: "open", label: "Open", count: summary.open, color: "#15803d" },
+      { key: "attention", label: "Connecting / QR", count: summary.attention, color: "#d97706" },
+      { key: "disconnected", label: "Disconnected", count: summary.disconnected, color: "#dc2626" },
+      { key: "other", label: "Other", count: summary.other, color: "#475569" },
+    ];
+  }, [instances]);
+
+  const operationalSummary = useMemo(() => {
+    const needsAction = statusBreakdown.find((item) => item.key === "attention")?.count ?? 0;
+    const disconnected = statusBreakdown.find((item) => item.key === "disconnected")?.count ?? 0;
+    const active = statusBreakdown.find((item) => item.key === "open")?.count ?? 0;
+
+    return {
+      active,
+      needsAction,
+      disconnected,
+    };
+  }, [statusBreakdown]);
+
   const instanceStatus = [
     { value: "all", label: t("status.all") },
     { value: "close", label: t("status.closed") },
@@ -117,6 +176,14 @@ function Dashboard() {
         <h1 className="text-3xl font-bold mb-1">{t("dashboard.welcome") || "Welcome back"}</h1>
         <p className="text-gray-600">{tenant?.name}</p>
       </div>
+
+      <Alert className="mb-6">
+        <CircleAlert className="h-4 w-4" />
+        <AlertTitle>Operational metrics are live; aggregate counters are still backend-limited.</AlertTitle>
+        <AlertDescription>
+          Instance totals and status distribution are trustworthy today. Message, contact, and broadcast counters still depend on backend aggregation work and may stay at zero until that lands.
+        </AlertDescription>
+      </Alert>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -138,7 +205,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{(metrics.totalMessages ?? 0).toLocaleString()}</div>
-            <p className="text-xs text-gray-600">{t("dashboard.metrics.thisMonth") || "This month"}</p>
+            <p className="text-xs text-gray-600">Backend aggregation pending</p>
           </CardContent>
         </Card>
 
@@ -149,7 +216,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{(metrics.totalContacts ?? 0).toLocaleString()}</div>
-            <p className="text-xs text-gray-600">{t("dashboard.metrics.synced") || "synced from backend"}</p>
+            <p className="text-xs text-gray-600">Currently backend-limited</p>
           </CardContent>
         </Card>
 
@@ -160,7 +227,64 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{(metrics.totalBroadcasts ?? 0).toLocaleString()}</div>
-            <p className="text-xs text-gray-600">{tenant?.name}</p>
+            <p className="text-xs text-gray-600">Job-level snapshot only</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] mb-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium">Instance status overview</h3>
+                <p className="text-xs text-muted-foreground">Live distribution from tenant-scoped instance status snapshots</p>
+              </div>
+              <Activity className="h-4 w-4 text-gray-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={statusChartConfig} className="h-[240px] w-full">
+              <BarChart accessibilityLayer data={statusBreakdown} layout="vertical" margin={{ left: 8, right: 24 }}>
+                <CartesianGrid horizontal={false} />
+                <YAxis dataKey="label" type="category" axisLine={false} tickLine={false} width={110} />
+                <XAxis dataKey="count" type="number" allowDecimals={false} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Bar dataKey="count" radius={8}>
+                  {statusBreakdown.map((entry) => (
+                    <Cell key={entry.key} fill={entry.color} />
+                  ))}
+                  <LabelList dataKey="count" position="right" />
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h3 className="text-sm font-medium">Operator focus</h3>
+            <p className="text-xs text-muted-foreground">What needs attention right now in this tenant</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Active</div>
+                <div className="text-2xl font-semibold">{operationalSummary.active}</div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Needs QR / connect</div>
+                <div className="text-2xl font-semibold">{operationalSummary.needsAction}</div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">Disconnected</div>
+                <div className="text-2xl font-semibold">{operationalSummary.disconnected}</div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              The current SaaS backend already supports instance lifecycle, QR/pairing, webhook/websocket/rabbitmq/proxy, and text-only outbound messaging. Chat history, media/audio sending, and legacy integration suites stay gated until their tenant-safe APIs are complete.
+            </div>
           </CardContent>
         </Card>
       </div>

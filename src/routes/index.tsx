@@ -1,7 +1,8 @@
-import { Navigate, createBrowserRouter, useParams } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "@/components/providers/protected-route";
 import PublicRoute from "@/components/providers/public-route";
+import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 
 import { InstanceLayout } from "@/layout/InstanceLayout";
 import { MainLayout } from "@/layout/MainLayout";
@@ -20,10 +21,21 @@ import { Websocket } from "@/pages/instance/Websocket";
 import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 
-function RedirectToInstanceDashboard() {
-  const { instanceId } = useParams<{ instanceId: string }>();
+function InstancePlaceholderRoute({ title, description }: { title: string; description: string }) {
+  return (
+    <UnsupportedInstanceFeature
+      title={title}
+      description={description}
+    />
+  );
+}
 
-  return <Navigate to={instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"} replace />;
+function ManagerPlaceholderRoute({ title, description }: { title: string; description: string }) {
+  return (
+    <MainLayout>
+      <UnsupportedInstanceFeature title={title} description={description} />
+    </MainLayout>
+  );
 }
 
 const router = createBrowserRouter([
@@ -104,7 +116,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Chat inbox not available yet"
+            description="The current SaaS backend still returns partial responses for tenant-safe chat search and message history, so this route stays gated instead of showing a broken inbox."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -114,7 +129,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Message thread not available yet"
+            description="Direct thread browsing depends on tenant-safe chat and message-history APIs that are not implemented in the current backend."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -134,7 +152,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="OpenAI integration is gated"
+            description="The backend registers tenant-safe OpenAI routes but they currently return structured 501 partial responses, so the legacy CRUD surface remains intentionally unavailable."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -144,7 +165,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="OpenAI resource editor is gated"
+            description="The current backend does not provide tenant-ready OpenAI resource CRUD yet, so this deep link stays on the shared unsupported placeholder."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -184,7 +208,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="SQS connector not available yet"
+            description="The current backend exposes tenant-safe SQS routes only as explicit 501 partial placeholders, so this page remains gated instead of pretending the connector works."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -194,7 +221,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Chatwoot integration is gated"
+            description="Chatwoot configuration is still backend-partial in the SaaS layer, so this route now resolves to an honest placeholder rather than bouncing users away silently."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -204,7 +234,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Typebot integration is gated"
+            description="The current backend still returns 501 partial responses for tenant-safe Typebot management, so this route remains intentionally unavailable."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -214,7 +247,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Typebot resource editor is gated"
+            description="This deep link is preserved for parity with upstream page surface, but tenant-safe Typebot resource CRUD is not backend-ready yet."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -224,7 +260,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Dify integration is gated"
+            description="Dify management remains a backend-partial surface today, so the frontend keeps a guarded placeholder instead of reviving unsupported legacy CRUD."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -234,7 +273,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Dify resource editor is gated"
+            description="This route is preserved for compatibility, but tenant-safe Dify resource management is not implemented in the current backend."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -244,7 +286,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="N8N integration is gated"
+            description="The backend still exposes N8N as an explicit partial surface, so the frontend keeps this route on a shared unsupported state."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -254,7 +299,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="N8N resource editor is gated"
+            description="Tenant-safe N8N resource CRUD is not backend-complete yet, so this page remains a guarded placeholder."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -264,7 +312,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="EvoAI integration is gated"
+            description="EvoAI still depends on backend-partial integration routes, so this page stays disabled rather than reviving unsupported legacy behavior."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -274,7 +325,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="EvoAI resource editor is gated"
+            description="This deep link is preserved, but the SaaS backend does not yet support tenant-safe EvoAI resource management."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -284,7 +338,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Evolution Bot integration is gated"
+            description="The current backend still reports Evolution Bot management as partial, so the frontend keeps an honest unsupported state here."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -294,7 +351,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Evolution Bot resource editor is gated"
+            description="Tenant-safe CRUD for Evolution Bot resources is not backend-ready, so this route remains a placeholder."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -304,7 +364,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Flowise integration is gated"
+            description="Flowise management is still served as a backend-partial surface, so this page is intentionally gated in the SaaS frontend."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -314,7 +377,10 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <RedirectToInstanceDashboard />
+          <InstancePlaceholderRoute
+            title="Flowise resource editor is gated"
+            description="This deep link now resolves to a guarded placeholder because tenant-safe Flowise resource CRUD is not implemented yet."
+          />
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -331,11 +397,25 @@ const router = createBrowserRouter([
   },
   {
     path: "/manager/embed-chat",
-    element: <Navigate to="/manager" replace />,
+    element: (
+      <ProtectedRoute>
+        <ManagerPlaceholderRoute
+          title="Embed chat is gated"
+          description="The embedded chat surface still depends on legacy instance-token chat APIs that are not tenant-safe in the current SaaS backend."
+        />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/manager/embed-chat/:remoteJid",
-    element: <Navigate to="/manager" replace />,
+    element: (
+      <ProtectedRoute>
+        <ManagerPlaceholderRoute
+          title="Embedded thread view is gated"
+          description="Direct embed-chat conversations remain unavailable until the backend exposes tenant-safe chat and message-history APIs."
+        />
+      </ProtectedRoute>
+    ),
   },
 ]);
 

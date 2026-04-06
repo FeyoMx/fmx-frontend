@@ -38,8 +38,16 @@ export const getApiErrorMessage = (error: unknown, fallback = "Unexpected error"
       return message || "You do not have permission to perform this action.";
     }
 
+    if (status === 404) {
+      return message || "The requested resource could not be found.";
+    }
+
     if (status === 422 || status === 400) {
       return message || "The request data is invalid.";
+    }
+
+    if (status === 429) {
+      return message || "Too many requests. Please wait a moment and try again.";
     }
 
     if (status === 501) {
