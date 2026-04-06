@@ -180,6 +180,8 @@ export const normalizeChatThreads = (payload: unknown): ChatThreadsResponse => {
   return payload.map((item, index) => {
     const record = asRecord(item) ?? {};
     const lastMessage = asRecord(record.lastMessage);
+    const previewType = detectContentType(readString(lastMessage?.messageType) || "unknown", lastMessage?.message);
+    const unreadCount = readNumber(record.unreadCount) ?? readNumber(record.unreadMessages) ?? readNumber(record.unread);
 
     return {
       id: readString(record.id) || readString(record.remoteJid) || `chat-${index}`,
@@ -187,10 +189,13 @@ export const normalizeChatThreads = (payload: unknown): ChatThreadsResponse => {
       pushName: readString(record.pushName) || readString(record.remoteJid).split("@")[0] || "Unknown contact",
       profilePicUrl: readString(record.profilePicUrl),
       labels: Array.isArray(record.labels) ? record.labels.filter((value): value is string => typeof value === "string") : [],
+      previewText: extractMessageText(lastMessage?.message) || readString(record.lastMessageText) || undefined,
+      previewType,
+      unreadCount,
       createdAt: readString(record.createdAt),
       updatedAt: readString(record.updatedAt),
       instanceId: readString(record.instanceId),
-      lastMessageAt: readString(lastMessage?.messageTimestamp),
+      lastMessageAt: normalizeTimestamp(lastMessage?.messageTimestamp || record.updatedAt),
     } satisfies ChatThread;
   });
 };

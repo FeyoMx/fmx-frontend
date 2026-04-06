@@ -95,6 +95,7 @@ Frontend handling after this sync:
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
+- Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
 
 ### API / adapter alignment
 

@@ -57,6 +57,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - real tenant-safe chat list
   - real conversation detail route on `/manager/instance/:instanceId/chat/:remoteJid`
   - normalized history loaded from `POST /instance/:id/messages/search`
+  - grouped conversation timeline with clearer timestamps, delivery indicators, and scroll-to-latest behavior
+  - thread previews and unread badges when the backend exposes them
   - text, media, and audio composers already pointed at SaaS routes
   - honest empty/error states when persisted history is missing or partial
 
@@ -84,6 +86,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - thread list is backed by the current tenant-safe backend route
 - conversation history is active and rendered from the tenant-safe backend route
 - outbound text, media, and audio actions refresh or append safely inside the active thread
+- composer exposes clearer in-flight feedback plus attachment chips for media/audio sends
 - remaining limits are backend-driven:
 - no historical backfill for older sessions
 - inbound history completeness depends on runtime event capture

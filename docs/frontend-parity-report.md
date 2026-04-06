@@ -47,7 +47,7 @@ This report measures parity against the upstream manager experience, but only co
 | Instance list/detail | full list and instance dashboard | tenant-safe CRUD + detail/status/qr/settings implemented | enabled | near parity | Main operational flows are usable; edit-in-place and deeper analytics are still leaner than upstream. |
 | QR / pairing / status | supported | connect, disconnect, status, qr/qrcode implemented | enabled | parity | Current UI handles QR image/text and pairing code flows. |
 | Chat inbox | full inbox and thread browsing | `POST /instance/:id/chats/search` and `POST /instance/:id/messages/search` implemented | active list/detail conversation flow on chat routes | partial | Real thread browsing is live, but older sessions are not historically backfilled and inbound completeness depends on runtime capture. |
-| Chat search / message history | supported upstream | `POST /instance/:id/chats/search` and `POST /instance/:id/messages/search` implemented | chat list and normalized history are active | partial | Thread rendering is real, but partial backend payloads still limit historical completeness and some media metadata. |
+| Chat search / message history | supported upstream | `POST /instance/:id/chats/search` and `POST /instance/:id/messages/search` implemented | chat list and normalized history are active | partial | Thread rendering now includes grouping, timestamps, status, and media/audio handling, but partial backend payloads still limit historical completeness and some media metadata. |
 | Text messaging | text send from chat and instance surfaces | `POST /instance/:id/messages/text` and status polling endpoint implemented | enabled on instance dashboard and active chat composer | partial | Functional with async delivery feedback and safe local refresh/append inside the active conversation. |
 | Media / audio messaging | upstream supports both | media/audio SaaS routes implemented | enabled in the active chat composer | partial | Sending is real and thread rendering shows available metadata, but historical media previews depend on backend-provided URLs/fields. |
 | Webhook | supported | implemented | enabled | parity | Tenant-safe CRUD is live. |
@@ -96,6 +96,7 @@ This report measures parity against the upstream manager experience, but only co
   - tenant-safe chat list is live on `/manager/instance/:instanceId/chat`
   - `/manager/instance/:instanceId/chat/:remoteJid` now loads normalized message history from `POST /instance/:id/messages/search`
   - text, media, and audio composers refresh the active thread safely after send
+  - chat list now surfaces preview and unread hints when the backend provides them
   - older sessions are not backfilled and inbound/media completeness still depends on captured runtime metadata
 - API keys
   - intentionally informational only because backend supports API-key auth but not API-key CRUD routes

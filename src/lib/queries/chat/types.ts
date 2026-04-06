@@ -15,6 +15,9 @@ export type ChatThread = {
   pushName: string;
   profilePicUrl: string;
   labels: string[];
+  previewText?: string;
+  previewType?: ChatHistoryMessage["contentType"];
+  unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
   instanceId?: string;

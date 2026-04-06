@@ -83,7 +83,12 @@ function ChatConversationPanel({
       <Card>
         <CardHeader>
           <CardTitle>{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
-          <p className="text-sm text-muted-foreground">{activeThread.remoteJid}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">{activeThread.remoteJid}</p>
+            <p className="text-xs text-muted-foreground">
+              Persisted history is live for this chat. Older sessions are not backfilled, and inbound or media records can still be partial when runtime capture was incomplete.
+            </p>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <ChatCapabilityStatus capabilities={capabilities} />
@@ -100,7 +105,7 @@ function ChatConversationPanel({
           ) : (
             <ChatEmptyState
               title="No persisted history yet"
-              description="This chat route is active, but the backend has not stored any messages for this conversation yet. Older sessions are not backfilled automatically."
+              description="This conversation is active, but there is no stored thread data yet for this remote JID. Send a new message here or wait for future runtime-captured events; older sessions are not backfilled automatically."
             />
           )}
         </CardContent>

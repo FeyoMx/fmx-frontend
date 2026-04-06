@@ -1,4 +1,4 @@
-import { MessageCircle, Search } from "lucide-react";
+import { ImageIcon, MessageCircle, Mic, Search, Video } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -18,6 +18,41 @@ import { useMediaQuery } from "@/utils/useMediaQuery";
 
 import { ChatConversationPanel } from "./ChatConversationPanel";
 import { ChatEmptyState } from "./ChatEmptyState";
+
+const previewLabel = (thread: ChatThread): string => {
+  if (thread.previewText) {
+    return thread.previewText;
+  }
+
+  switch (thread.previewType) {
+    case "image":
+      return "Image";
+    case "video":
+      return "Video";
+    case "audio":
+      return "Audio";
+    case "document":
+      return "Document";
+    default:
+      return "No preview available";
+  }
+};
+
+const PreviewIcon = ({ type }: { type?: ChatThread["previewType"] }) => {
+  if (type === "image") {
+    return <ImageIcon className="h-3.5 w-3.5" />;
+  }
+
+  if (type === "video") {
+    return <Video className="h-3.5 w-3.5" />;
+  }
+
+  if (type === "audio") {
+    return <Mic className="h-3.5 w-3.5" />;
+  }
+
+  return null;
+};
 
 function ChatShell() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -100,16 +135,35 @@ function ChatShell() {
                     <Button
                       key={thread.id}
                       variant={isActive ? "secondary" : "ghost"}
-                      className="h-auto justify-start gap-3 whitespace-normal px-3 py-3 text-left"
+                      className={`h-auto justify-start gap-3 whitespace-normal rounded-xl px-3 py-3 text-left transition-colors ${
+                        isActive ? "border border-primary/30 bg-primary/10 shadow-sm" : "border border-transparent hover:border-border hover:bg-muted/70"
+                      }`}
                       onClick={() => handleThreadSelect(thread)}>
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={thread.profilePicUrl} alt={thread.pushName} />
                         <AvatarFallback>{(thread.pushName || thread.remoteJid).slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{thread.pushName || thread.remoteJid.split("@")[0]}</div>
-                        <div className="truncate text-xs text-muted-foreground">{thread.remoteJid}</div>
-                        {thread.lastMessageAt && <div className="mt-1 text-[11px] text-muted-foreground">Last activity: {new Date(thread.lastMessageAt).toLocaleString()}</div>}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{thread.pushName || thread.remoteJid.split("@")[0]}</div>
+                            <div className="truncate text-xs text-muted-foreground">{thread.remoteJid}</div>
+                          </div>
+                          <div className="shrink-0 text-[11px] text-muted-foreground">
+                            {thread.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                            <PreviewIcon type={thread.previewType} />
+                            <span className="truncate">{previewLabel(thread)}</span>
+                          </div>
+                          {thread.unreadCount && thread.unreadCount > 0 ? (
+                            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              {thread.unreadCount > 99 ? "99+" : thread.unreadCount}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </Button>
                   );

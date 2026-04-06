@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat readiness shell module with prepared conversation panel, message list, composer, capability status, and empty-state components
 - Tenant-safe chat query adapters for chat list, future message history, and text/media/audio send flows
 - Real tenant-safe chat conversation route on `/manager/instance/:instanceId/chat/:remoteJid` backed by `POST /instance/:id/messages/search`
+- Product-ready chat UX polish for grouped messages, clearer thread selection, richer composer feedback, and safer active-thread optimistic updates
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -52,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard now distinguishes real operational metrics from backend-limited aggregate counters instead of implying full analytics parity
 - Unsupported deep links now land on explanatory placeholders instead of silently redirecting away from the requested surface
 - Instance chat routes now resolve to a real conversation view backed by tenant-safe chat list and message history routes
+- Active chat list/detail flow now surfaces previews, unread hints when provided, smarter scrolling, and clearer history limitations
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
