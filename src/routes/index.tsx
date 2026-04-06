@@ -14,6 +14,7 @@ import { Broadcast } from "@/pages/Broadcast";
 import { AISettings } from "@/pages/AISettings";
 import { APIKeys } from "@/pages/APIKeys";
 import { DashboardInstance } from "@/pages/instance/DashboardInstance";
+import { EmbedChat } from "@/pages/instance/EmbedChat";
 import { Proxy } from "@/pages/instance/Proxy";
 import { Rabbitmq } from "@/pages/instance/Rabbitmq";
 import { Settings } from "@/pages/instance/Settings";
@@ -28,14 +29,6 @@ function InstancePlaceholderRoute({ title, description }: { title: string; descr
       title={title}
       description={description}
     />
-  );
-}
-
-function ManagerPlaceholderRoute({ title, description }: { title: string; description: string }) {
-  return (
-    <MainLayout>
-      <UnsupportedInstanceFeature title={title} description={description} />
-    </MainLayout>
   );
 }
 
@@ -394,10 +387,7 @@ const router = createBrowserRouter([
     path: "/manager/embed-chat",
     element: (
       <ProtectedRoute>
-        <ManagerPlaceholderRoute
-          title="Embed chat is gated"
-          description="The embedded chat surface still depends on legacy instance-token chat APIs that are not tenant-safe in the current SaaS backend."
-        />
+        <EmbedChat />
       </ProtectedRoute>
     ),
   },
@@ -405,10 +395,7 @@ const router = createBrowserRouter([
     path: "/manager/embed-chat/:remoteJid",
     element: (
       <ProtectedRoute>
-        <ManagerPlaceholderRoute
-          title="Embedded thread view is gated"
-          description="Direct embed-chat conversations remain unavailable until the backend exposes tenant-safe chat and message-history APIs."
-        />
+        <EmbedChat />
       </ProtectedRoute>
     ),
   },

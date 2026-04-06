@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LoaderCircle, Paperclip, Send, X } from "lucide-react";
+import { LoaderCircle, Mic, Paperclip, Send, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -263,7 +263,7 @@ function ChatComposer({
 
       appendMessage(
         createLocalMessage({
-          id: response.message_id || localMessageId,
+          id: localMessageId,
           text: trimmedText,
           status: response.delivery_status || (response.sent ? "sent" : "queued"),
         }),

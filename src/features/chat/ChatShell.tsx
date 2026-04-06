@@ -1,4 +1,4 @@
-import { ImageIcon, MessageCircle, Mic, Search, Video } from "lucide-react";
+import { ImageIcon, Mic, Search, Video } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
