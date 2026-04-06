@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { CircleUser, MessageCircle, RefreshCw, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
 
@@ -8,7 +8,7 @@ import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 import { useTheme } from "@/components/theme-provider";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -19,10 +19,134 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useInstance } from "@/contexts/InstanceContext";
 
-import { useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
+import { getTextMessageJobStatus, useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
+import { InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 import { toast } from "react-toastify";
+
+type MessageSendUiStatus = "queued" | "sending" | "provider_sent" | "delivered" | "read" | "error";
+
+type MessageSendFeedback = {
+  status: MessageSendUiStatus;
+  title: string;
+  detail?: string;
+  jobId?: string;
+};
+
+const MESSAGE_JOB_POLL_INTERVAL_MS = 2500;
+const MESSAGE_JOB_POLL_TIMEOUT_MS = 60000;
+
+type MessageSendStatusPayload = Pick<
+  InstanceTextMessageResult,
+  "message" | "queued" | "accepted_only" | "sent" | "delivery_confirmed" | "delivery_status" | "job_id" | "delivered_at" | "read_at"
+> &
+  Partial<Pick<InstanceTextMessageJobStatus, "status" | "error">>;
+
+function formatStatusTimestamp(label: string, value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return undefined;
+  }
+
+  return `${label}: ${parsedDate.toLocaleString()}`;
+}
+
+function getMessageSendFeedback(payload: MessageSendStatusPayload): MessageSendFeedback {
+  if (payload.status === "failed") {
+    return {
+      status: "error",
+      title: "Error al enviar",
+      detail: payload.error || payload.message,
+      jobId: payload.job_id,
+    };
+  }
+
+  if (payload.delivery_status === "read") {
+    return {
+      status: "read",
+      title: "Leído",
+      detail: formatStatusTimestamp("Leído el", payload.read_at) || "El destinatario ya abrió el mensaje.",
+      jobId: payload.job_id,
+    };
+  }
+
+  if (payload.delivery_status === "delivered" || payload.delivery_confirmed) {
+    return {
+      status: "delivered",
+      title: "Entregado",
+      detail: formatStatusTimestamp("Entregado el", payload.delivered_at) || "Confirmado por el proveedor.",
+      jobId: payload.job_id,
+    };
+  }
+
+  if (payload.delivery_status === "sent") {
+    return {
+      status: "provider_sent",
+      title: "Enviado al proveedor",
+      detail: "Aún sin confirmación de entrega.",
+      jobId: payload.job_id,
+    };
+  }
+
+  if (payload.status === "running") {
+    return {
+      status: "sending",
+      title: "Enviando",
+      detail: "Procesando envío.",
+      jobId: payload.job_id,
+    };
+  }
+
+  if (payload.status === "queued" || payload.queued === true || payload.accepted_only === true || payload.delivery_status === "queued") {
+    return {
+      status: "queued",
+      title: "En cola",
+      detail: "Pendiente de envío.",
+      jobId: payload.job_id,
+    };
+  }
+
+  return {
+    status: "queued",
+    title: "En cola",
+    detail: "Pendiente de envío.",
+    jobId: payload.job_id,
+  };
+}
+
+function shouldStopMessagePolling(payload: InstanceTextMessageJobStatus): boolean {
+  if (payload.status === "failed") {
+    return true;
+  }
+
+  if (payload.delivery_confirmed) {
+    return true;
+  }
+
+  return payload.delivery_status === "delivered" || payload.delivery_status === "read";
+}
+
+function getMessageSendAlertVariant(status: MessageSendUiStatus): "warning" | "info" | "success" | "destructive" {
+  switch (status) {
+    case "queued":
+      return "warning";
+    case "sending":
+      return "info";
+    case "provider_sent":
+    case "delivered":
+    case "read":
+      return "success";
+    case "error":
+      return "destructive";
+    default:
+      return "info";
+  }
+}
 
 function DashboardInstance() {
   const { t, i18n } = useTranslation();
@@ -33,7 +157,9 @@ function DashboardInstance() {
   const [messageText, setMessageText] = useState("");
   const [messageDelay, setMessageDelay] = useState("0");
   const [isSendingText, setIsSendingText] = useState(false);
+  const [messageSendFeedback, setMessageSendFeedback] = useState<MessageSendFeedback | null>(null);
   const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
+  const messageSendAttemptRef = useRef(0);
   const { theme } = useTheme();
 
   const { instance, reloadInstance } = useInstance();
@@ -128,17 +254,21 @@ function DashboardInstance() {
     const parsedDelay = Number.parseInt(messageDelay, 10);
 
     if (!number || !text) {
-      toast.error("Recipient number and message text are required.");
+      toast.error("Número y mensaje requeridos.");
       return;
     }
 
     if (!Number.isFinite(parsedDelay) || parsedDelay < 0) {
-      toast.error("Delay must be zero or greater.");
+      toast.error("El delay debe ser 0 o mayor.");
       return;
     }
 
     try {
       setIsSendingText(true);
+      const attemptId = Date.now();
+      messageSendAttemptRef.current = attemptId;
+      setMessageSendFeedback(null);
+
       const response = await sendTextMessage({
         instanceId: instance.id,
         data: {
@@ -151,14 +281,68 @@ function DashboardInstance() {
       setMessageText("");
       setMessageDelay("0");
       setTextMessagingUnsupported(false);
-      toast.success(response?.data?.messageId ? `Message sent (${response.data.messageId})` : "Message sent successfully.");
+      const initialFeedback =
+        response.httpStatus === 202
+          ? getMessageSendFeedback({
+              ...response,
+              status: "queued",
+              delivery_status: "queued",
+            })
+          : getMessageSendFeedback(response);
+      setMessageSendFeedback(initialFeedback);
+
+      if (response.httpStatus === 202 && response.status_endpoint) {
+        const startedAt = Date.now();
+        let lastFeedback = initialFeedback;
+
+        while (Date.now() - startedAt < MESSAGE_JOB_POLL_TIMEOUT_MS) {
+          await new Promise((resolve) => window.setTimeout(resolve, MESSAGE_JOB_POLL_INTERVAL_MS));
+
+          if (messageSendAttemptRef.current !== attemptId) {
+            return;
+          }
+
+          const jobStatus = await getTextMessageJobStatus(response.status_endpoint);
+          lastFeedback = getMessageSendFeedback({
+            ...jobStatus,
+            message: response.message,
+          });
+          setMessageSendFeedback(lastFeedback);
+
+          if (jobStatus.status === "failed") {
+            toast.error(jobStatus.error || "Error al enviar");
+            return;
+          }
+
+          if (shouldStopMessagePolling(jobStatus)) {
+            return;
+          }
+        }
+
+        if (messageSendAttemptRef.current === attemptId) {
+          setMessageSendFeedback({
+            ...lastFeedback,
+            detail: `${lastFeedback.detail ? `${lastFeedback.detail} ` : ""}Seguimos esperando confirmación del backend.`,
+          });
+        }
+        return;
+      }
+
+      if (initialFeedback.status === "error") {
+        toast.error(initialFeedback.detail || initialFeedback.title);
+      }
     } catch (error) {
       console.error("Error:", error);
       if (isApiNotImplementedError(error)) {
         setTextMessagingUnsupported(true);
         return;
       }
-      toast.error(getApiErrorMessage(error, "Failed to send text message"));
+      setMessageSendFeedback({
+        status: "error",
+        title: "Error al enviar",
+        detail: getApiErrorMessage(error, "No se pudo enviar"),
+      });
+      toast.error(getApiErrorMessage(error, "No se pudo enviar"));
     } finally {
       setIsSendingText(false);
     }
@@ -400,6 +584,12 @@ function DashboardInstance() {
                   disabled={instance.connectionStatus !== "open" || isSendingText}
                 />
               </div>
+              {messageSendFeedback && (
+                <Alert variant={getMessageSendAlertVariant(messageSendFeedback.status)}>
+                  <AlertTitle>{messageSendFeedback.title}</AlertTitle>
+                  {messageSendFeedback.detail && <AlertDescription>{messageSendFeedback.detail}</AlertDescription>}
+                </Alert>
+              )}
               {instance.connectionStatus !== "open" && (
                 <Alert variant="warning">
                   <AlertTitle>Connect the instance before sending text messages.</AlertTitle>

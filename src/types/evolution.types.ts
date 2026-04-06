@@ -109,12 +109,47 @@ export type InstanceTextMessageInput = {
   delay?: number;
 };
 
+export type InstanceTextMessageQueueStatus = "queued" | "running" | "failed" | string;
+
+export type InstanceTextMessageDeliveryStatus = "queued" | "running" | "failed" | "sent" | "delivered" | "read" | string;
+
 export type InstanceTextMessageResult = {
-  messageId: string;
-  serverId: number;
-  chat: string;
-  fromMe: boolean;
-  timestamp: string;
+  message: string;
+  queued?: boolean;
+  accepted_only?: boolean;
+  sent: boolean;
+  delivery_confirmed: boolean;
+  delivery_status?: InstanceTextMessageDeliveryStatus;
+  job_id?: string;
+  status_endpoint?: string;
+  delivered_at?: string;
+  read_at?: string;
+  instance_id: string;
+  instanceName: string;
+  engine_instance_id?: string;
+  number?: string;
+  text?: string;
+};
+
+export type InstanceTextMessageJobStatus = {
+  job_id: string;
+  status: InstanceTextMessageQueueStatus;
+  delivery_status?: InstanceTextMessageDeliveryStatus;
+  sent: boolean;
+  delivery_confirmed: boolean;
+  number: string;
+  text: string;
+  queued_at?: string;
+  started_at?: string;
+  finished_at?: string;
+  delivered_at?: string;
+  read_at?: string;
+  error?: string;
+  message_id?: string;
+  server_id?: number;
+  instance_id?: string;
+  instanceName?: string;
+  engine_instance_id?: string;
 };
 
 export type SendMedia = {
