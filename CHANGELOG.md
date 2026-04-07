@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product-ready chat UX polish for grouped messages, clearer thread selection, richer composer feedback, and safer active-thread optimistic updates
 - Runtime observability panels on the instance dashboard using the new tenant-safe runtime state and history endpoints
 - Shared operator page polish for the supported MVP surface, including more consistent headers, support caveats, badges, and feedback copy
+- MVP release candidate documentation for supported scope, QA walkthrough, and known user-visible caveats
 
 ### Changed
 - Updated package.json with proper metadata and repository information
