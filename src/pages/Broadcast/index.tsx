@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Send, RefreshCw } from "lucide-react";
+import { Send, RefreshCw, RadioTower } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { OperatorPageHeader } from "@/components/operator-page-header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -86,27 +88,26 @@ export function Broadcast() {
     }
   };
 
-  const getStatusColor = (status: BroadcastView["status"]) => {
+  const getStatusColor = (status: BroadcastView["status"]): "default" | "secondary" | "destructive" | "warning" => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-800";
+        return "default";
       case "processing":
-        return "bg-blue-100 text-blue-800";
+        return "secondary";
       case "failed":
-        return "bg-red-100 text-red-800";
+        return "destructive";
       default:
-        return "bg-amber-100 text-amber-800";
+        return "warning";
     }
   };
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("broadcast.title") || "Broadcast"}</h1>
-          <p className="text-gray-600">{tenant?.name}</p>
-        </div>
-        <div className="flex gap-2">
+      <OperatorPageHeader
+        title={t("broadcast.title") || "Broadcast"}
+        description={tenant?.name}
+        actions={
+          <>
           <Button onClick={() => void fetchBroadcasts()} variant="outline" size="icon">
             <RefreshCw size={20} />
           </Button>
@@ -114,8 +115,17 @@ export function Broadcast() {
             <Send size={20} className="mr-2" />
             {t("broadcast.button.new") || "New Broadcast"}
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
+
+      <Alert variant="info">
+        <RadioTower className="h-4 w-4" />
+        <AlertTitle>Broadcast jobs are active</AlertTitle>
+        <AlertDescription>
+          This MVP supports queueing and reviewing broadcast jobs. Delivery totals and per-recipient analytics are still limited to what the current backend reports.
+        </AlertDescription>
+      </Alert>
 
       {showForm && (
         <Card>
@@ -222,7 +232,7 @@ export function Broadcast() {
                     <TableRow key={broadcast.id}>
                       <TableCell className="font-medium">{instances?.find((instance) => instance.id === broadcast.instanceId)?.name || broadcast.instanceId}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(broadcast.status)}>{broadcast.status}</Badge>
+                        <Badge variant={getStatusColor(broadcast.status)}>{broadcast.status}</Badge>
                       </TableCell>
                       <TableCell>{broadcast.attempts}/{broadcast.maxAttempts}</TableCell>
                       <TableCell>{broadcast.scheduledAt ? new Date(broadcast.scheduledAt).toLocaleString() : "Immediate"}</TableCell>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { RefreshCw, Save } from "lucide-react";
+import { RefreshCw, Save, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { OperatorPageHeader } from "@/components/operator-page-header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -93,15 +95,23 @@ export function AISettings() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("aiSettings.title") || "AI Settings"}</h1>
-          <p className="text-gray-600">{tenant?.name}</p>
-        </div>
-        <Button onClick={() => void fetchSettings()} variant="outline" size="icon">
-          <RefreshCw size={20} />
-        </Button>
-      </div>
+      <OperatorPageHeader
+        title={t("aiSettings.title") || "AI Settings"}
+        description={tenant?.name}
+        actions={
+          <Button onClick={() => void fetchSettings()} variant="outline" size="icon">
+            <RefreshCw size={20} />
+          </Button>
+        }
+      />
+
+      <Alert variant="info">
+        <Sparkles className="h-4 w-4" />
+        <AlertTitle>Tenant AI controls are active</AlertTitle>
+        <AlertDescription>
+          Use this page for tenant defaults and per-instance enablement. Legacy bot and integration CRUD flows remain intentionally outside the primary MVP operator path.
+        </AlertDescription>
+      </Alert>
 
       <Card>
         <CardHeader>
@@ -192,7 +202,7 @@ export function AISettings() {
                     <TableRow key={instance.instanceId}>
                       <TableCell className="font-medium">{instance.instanceName}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{instance.model || "tenant default"}</Badge>
+                        <Badge variant="outline">{instance.model || "Tenant default"}</Badge>
                       </TableCell>
                       <TableCell>
                         <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} />

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Search, Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { OperatorPageHeader } from "@/components/operator-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,12 +82,11 @@ export function CRM() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("crm.title") || "CRM"}</h1>
-          <p className="text-gray-600">{tenant?.name}</p>
-        </div>
-        <div className="flex gap-2">
+      <OperatorPageHeader
+        title={t("crm.title") || "CRM"}
+        description={tenant?.name}
+        actions={
+          <>
           <Button onClick={() => void fetchContacts()} variant="outline" size="icon">
             <RefreshCw size={20} />
           </Button>
@@ -94,8 +94,9 @@ export function CRM() {
             <Plus size={20} className="mr-2" />
             {t("crm.button.addContact") || "Add Contact"}
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -118,7 +119,7 @@ export function CRM() {
             </div>
             {selectedTag && (
               <Button onClick={() => setSelectedTag(null)} variant="outline">
-                {selectedTag} x
+                Clear: {selectedTag}
               </Button>
             )}
           </div>
@@ -181,7 +182,7 @@ export function CRM() {
                       <TableCell>{contact.pipelineStage || "-"}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" disabled title="Delete is not supported by the current backend">
-                          Unsupported
+                          Not available
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -200,9 +201,9 @@ export function CRM() {
             <DialogDescription>{t("crm.dialog.addContactDescription") || "Create a new contact in your CRM system"}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <input type="text" placeholder="Name*" value={newContact.name} onChange={(e) => setNewContact({ ...newContact, name: e.target.value })} className="w-full rounded border p-2" />
-            <input type="email" placeholder="Email" value={newContact.email} onChange={(e) => setNewContact({ ...newContact, email: e.target.value })} className="w-full rounded border p-2" />
-            <input type="tel" placeholder="Phone*" value={newContact.phone} onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })} className="w-full rounded border p-2" />
+            <Input type="text" placeholder="Name*" value={newContact.name} onChange={(e) => setNewContact({ ...newContact, name: e.target.value })} />
+            <Input type="email" placeholder="Email" value={newContact.email} onChange={(e) => setNewContact({ ...newContact, email: e.target.value })} />
+            <Input type="tel" placeholder="Phone*" value={newContact.phone} onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })} />
           </div>
           <DialogFooter>
             <Button onClick={() => setShowAddContact(false)} variant="outline">

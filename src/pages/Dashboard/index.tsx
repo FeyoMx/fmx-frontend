@@ -179,9 +179,9 @@ function Dashboard() {
 
       <Alert className="mb-6">
         <CircleAlert className="h-4 w-4" />
-        <AlertTitle>Operational metrics are live; aggregate counters are still backend-limited.</AlertTitle>
+        <AlertTitle>Operator metrics are live; aggregate counters are still backend-limited.</AlertTitle>
         <AlertDescription>
-          Instance totals and status distribution are trustworthy today. Message, contact, and broadcast counters still depend on backend aggregation work and may stay at zero until that lands.
+          Instance totals and status distribution are trustworthy today. Message, contact, and broadcast counters still depend on backend aggregation work and may stay at zero or look sparse until that lands.
         </AlertDescription>
       </Alert>
 
@@ -283,7 +283,7 @@ function Dashboard() {
             </div>
 
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              The current SaaS backend already supports instance lifecycle, QR/pairing, webhook/websocket/rabbitmq/proxy, and text-only outbound messaging. Chat history, media/audio sending, and legacy integration suites stay gated until their tenant-safe APIs are complete.
+              The current SaaS MVP supports auth, instance lifecycle, runtime observability, contacts, broadcast jobs, chat list/detail handling, and outbound text, media, and audio sends on supported routes. Legacy integration suites remain gated until their tenant-safe APIs are complete.
             </div>
           </CardContent>
         </Card>

@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real tenant-safe chat conversation route on `/manager/instance/:instanceId/chat/:remoteJid` backed by `POST /instance/:id/messages/search`
 - Product-ready chat UX polish for grouped messages, clearer thread selection, richer composer feedback, and safer active-thread optimistic updates
 - Runtime observability panels on the instance dashboard using the new tenant-safe runtime state and history endpoints
+- Shared operator page polish for the supported MVP surface, including more consistent headers, support caveats, badges, and feedback copy
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -56,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instance chat routes now resolve to a real conversation view backed by tenant-safe chat list and message history routes
 - Active chat list/detail flow now surfaces previews, unread hints when provided, smarter scrolling, and clearer history limitations
 - Instance dashboard now surfaces runtime state, last observed bridge status, and recent lifecycle events for operator observability
+- Supported MVP pages now present a more coherent operator flow, with unsupported legacy surfaces kept less prominent and informational-only pages labeled more clearly
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -70,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared API error parsing now includes clearer `404` and `429` feedback
 - Chat architecture no longer depends on legacy `instanceName` chat contracts for the future SaaS-ready shell
 - Chat conversation rendering now tolerates partial message payloads while exposing timestamps, direction, status, and available media/audio metadata
+- Instance status and broadcast badges now normalize more runtime and queue states consistently across the active MVP UI
 
 ### Removed
 - Unused legacy `apiLegacy` client

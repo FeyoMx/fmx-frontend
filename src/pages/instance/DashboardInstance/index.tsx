@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Activity, CircleUser, Clock3, Link2Off, LogOut, MessageCircle, RefreshCw, SmartphoneCharging, UsersRound, Wifi, WifiOff } from "lucide-react";
+import { Activity, CircleUser, Clock3, LogOut, MessageCircle, RefreshCw, SmartphoneCharging, UsersRound, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
@@ -34,7 +34,6 @@ type MessageSendFeedback = {
   status: MessageSendUiStatus;
   title: string;
   detail?: string;
-  jobId?: string;
 };
 
 type LifecycleFeedback = {
@@ -69,62 +68,55 @@ function getMessageSendFeedback(payload: MessageSendStatusPayload): MessageSendF
   if (payload.status === "failed") {
     return {
       status: "error",
-      title: "Error al enviar",
+      title: "Send failed",
       detail: payload.error || payload.message,
-      jobId: payload.job_id,
     };
   }
 
   if (payload.delivery_status === "read") {
     return {
       status: "read",
-      title: "Leído",
-      detail: formatStatusTimestamp("Leído el", payload.read_at) || "El destinatario ya abrió el mensaje.",
-      jobId: payload.job_id,
+      title: "Read",
+      detail: formatStatusTimestamp("Read at", payload.read_at) || "The recipient has opened the message.",
     };
   }
 
   if (payload.delivery_status === "delivered" || payload.delivery_confirmed) {
     return {
       status: "delivered",
-      title: "Entregado",
-      detail: formatStatusTimestamp("Entregado el", payload.delivered_at) || "Confirmado por el proveedor.",
-      jobId: payload.job_id,
+      title: "Delivered",
+      detail: formatStatusTimestamp("Delivered at", payload.delivered_at) || "Delivery was confirmed by the provider.",
     };
   }
 
   if (payload.delivery_status === "sent") {
     return {
       status: "provider_sent",
-      title: "Enviado al proveedor",
-      detail: "Aún sin confirmación de entrega.",
-      jobId: payload.job_id,
+      title: "Sent to provider",
+      detail: "Still waiting for delivery confirmation.",
     };
   }
 
   if (payload.status === "running") {
     return {
       status: "sending",
-      title: "Enviando",
-      detail: "Procesando envío.",
-      jobId: payload.job_id,
+      title: "Sending",
+      detail: "Processing outbound message.",
     };
   }
 
   if (payload.status === "queued" || payload.queued === true || payload.accepted_only === true || payload.delivery_status === "queued") {
     return {
       status: "queued",
-      title: "En cola",
-      detail: "Pendiente de envío.",
-      jobId: payload.job_id,
+      title: "Queued",
+      detail: "Waiting to be sent.",
     };
   }
 
   return {
     status: "queued",
-    title: "En cola",
-    detail: "Pendiente de envío.",
-    jobId: payload.job_id,
+    title: "Queued",
+    detail: "Waiting to be sent.",
   };
 }
 
@@ -418,12 +410,12 @@ function DashboardInstance() {
     const parsedDelay = Number.parseInt(messageDelay, 10);
 
     if (!number || !text) {
-      toast.error("Número y mensaje requeridos.");
+      toast.error("Recipient number and message are required.");
       return;
     }
 
     if (!Number.isFinite(parsedDelay) || parsedDelay < 0) {
-      toast.error("El delay debe ser 0 o mayor.");
+      toast.error("Delay must be 0 or greater.");
       return;
     }
 
@@ -474,7 +466,7 @@ function DashboardInstance() {
           setMessageSendFeedback(lastFeedback);
 
           if (jobStatus.status === "failed") {
-            toast.error(jobStatus.error || "Error al enviar");
+            toast.error(jobStatus.error || "Send failed");
             return;
           }
 
@@ -486,7 +478,7 @@ function DashboardInstance() {
         if (messageSendAttemptRef.current === attemptId) {
           setMessageSendFeedback({
             ...lastFeedback,
-            detail: `${lastFeedback.detail ? `${lastFeedback.detail} ` : ""}Seguimos esperando confirmación del backend.`,
+            detail: `${lastFeedback.detail ? `${lastFeedback.detail} ` : ""}Still waiting for final backend confirmation.`,
           });
         }
         return;
@@ -503,10 +495,10 @@ function DashboardInstance() {
       }
       setMessageSendFeedback({
         status: "error",
-        title: "Error al enviar",
-        detail: getApiErrorMessage(error, "No se pudo enviar"),
+        title: "Send failed",
+        detail: getApiErrorMessage(error, "Unable to send the message."),
       });
-      toast.error(getApiErrorMessage(error, "No se pudo enviar"));
+      toast.error(getApiErrorMessage(error, "Unable to send the message."));
     } finally {
       setIsSendingText(false);
     }
@@ -815,7 +807,7 @@ function DashboardInstance() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                This instance action uses the current backend route for text-only messaging. Media, audio, and chat search remain unavailable in the SaaS UI.
+                This instance action uses the current backend route for direct text sending. For full thread context, use the supported chat list and conversation routes.
               </p>
               <div className="grid gap-2">
                 <Label htmlFor="instance-send-number">Recipient number</Label>

@@ -98,6 +98,8 @@ Frontend handling after this sync:
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
 - Instance dashboard now refreshes runtime state/history after reconnect, pairing, restart, and logout actions so operators can see lifecycle truth in one place.
+- Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
+- API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
 ### API / adapter alignment
 
@@ -124,7 +126,7 @@ Remaining frontend-only work is mostly presentational:
 
 - richer charts and trends
 - more operational actions on dashboard cards
-- polished empty states for sparse instance metrics
+- deeper QA across dense-data scenarios and long chat/broadcast/contact lists
 
 ## Verification
 

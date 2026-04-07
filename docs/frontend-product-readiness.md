@@ -34,11 +34,16 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - instance list
   - new status overview chart based on real instance statuses
   - explicit notice that aggregate counters are still backend-limited
+  - clearer operator-focus copy aligned with the supported MVP scope
 - `/manager/contacts`
+  - consistent header, support caveat, and cleaner empty/filter states
 - `/manager/broadcast`
+  - consistent status badges and queue/history framing
 - `/manager/ai-settings`
+  - clearer tenant-default versus per-instance operator guidance
 - `/manager/api-keys`
   - informational by design
+  - explicitly marked as an informational-only surface
 
 ### Instance operations
 
@@ -93,6 +98,12 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - inbound history completeness depends on runtime event capture
 - media history may be partial when preview/download metadata is missing
 
+### MVP polish pass
+
+- supported operator pages now use more consistent labels, spacing, and empty-state language
+- runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
+- unsupported legacy surfaces remain de-emphasized and out of primary navigation
+
 ## What Is Intentionally Gated
 
 These routes now show a guarded unsupported placeholder instead of silently redirecting:
@@ -129,6 +140,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - CRM-lite usage
   - text/media/audio outbound dispatch from supported instance surfaces
   - tenant-safe chat list/detail conversation handling on supported instance chat routes
+  - demoable MVP walkthroughs across the currently supported operator surfaces
 - Not yet suitable for:
   - full upstream-manager parity
   - chat parity for older sessions that were never captured by the runtime

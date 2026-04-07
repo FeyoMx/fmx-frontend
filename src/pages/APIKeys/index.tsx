@@ -2,8 +2,10 @@ import { useTranslation } from "react-i18next";
 import { KeyRound, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { OperatorPageHeader } from "@/components/operator-page-header";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { useTenant } from "@/contexts/TenantContext";
@@ -18,22 +20,23 @@ export function APIKeys() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("apiKeys.title") || "API Keys"}</h1>
-          <p className="text-gray-600">{tenant?.name}</p>
-        </div>
-        <div className="flex gap-2">
+      <OperatorPageHeader
+        title={t("apiKeys.title") || "API Keys"}
+        description={tenant?.name}
+        actions={
           <Button onClick={handleRefresh} variant="outline" size="icon">
             <RefreshCw size={20} />
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("apiKeys.list.title") || "API Keys"}</CardTitle>
-          <CardDescription>Backend capability status</CardDescription>
+          <div className="flex flex-wrap items-center gap-3">
+            <CardTitle>{t("apiKeys.list.title") || "API Keys"}</CardTitle>
+            <Badge variant="outline">Informational</Badge>
+          </div>
+          <CardDescription>Authentication support is active, but key management is still backend-gated.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert variant="warning">
@@ -45,10 +48,9 @@ export function APIKeys() {
           </Alert>
 
           <div className="rounded border p-4 text-sm text-muted-foreground">
-            <p>Supported today:</p>
-            <p>`Authorization: Bearer &lt;access_token&gt;` for user sessions.</p>
-            <p>`X-API-Key` or `apikey` for tenant API key authentication when you already have a key.</p>
-            <p>Not supported today: listing, creating, or revoking API keys from the SaaS frontend.</p>
+            <p>Supported today: `Authorization: Bearer &lt;access_token&gt;` for user sessions.</p>
+            <p>Supported today: `X-API-Key` or `apikey` for tenant API key authentication when you already have a key.</p>
+            <p>Not supported today: listing, creating, rotating, or revoking API keys from this SaaS frontend.</p>
           </div>
         </CardContent>
       </Card>
