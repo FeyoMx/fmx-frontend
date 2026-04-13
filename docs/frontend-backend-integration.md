@@ -1,6 +1,6 @@
 # Frontend Backend Integration
 
-Updated on 2026-04-05.
+Updated on 2026-04-12.
 
 ## Auth Flow
 
@@ -33,9 +33,26 @@ Handled explicitly:
 - `501`
 - generic `5xx`
 
+## Tenant-Safe Chat And Messaging
+
+The supported MVP chat flow now lives on the instance chat routes:
+
+- `/manager/instance/:instanceId/chat`
+- `/manager/instance/:instanceId/chat/:remoteJid`
+
+These routes use tenant-safe SaaS endpoints for:
+
+- chat list
+- persisted message history
+- text send
+- media send
+- audio send
+
+Legacy embed chat routes remain in the repo only as gated placeholders. They are not part of the supported operator flow and still depend on older token/query-param contracts.
+
 ## Instance Text Messaging
 
-The current tenant-safe messaging flow is text-only and async.
+The direct instance-dashboard text action is still async and remains useful for quick outbound sends.
 
 ### Send route
 
@@ -104,10 +121,10 @@ Status payload can include:
 
 ### Current limitations
 
-- no tenant-safe inbox/thread browsing
-- no media send
-- no audio send
-- no chat search/message history
+- instance-dashboard sending is still only a quick-send surface, not a full conversation workspace
+- older sessions are not historically backfilled into chat threads
+- inbound history completeness still depends on runtime event capture
+- stored media history can still be partial when preview/download metadata is missing
 
 ## Supported Instance Connectors
 
@@ -136,10 +153,6 @@ Frontend pages currently wired to real tenant-safe SaaS routes:
 
 The backend intentionally exposes the following as `501 partial`, and the frontend keeps them gated or placeholder-backed instead of faking parity:
 
-- `POST /instance/:id/chats/search`
-- `POST /instance/:id/messages/search`
-- `POST /instance/:id/messages/media`
-- `POST /instance/:id/messages/audio`
 - `GET/PUT /instance/:id/sqs`
 - `GET/PUT /instance/:id/chatwoot`
 - `GET/POST /instance/:id/openai`
@@ -156,4 +169,4 @@ The backend intentionally exposes the following as `501 partial`, and the fronte
 - keep adapters centralized near `src/lib/queries/*`
 - preserve tenant-safe routing and auth
 - show guarded placeholders for backend-partial surfaces
-- do not revive legacy instance-token CRUD flows unless the SaaS backend truly supports them
+- do not revive legacy instance-token or query-param chat flows unless the SaaS backend truly supports them

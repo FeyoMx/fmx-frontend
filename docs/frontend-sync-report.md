@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-06.
+Updated on 2026-04-12.
 
 ## Scope
 
@@ -97,6 +97,7 @@ Frontend handling after this sync:
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
+- Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard now refreshes runtime state/history after reconnect, pairing, restart, and logout actions so operators can see lifecycle truth in one place.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.

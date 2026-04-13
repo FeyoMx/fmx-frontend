@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-06.
+Updated on 2026-04-12.
 
 ## Summary
 
@@ -103,6 +103,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - supported operator pages now use more consistent labels, spacing, and empty-state language
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
+- operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 
 ## What Is Intentionally Gated
 
@@ -118,6 +119,11 @@ These routes now show a guarded unsupported placeholder instead of silently redi
 - Evolution Bot
 - Flowise
 - embed chat
+
+Legacy embed chat routes are intentionally gated too:
+
+- `/manager/embed-chat`
+- `/manager/embed-chat/:remoteJid`
 
 Chat inbox routes are no longer hard placeholders. They now resolve to a real conversation experience that stays honest about history completeness limits.
 

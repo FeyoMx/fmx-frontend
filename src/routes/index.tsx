@@ -14,7 +14,6 @@ import { Broadcast } from "@/pages/Broadcast";
 import { AISettings } from "@/pages/AISettings";
 import { APIKeys } from "@/pages/APIKeys";
 import { DashboardInstance } from "@/pages/instance/DashboardInstance";
-import { EmbedChat } from "@/pages/instance/EmbedChat";
 import { Proxy } from "@/pages/instance/Proxy";
 import { Rabbitmq } from "@/pages/instance/Rabbitmq";
 import { Settings } from "@/pages/instance/Settings";
@@ -387,7 +386,12 @@ const router = createBrowserRouter([
     path: "/manager/embed-chat",
     element: (
       <ProtectedRoute>
-        <EmbedChat />
+        <MainLayout>
+          <InstancePlaceholderRoute
+            title="Legacy embed chat is gated"
+            description="The supported MVP operator flow now uses the tenant-safe chat list and conversation routes under each instance. This older embed chat surface still depends on legacy token and query-param contracts, so it remains intentionally unavailable."
+          />
+        </MainLayout>
       </ProtectedRoute>
     ),
   },
@@ -395,7 +399,12 @@ const router = createBrowserRouter([
     path: "/manager/embed-chat/:remoteJid",
     element: (
       <ProtectedRoute>
-        <EmbedChat />
+        <MainLayout>
+          <InstancePlaceholderRoute
+            title="Legacy embed chat deep link is gated"
+            description="This legacy messages deep link now resolves to an honest placeholder. Use the tenant-safe instance chat routes instead of the old embed chat contract."
+          />
+        </MainLayout>
       </ProtectedRoute>
     ),
   },

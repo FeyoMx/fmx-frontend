@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Runtime observability panels on the instance dashboard using the new tenant-safe runtime state and history endpoints
 - Shared operator page polish for the supported MVP surface, including more consistent headers, support caveats, badges, and feedback copy
 - MVP release candidate documentation for supported scope, QA walkthrough, and known user-visible caveats
+- Explicit gating for legacy embed chat/messages routes so operators enter chat through the tenant-safe instance chat flow only
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -59,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Active chat list/detail flow now surfaces previews, unread hints when provided, smarter scrolling, and clearer history limitations
 - Instance dashboard now surfaces runtime state, last observed bridge status, and recent lifecycle events for operator observability
 - Supported MVP pages now present a more coherent operator flow, with unsupported legacy surfaces kept less prominent and informational-only pages labeled more clearly
+- Sidebar navigation now uses a single chat entrypoint and no longer exposes the legacy embed chat/messages surface in the primary operator flow
+- Legacy `/manager/embed-chat` routes now resolve to honest unsupported placeholders instead of mounting the old token/query-param chat UI
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
