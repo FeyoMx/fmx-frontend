@@ -11,7 +11,7 @@ import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInstance } from "@/contexts/InstanceContext";
 
 import { getTextMessageJobStatus, useManageInstance, useInstanceQRCode, useInstanceStatus } from "@/lib/queries/instance/manageInstance";
+import { isBridgeUnavailableError } from "@/lib/queries/instance/bridgeAvailability";
 import { useInstanceRuntime, useInstanceRuntimeHistory } from "@/lib/queries/instance/runtime";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
@@ -37,9 +38,11 @@ type MessageSendFeedback = {
 };
 
 type LifecycleFeedback = {
+  action?: "reconnect" | "pair" | "logout";
   status: "idle" | "running" | "success" | "error";
   title: string;
   detail?: string;
+  tone?: "info" | "success" | "warning" | "destructive";
 };
 
 const MESSAGE_JOB_POLL_INTERVAL_MS = 2500;
@@ -62,6 +65,15 @@ function formatStatusTimestamp(label: string, value?: string): string | undefine
   }
 
   return `${label}: ${parsedDate.toLocaleString()}`;
+}
+
+function notifyLifecycleFailure(detail: string, bridgeUnavailable: boolean) {
+  if (bridgeUnavailable) {
+    toast.warn(detail);
+    return;
+  }
+
+  toast.error(detail);
 }
 
 function getMessageSendFeedback(payload: MessageSendStatusPayload): MessageSendFeedback {
@@ -250,6 +262,9 @@ function DashboardInstance() {
   const [messageSendFeedback, setMessageSendFeedback] = useState<MessageSendFeedback | null>(null);
   const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
   const [lifecycleFeedback, setLifecycleFeedback] = useState<LifecycleFeedback | null>(null);
+  const [activeLifecycleAction, setActiveLifecycleAction] = useState<LifecycleFeedback["action"] | null>(null);
+  const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
+  const [pairDialogOpen, setPairDialogOpen] = useState(false);
   const [backfillChatJid, setBackfillChatJid] = useState("");
   const [backfillCount, setBackfillCount] = useState("50");
   const [backfillFeedback, setBackfillFeedback] = useState<LifecycleFeedback | null>(null);
@@ -307,56 +322,79 @@ function DashboardInstance() {
   };
 
   const handleReconnect = async (instanceId: string) => {
+    setActiveLifecycleAction("reconnect");
+    setReconnectDialogOpen(true);
     try {
       setLifecycleFeedback({
+        action: "reconnect",
         status: "running",
         title: "Requesting reconnect",
         detail: "Waiting for the backend to reopen the session and refresh runtime state.",
+        tone: "info",
       });
       setQRCode(null);
       setPairingCode("");
       await reconnect(instanceId);
       await refreshInstanceLifecycleData();
       setLifecycleFeedback({
+        action: "reconnect",
         status: "success",
         title: "Reconnect requested",
-        detail: "Runtime status, QR availability, and lifecycle history have been refreshed.",
+        detail: "Runtime status, QR availability, and lifecycle history were refreshed. A live QR may still be unavailable for the current session state.",
+        tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
+      const detail = getApiErrorMessage(error, "Failed to request reconnect.");
+      const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
+        action: "reconnect",
         status: "error",
-        title: "Reconnect failed",
-        detail: getApiErrorMessage(error, "Failed to request reconnect."),
+        title: bridgeUnavailable ? "Reconnect unavailable" : "Reconnect failed",
+        detail,
+        tone: bridgeUnavailable ? "warning" : "destructive",
       });
-      toast.error(getApiErrorMessage(error, "Failed to request reconnect."));
+      notifyLifecycleFailure(detail, bridgeUnavailable);
+    } finally {
+      setActiveLifecycleAction(null);
     }
   };
 
   const handleLogout = async (instanceId: string) => {
+    setActiveLifecycleAction("logout");
     try {
       setLifecycleFeedback({
+        action: "logout",
         status: "running",
         title: "Logging out instance",
         detail: "Waiting for logout to complete and for runtime state to refresh.",
+        tone: "info",
       });
       setQRCode(null);
       setPairingCode("");
       await logout(instanceId);
       await refreshInstanceLifecycleData();
       setLifecycleFeedback({
+        action: "logout",
         status: "success",
         title: "Logout completed",
         detail: "Runtime status and lifecycle history were refreshed after the logout request.",
+        tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
+      const detail = getApiErrorMessage(error, "Failed to log out the instance.");
+      const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
+        action: "logout",
         status: "error",
-        title: "Logout failed",
-        detail: getApiErrorMessage(error, "Failed to log out the instance."),
+        title: bridgeUnavailable ? "Logout unavailable" : "Logout failed",
+        detail,
+        tone: bridgeUnavailable ? "warning" : "destructive",
       });
-      toast.error(getApiErrorMessage(error, "Failed to log out the instance."));
+      notifyLifecycleFailure(detail, bridgeUnavailable);
+    } finally {
+      setActiveLifecycleAction(null);
     }
   };
 
@@ -366,11 +404,15 @@ function DashboardInstance() {
       return;
     }
 
+    setActiveLifecycleAction("pair");
+    setPairDialogOpen(true);
     try {
       setLifecycleFeedback({
+        action: "pair",
         status: "running",
         title: "Requesting pairing code",
         detail: "Waiting for the backend to generate a code for this phone number.",
+        tone: "info",
       });
       setQRCode(null);
       setPairingCode("");
@@ -382,22 +424,32 @@ function DashboardInstance() {
       setPairingCode(data.pairingCode || data.code || "");
       await refreshInstanceLifecycleData();
       setLifecycleFeedback({
+        action: "pair",
         status: "success",
         title: "Pairing code ready",
-        detail: "Use the code below in WhatsApp. Runtime status and lifecycle history have been refreshed.",
+        detail: "Use the code below in WhatsApp if one was returned. Runtime status and lifecycle history were refreshed.",
+        tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
+      const detail = getApiErrorMessage(error, "Failed to request a pairing code.");
+      const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
+        action: "pair",
         status: "error",
-        title: "Pairing request failed",
-        detail: getApiErrorMessage(error, "Failed to request a pairing code."),
+        title: bridgeUnavailable ? "Pairing unavailable" : "Pairing request failed",
+        detail,
+        tone: bridgeUnavailable ? "warning" : "destructive",
       });
-      toast.error(getApiErrorMessage(error, "Failed to request a pairing code."));
+      notifyLifecycleFailure(detail, bridgeUnavailable);
+    } finally {
+      setActiveLifecycleAction(null);
     }
   };
 
   const closeQRCodePopup = async () => {
+    setReconnectDialogOpen(false);
+    setPairDialogOpen(false);
     setQRCode(null);
     setPairingCode("");
     await reloadInstance();
@@ -427,6 +479,7 @@ function DashboardInstance() {
         status: "running",
         title: "Requesting history backfill",
         detail: "This asks the live bridge for a bounded history sync. It does not guarantee a full replay.",
+        tone: "info",
       });
 
       const result = await backfillHistory({
@@ -438,21 +491,39 @@ function DashboardInstance() {
       });
 
       await refreshInstanceLifecycleData();
-      setBackfillFeedback({
-        status: "success",
-        title: "History backfill requested",
-        detail:
+      if (result.accepted) {
+        const acceptedDetail = result.operatorMessage
+          ? `${result.operatorMessage} Requested count (${parsedCount}) is request scope only, not the number of rows imported.`
+          : `The bridge accepted a bounded recovery request for ${chatJid}. The requested count (${parsedCount}) is only the requested scope, not the number of rows imported.`;
+        setBackfillFeedback({
+          status: "success",
+          title: "History backfill requested",
+          detail: acceptedDetail,
+          tone: "success",
+        });
+      } else {
+        const detail =
           result.operatorMessage ||
-          "The bridge accepted the recovery request. Stored chat history will only change if a sync blob is returned.",
-      });
+          `The backend did not accept the recovery request for ${chatJid}. The requested count (${parsedCount}) was not applied.`;
+        setBackfillFeedback({
+          status: "error",
+          title: "History backfill not accepted",
+          detail,
+          tone: "warning",
+        });
+        toast.warn(detail);
+      }
     } catch (error) {
       console.error("Error:", error);
+      const detail = getApiErrorMessage(error, "Unable to request history backfill.");
+      const bridgeUnavailable = isBridgeUnavailableError(error);
       setBackfillFeedback({
         status: "error",
-        title: "History backfill failed",
-        detail: getApiErrorMessage(error, "Unable to request history backfill."),
+        title: bridgeUnavailable ? "History backfill unavailable" : "History backfill failed",
+        detail,
+        tone: bridgeUnavailable ? "warning" : "destructive",
       });
-      toast.error(getApiErrorMessage(error, "Unable to request history backfill."));
+      notifyLifecycleFailure(detail, bridgeUnavailable);
     } finally {
       setIsBackfillRunning(false);
     }
@@ -609,6 +680,14 @@ function DashboardInstance() {
     return displayQRCode?.startsWith('data:image/') || displayQRCode?.match(/^data:image\/png;base64,/);
   }, [displayQRCode]);
 
+  const isLifecycleRunning = activeLifecycleAction !== null;
+  const lifecycleVariant = lifecycleFeedback?.tone ?? "info";
+  const backfillVariant = backfillFeedback?.tone ?? "info";
+  const showReconnectDialogError = reconnectDialogOpen && lifecycleFeedback?.action === "reconnect" && lifecycleFeedback.status === "error";
+  const showPairDialogError = pairDialogOpen && lifecycleFeedback?.action === "pair" && lifecycleFeedback.status === "error";
+  const showReconnectDialogLoading = reconnectDialogOpen && activeLifecycleAction === "reconnect";
+  const showPairDialogLoading = pairDialogOpen && activeLifecycleAction === "pair";
+
   if (!instance) {
     return <LoadingSpinner />;
   }
@@ -658,11 +737,11 @@ function DashboardInstance() {
               <Alert variant="warning" className="flex flex-wrap items-center justify-between gap-3">
                 <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
 
-                <Dialog>
-                  <DialogTrigger onClick={() => handleReconnect(instance.id)} asChild>
-                    <Button variant="warning">Reconnect with QR</Button>
-                  </DialogTrigger>
-                  <DialogContent onCloseAutoFocus={closeQRCodePopup}>
+                <Dialog open={reconnectDialogOpen} onOpenChange={(open) => void (open ? setReconnectDialogOpen(true) : closeQRCodePopup())}>
+                  <Button variant="warning" disabled={isLifecycleRunning} onClick={() => void handleReconnect(instance.id)}>
+                    {activeLifecycleAction === "reconnect" ? "Requesting reconnect..." : "Reconnect with QR"}
+                  </Button>
+                  <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Reconnect with QR</DialogTitle>
                       <DialogDescription>
@@ -670,39 +749,61 @@ function DashboardInstance() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="flex items-center justify-center">
-                      {displayQRCode ? (
+                      {showReconnectDialogLoading ? (
+                        <LoadingSpinner />
+                      ) : showReconnectDialogError ? (
+                        <Alert variant="warning">
+                          <AlertTitle>{lifecycleFeedback.title}</AlertTitle>
+                          {lifecycleFeedback.detail && <AlertDescription>{lifecycleFeedback.detail}</AlertDescription>}
+                        </Alert>
+                      ) : displayQRCode ? (
                         isQRImage ? (
                           <img src={displayQRCode} alt="QR Code" className="max-w-64 max-h-64" />
                         ) : (
                           <QRCode value={displayQRCode} size={256} bgColor="transparent" fgColor={qrCodeColor} className="rounded-sm" />
                         )
                       ) : (
-                        <LoadingSpinner />
+                        <Alert variant="warning">
+                          <AlertTitle>No live QR returned</AlertTitle>
+                          <AlertDescription>The reconnect request finished, but the backend did not expose a QR for the current session state.</AlertDescription>
+                        </Alert>
                       )}
                     </div>
                   </DialogContent>
                 </Dialog>
 
                 {instance.number && (
-                  <Dialog>
-                    <DialogTrigger className="connect-code-button" onClick={() => handlePairingCode(instance.id)}>
-                      Pair with code
-                    </DialogTrigger>
-                    <DialogContent onCloseAutoFocus={closeQRCodePopup}>
+                  <Dialog open={pairDialogOpen} onOpenChange={(open) => void (open ? setPairDialogOpen(true) : closeQRCodePopup())}>
+                    <Button type="button" className="connect-code-button" disabled={isLifecycleRunning} onClick={() => void handlePairingCode(instance.id)}>
+                      {activeLifecycleAction === "pair" ? "Requesting code..." : "Pair with code"}
+                    </Button>
+                    <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Pair with code</DialogTitle>
                         <DialogDescription>
-                          {displayQRCode ? (
+                          {showPairDialogLoading ? (
+                            <div className="flex justify-center py-3">
+                              <LoadingSpinner />
+                            </div>
+                          ) : showPairDialogError ? (
+                            <Alert variant="warning">
+                              <AlertTitle>{lifecycleFeedback.title}</AlertTitle>
+                              {lifecycleFeedback.detail && <AlertDescription>{lifecycleFeedback.detail}</AlertDescription>}
+                            </Alert>
+                          ) : pairingCode ? (
                             <div className="py-3">
                               <p className="text-center">
                                 <strong>Pair with code</strong>
                               </p>
                               <p className="pairing-code text-center">
-                                {displayQRCode.substring(0, 4)}-{displayQRCode.substring(4, 8)}
+                                {pairingCode.substring(0, 4)}-{pairingCode.substring(4, 8)}
                               </p>
                             </div>
                           ) : (
-                            <LoadingSpinner />
+                            <Alert variant="warning">
+                              <AlertTitle>No pairing code returned</AlertTitle>
+                              <AlertDescription>The request finished, but the backend did not return a pairing code for this session state.</AlertDescription>
+                            </Alert>
                           )}
                         </DialogDescription>
                       </DialogHeader>
@@ -713,14 +814,14 @@ function DashboardInstance() {
             )}
           </CardContent>
           <CardFooter className="flex flex-wrap items-center justify-end gap-3">
-            <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload}>
+            <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning}>
               <RefreshCw size="20" />
             </Button>
-            <Button className="action-button" variant="secondary" onClick={() => handleReconnect(instance.id)}>
-              RECONNECT
+            <Button className="action-button" variant="secondary" onClick={() => void handleReconnect(instance.id)} disabled={isLifecycleRunning}>
+              {activeLifecycleAction === "reconnect" ? "REQUESTING..." : "RECONNECT"}
             </Button>
-            <Button variant="destructive" onClick={() => handleLogout(instance.id)} disabled={instance.connectionStatus === "close"}>
-              LOG OUT
+            <Button variant="destructive" onClick={() => void handleLogout(instance.id)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
+              {activeLifecycleAction === "logout" ? "LOGGING OUT..." : "LOG OUT"}
             </Button>
           </CardFooter>
         </Card>
@@ -766,15 +867,16 @@ function DashboardInstance() {
             <p className="text-sm text-muted-foreground">
               This panel reflects the durable runtime endpoint. It is the best current operator view, but final truth can still lag when the bridge is temporarily unavailable.
             </p>
-            {runtimeLoading ? (
+            {runtimeError ? (
+              <Alert variant={isBridgeUnavailableError(runtimeError) ? "warning" : "destructive"}>
+                <AlertTitle>{isBridgeUnavailableError(runtimeError) ? "Runtime status temporarily unavailable" : "Runtime status unavailable"}</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeError, "Unable to load runtime state.")}</AlertDescription>
+              </Alert>
+            ) : null}
+            {runtimeLoading && !runtimeState ? (
               <div className="flex min-h-32 items-center justify-center">
                 <LoadingSpinner />
               </div>
-            ) : runtimeError ? (
-              <Alert variant="destructive">
-                <AlertTitle>Runtime status unavailable</AlertTitle>
-                <AlertDescription>{getApiErrorMessage(runtimeError, "Unable to load runtime state.")}</AlertDescription>
-              </Alert>
             ) : runtimeState ? (
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-lg border p-4">
@@ -802,21 +904,14 @@ function DashboardInstance() {
                   <div className="text-sm">{formatOptionalTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
               </div>
-            ) : (
+            ) : !runtimeError ? (
               <Alert variant="warning">
                 <AlertTitle>No runtime status returned</AlertTitle>
                 <AlertDescription>The backend runtime endpoint is active, but it did not return a current state for this instance yet.</AlertDescription>
               </Alert>
-            )}
+            ) : null}
             {lifecycleFeedback && lifecycleFeedback.status !== "idle" && (
-              <Alert
-                variant={
-                  lifecycleFeedback.status === "running"
-                    ? "info"
-                    : lifecycleFeedback.status === "success"
-                      ? "success"
-                      : "destructive"
-                }>
+              <Alert variant={lifecycleVariant}>
                 <AlertTitle>{lifecycleFeedback.title}</AlertTitle>
                 {lifecycleFeedback.detail && <AlertDescription>{lifecycleFeedback.detail}</AlertDescription>}
               </Alert>
@@ -878,35 +973,29 @@ function DashboardInstance() {
               </p>
             </div>
             {backfillFeedback && backfillFeedback.status !== "idle" && (
-              <Alert
-                variant={
-                  backfillFeedback.status === "running"
-                    ? "info"
-                    : backfillFeedback.status === "success"
-                      ? "success"
-                      : "destructive"
-                }>
+              <Alert variant={backfillVariant}>
                 <AlertTitle>{backfillFeedback.title}</AlertTitle>
                 {backfillFeedback.detail && <AlertDescription>{backfillFeedback.detail}</AlertDescription>}
               </Alert>
             )}
-            {runtimeHistoryLoading ? (
+            {runtimeHistoryError ? (
+              <Alert variant={isBridgeUnavailableError(runtimeHistoryError) ? "warning" : "destructive"}>
+                <AlertTitle>{isBridgeUnavailableError(runtimeHistoryError) ? "Runtime history temporarily unavailable" : "Runtime history unavailable"}</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeHistoryError, "Unable to load runtime history.")}</AlertDescription>
+              </Alert>
+            ) : null}
+            {runtimeHistoryLoading && !runtimeHistory ? (
               <div className="flex min-h-32 items-center justify-center">
                 <LoadingSpinner />
               </div>
-            ) : runtimeHistoryError ? (
-              <Alert variant="destructive">
-                <AlertTitle>Runtime history unavailable</AlertTitle>
-                <AlertDescription>{getApiErrorMessage(runtimeHistoryError, "Unable to load runtime history.")}</AlertDescription>
-              </Alert>
             ) : runtimeHistory && runtimeHistory.length > 0 ? (
               <RuntimeHistoryList events={runtimeHistory.slice(0, 10)} />
-            ) : (
+            ) : !runtimeHistoryError ? (
               <Alert variant="warning">
                 <AlertTitle>No runtime history yet</AlertTitle>
                 <AlertDescription>The runtime history endpoint is active, but there are no recent lifecycle events stored for this instance yet.</AlertDescription>
               </Alert>
-            )}
+            ) : null}
           </CardContent>
         </Card>
       </section>

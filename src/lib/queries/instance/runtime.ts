@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiGlobal } from "../api";
 import { UseQueryParams } from "../types";
 import { FetchInstanceRuntimeHistoryResponse, FetchInstanceRuntimeResponse, InstanceRuntimeHistoryEvent, InstanceRuntimeState } from "./types";
+import { normalizeBridgeUnavailableError } from "./bridgeAvailability";
 
 type RuntimeParams = {
   instanceId: string | null;
@@ -112,13 +113,21 @@ const normalizeRuntimeHistory = (payload: unknown): FetchInstanceRuntimeHistoryR
 };
 
 const fetchInstanceRuntime = async ({ instanceId }: RuntimeParams): Promise<FetchInstanceRuntimeResponse> => {
-  const response = await apiGlobal.get(`/instance/id/${instanceId}/runtime`);
-  return normalizeRuntimeState(response.data);
+  try {
+    const response = await apiGlobal.get(`/instance/id/${instanceId}/runtime`);
+    return normalizeRuntimeState(response.data);
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "runtime");
+  }
 };
 
 const fetchInstanceRuntimeHistory = async ({ instanceId }: RuntimeParams): Promise<FetchInstanceRuntimeHistoryResponse> => {
-  const response = await apiGlobal.get(`/instance/id/${instanceId}/runtime/history`);
-  return normalizeRuntimeHistory(response.data);
+  try {
+    const response = await apiGlobal.get(`/instance/id/${instanceId}/runtime/history`);
+    return normalizeRuntimeHistory(response.data);
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "runtime-history");
+  }
 };
 
 export const useInstanceRuntime = (props: UseQueryParams<FetchInstanceRuntimeResponse> & Partial<RuntimeParams>) => {

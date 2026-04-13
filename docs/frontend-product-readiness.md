@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-12.
+Updated on 2026-04-13.
 
 ## Summary
 
@@ -26,6 +26,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - JWT auth, refresh, and tenant hydration
 - tenant-aware routing and instance scoping
 - shared backend error parsing for `401`, `403`, `404`, `429`, `501`, and generic validation/server failures
+- centralized instance bridge-unavailable interpretation for reconnect, pair, logout, runtime state/history, and history backfill
 
 ### Main product surfaces
 
@@ -52,7 +53,9 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - pairing code flow
   - refresh / reconnect / logout controls aligned to the tenant-safe backend contract
   - runtime observability panel with current runtime state, last observed status, and recent lifecycle history
+  - graceful operator warnings when the live runtime bridge is unavailable, without redirecting to login or framing the issue as auth/session loss
   - guarded history backfill recovery action for chat JIDs with stored anchors
+  - clear accepted-versus-failed backfill feedback that treats requested count as request scope only
   - text-only outbound send flow
   - async status polling against `status_endpoint`
 - `/manager/instance/:instanceId/settings`
@@ -96,6 +99,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - composer exposes clearer in-flight feedback plus attachment chips for media/audio sends
 - remaining limits are backend-driven:
 - history backfill is now operator-exposed as a guarded recovery action, but it is still bridge-dependent and not a guaranteed replay
+- bridge-unavailable failures are now handled gracefully whether the backend reports them as the current `500 internal_error` or a future `409 conflict`
 - inbound history completeness depends on runtime event capture
 - media history may be partial when preview/download metadata is missing
 
@@ -144,6 +148,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - operational instance management
   - connection troubleshooting
   - runtime state and lifecycle event inspection from the instance dashboard
+  - honest bridge-unavailable handling for lifecycle actions and bounded chat-history recovery requests
   - connector configuration for webhook/websocket/rabbitmq/proxy
   - CRM-lite usage
   - text/media/audio outbound dispatch from supported instance surfaces
@@ -152,4 +157,5 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 - Not yet suitable for:
   - full upstream-manager parity
   - chat parity for older sessions that were never captured by the runtime
+  - guaranteed bridge recovery after a failed reconnect, pair, logout, or history backfill request
   - legacy integration management parity

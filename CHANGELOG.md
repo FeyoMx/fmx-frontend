@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MVP release candidate documentation for supported scope, QA walkthrough, and known user-visible caveats
 - Explicit gating for legacy embed chat/messages routes so operators enter chat through the tenant-safe instance chat flow only
 - History backfill recovery control on the instance dashboard using the tenant-safe backend route
+- Centralized bridge-unavailable adapter for lifecycle, runtime, and backfill queries
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -65,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy `/manager/embed-chat` routes now resolve to honest unsupported placeholders instead of mounting the old token/query-param chat UI
 - Instance dashboard lifecycle controls now align with backend SaaS semantics by using reconnect, pair, and DELETE logout instead of stale restart/disconnect wording
 - Instance dashboard now refreshes status, QR, runtime state, and runtime history after lifecycle and backfill actions
+- Lifecycle and backfill operator feedback now stays honest when the live runtime bridge is unavailable, tolerating both current `500 internal_error` responses and future `409 conflict` normalization
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -81,6 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat conversation rendering now tolerates partial message payloads while exposing timestamps, direction, status, and available media/audio metadata
 - Instance status and broadcast badges now normalize more runtime and queue states consistently across the active MVP UI
 - Lifecycle query wiring no longer calls the stale restart route or POST logout contract
+- Instance dashboard and chat-recovery flows no longer imply auth/session failure when bridge-unavailable lifecycle or backfill requests fail
+- Runtime status and runtime history panels now keep their last successful data visible during failed bridge-unavailable refetches
 
 ### Removed
 - Unused legacy `apiLegacy` client

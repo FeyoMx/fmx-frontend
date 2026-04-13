@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-12.
+Updated on 2026-04-13.
 
 ## Scope
 
@@ -101,6 +101,9 @@ Frontend handling after this sync:
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
 - Instance dashboard now refreshes status, QR, runtime state, and runtime history after reconnect, pairing, logout, and backfill actions so operators can see lifecycle truth in one place.
+- Bridge-unavailable lifecycle and recovery failures are now normalized near the instance query layer so reconnect, pair, logout, runtime fetches, runtime history fetches, and history backfill tolerate both the current `500 internal_error` behavior and future `409 conflict` normalization.
+- Runtime status and runtime history panels now keep their last successful data visible during failed refetches, while showing operator-facing warnings instead of implying auth or session loss.
+- Reconnect, pairing, and history-backfill feedback now uses explicit bridge/runtime-unavailable wording, and backfill acceptance copy no longer implies the requested count equals imported rows.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
@@ -109,6 +112,7 @@ Frontend handling after this sync:
 - Shared API error handling now includes clearer `404` and `429` messages.
 - Text-message delivery state stays aligned with the async backend contract introduced on the instance dashboard flow.
 - Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
+- Lifecycle/runtime/backfill bridge-unavailable interpretation is centralized under `src/lib/queries/instance/bridgeAvailability.ts`.
 
 ## Remaining Gaps
 
@@ -130,6 +134,7 @@ Remaining frontend-only work is mostly presentational:
 - richer charts and trends
 - more operational actions on dashboard cards
 - deeper QA across dense-data scenarios and long chat/broadcast/contact lists
+- wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
 
 ## Verification
 

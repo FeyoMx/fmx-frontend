@@ -4,6 +4,7 @@ import { InstanceHistoryBackfillResult } from "./types";
 import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
 import { useQuery } from "@tanstack/react-query";
+import { normalizeBridgeUnavailableError } from "./bridgeAvailability";
 
 /**
  * Instance Management API Functions
@@ -27,13 +28,21 @@ const createInstance = async (instance: NewInstance) => {
 };
 
 const reconnect = async (instanceId: string) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/reconnect`);
-  return response.data;
+  try {
+    const response = await apiGlobal.post(`/instance/id/${instanceId}/reconnect`);
+    return response.data;
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "reconnect");
+  }
 };
 
 const logout = async (instanceId: string) => {
-  const response = await apiGlobal.delete(`/instance/id/${instanceId}/logout`);
-  return response.data;
+  try {
+    const response = await apiGlobal.delete(`/instance/id/${instanceId}/logout`);
+    return response.data;
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "logout");
+  }
 };
 
 const deleteInstance = async (instanceId: string) => {
@@ -47,8 +56,12 @@ interface PairParams {
 }
 
 const pair = async ({ instanceId, phone }: PairParams) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/pair`, { phone });
-  return response.data;
+  try {
+    const response = await apiGlobal.post(`/instance/id/${instanceId}/pair`, { phone });
+    return response.data;
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "pair");
+  }
 };
 
 interface HistoryBackfillParams {
@@ -94,8 +107,12 @@ const normalizeHistoryBackfillResponse = (payload: unknown): InstanceHistoryBack
 };
 
 const backfillHistory = async ({ instanceId, data }: HistoryBackfillParams): Promise<InstanceHistoryBackfillResult> => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/history/backfill`, data);
-  return normalizeHistoryBackfillResponse(response.data);
+  try {
+    const response = await apiGlobal.post(`/instance/id/${instanceId}/history/backfill`, data);
+    return normalizeHistoryBackfillResponse(response.data);
+  } catch (error) {
+    throw normalizeBridgeUnavailableError(error, "history-backfill");
+  }
 };
 
 const getQRCode = async (instanceId: string) => {
