@@ -27,6 +27,19 @@ export type FetchInstanceRuntimeResponse = InstanceRuntimeState;
 
 export type FetchInstanceRuntimeHistoryResponse = InstanceRuntimeHistoryEvent[];
 
+export type InstanceHistoryBackfillResult = {
+  accepted: boolean;
+  action?: string;
+  chatJid?: string;
+  anchorMessageId?: string;
+  anchorSource?: string;
+  count?: number;
+  bridgeDependent?: boolean;
+  historicalIngestion?: string;
+  operatorMessage?: string;
+  raw: unknown;
+};
+
 export interface BackendInstanceResponse {
   id?: string;
   instance_id?: string;

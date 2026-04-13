@@ -50,8 +50,9 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/instance/:instanceId/dashboard`
   - status and QR handling
   - pairing code flow
-  - refresh / restart / disconnect controls
+  - refresh / reconnect / logout controls aligned to the tenant-safe backend contract
   - runtime observability panel with current runtime state, last observed status, and recent lifecycle history
+  - guarded history backfill recovery action for chat JIDs with stored anchors
   - text-only outbound send flow
   - async status polling against `status_endpoint`
 - `/manager/instance/:instanceId/settings`
@@ -94,7 +95,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - outbound text, media, and audio actions refresh or append safely inside the active thread
 - composer exposes clearer in-flight feedback plus attachment chips for media/audio sends
 - remaining limits are backend-driven:
-- no historical backfill for older sessions
+- history backfill is now operator-exposed as a guarded recovery action, but it is still bridge-dependent and not a guaranteed replay
 - inbound history completeness depends on runtime event capture
 - media history may be partial when preview/download metadata is missing
 
@@ -104,6 +105,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
+- instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
 
 ## What Is Intentionally Gated
 

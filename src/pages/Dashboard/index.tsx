@@ -273,7 +273,7 @@ function Dashboard() {
                 <div className="text-2xl font-semibold">{operationalSummary.active}</div>
               </div>
               <div className="rounded-lg border p-3">
-                <div className="text-xs text-muted-foreground">Needs QR / connect</div>
+                <div className="text-xs text-muted-foreground">Needs QR / reconnect</div>
                 <div className="text-2xl font-semibold">{operationalSummary.needsAction}</div>
               </div>
               <div className="rounded-lg border p-3">

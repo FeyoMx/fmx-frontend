@@ -50,6 +50,33 @@ These routes use tenant-safe SaaS endpoints for:
 
 Legacy embed chat routes remain in the repo only as gated placeholders. They are not part of the supported operator flow and still depend on older token/query-param contracts.
 
+## Instance Lifecycle And Recovery
+
+The instance dashboard now uses the current tenant-safe lifecycle contract directly:
+
+- `POST /instance/id/:instanceID/reconnect`
+- `POST /instance/id/:instanceID/pair`
+- `DELETE /instance/id/:instanceID/logout`
+- `GET /instance/id/:instanceID/runtime`
+- `GET /instance/id/:instanceID/runtime/history`
+- `POST /instance/id/:instanceID/history/backfill`
+
+### Frontend behavior
+
+- `Reconnect` is the operator action for reopening a live session and refreshing QR availability when the backend exposes one.
+- `Pair with code` is only shown when the instance has a phone number that can be used with the backend pairing endpoint.
+- `Log out` uses the backend delete semantics and then refreshes status, QR, runtime state, and runtime history.
+- `History backfill` is exposed as a guarded recovery action on the instance dashboard and requires:
+  - a chat JID
+  - a stored message anchor for that chat
+  - a live bridge session able to return a sync blob
+
+### Current limitations
+
+- history backfill is bounded, bridge-dependent, and not a guaranteed full replay
+- runtime truth can still lag briefly when the bridge is degraded or temporarily unavailable
+- chat history completeness still depends on what the runtime captured or what the bridge can return during backfill
+
 ## Instance Text Messaging
 
 The direct instance-dashboard text action is still async and remains useful for quick outbound sends.
@@ -122,7 +149,7 @@ Status payload can include:
 ### Current limitations
 
 - instance-dashboard sending is still only a quick-send surface, not a full conversation workspace
-- older sessions are not historically backfilled into chat threads
+- older sessions are not guaranteed to be historically backfilled into chat threads even though a bounded recovery action now exists
 - inbound history completeness still depends on runtime event capture
 - stored media history can still be partial when preview/download metadata is missing
 

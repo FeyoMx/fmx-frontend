@@ -1,4 +1,5 @@
 import { AdvancedSettings, InstanceTextMessageInput, InstanceTextMessageJobStatus, InstanceTextMessageResult, NewInstance } from "@/types/evolution.types";
+import { InstanceHistoryBackfillResult } from "./types";
 
 import { apiGlobal } from "../api";
 import { useManageMutation } from "../mutateQuery";
@@ -10,12 +11,12 @@ import { useQuery } from "@tanstack/react-query";
  * All operations now use ID-based routes with JWT authentication:
  *
  * ID-based routes:
- * - POST /instance/id/{id}/connect
- * - POST /instance/id/{id}/disconnect
+ * - POST /instance/id/{id}/reconnect
+ * - POST /instance/id/{id}/pair
  * - GET /instance/id/{id}/qrcode
  * - GET /instance/id/{id}/status
- * - POST /instance/id/{id}/restart
- * - POST /instance/id/{id}/logout
+ * - DELETE /instance/id/{id}/logout
+ * - POST /instance/id/{id}/history/backfill
  * - PUT /instance/id/{id}/settings
  * - DELETE /instance/id/{id}
  */
@@ -25,13 +26,13 @@ const createInstance = async (instance: NewInstance) => {
   return response.data;
 };
 
-const restart = async (instanceId: string) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/restart`);
+const reconnect = async (instanceId: string) => {
+  const response = await apiGlobal.post(`/instance/id/${instanceId}/reconnect`);
   return response.data;
 };
 
 const logout = async (instanceId: string) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/logout`);
+  const response = await apiGlobal.delete(`/instance/id/${instanceId}/logout`);
   return response.data;
 };
 
@@ -40,20 +41,61 @@ const deleteInstance = async (instanceId: string) => {
   return response.data;
 };
 
-interface ConnectParams {
+interface PairParams {
   instanceId: string;
-  number?: string;
+  phone: string;
 }
 
-const connect = async ({ instanceId, number }: ConnectParams) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/connect`, { number });
+const pair = async ({ instanceId, phone }: PairParams) => {
+  const response = await apiGlobal.post(`/instance/id/${instanceId}/pair`, { phone });
   return response.data;
 };
 
+interface HistoryBackfillParams {
+  instanceId: string;
+  data: {
+    chat_jid: string;
+    count?: number;
+  };
+}
 
-const disconnect = async (instanceId: string) => {
-  const response = await apiGlobal.post(`/instance/id/${instanceId}/disconnect`);
-  return response.data;
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
+};
+
+const readString = (value: unknown): string | undefined => {
+  return typeof value === "string" && value.trim() ? value : undefined;
+};
+
+const readBoolean = (value: unknown): boolean | undefined => {
+  return typeof value === "boolean" ? value : undefined;
+};
+
+const readNumber = (value: unknown): number | undefined => {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+};
+
+const normalizeHistoryBackfillResponse = (payload: unknown): InstanceHistoryBackfillResult => {
+  const root = asRecord(payload) ?? {};
+  const data = asRecord(root.data) ?? root;
+
+  return {
+    accepted: readBoolean(data.accepted) ?? false,
+    action: readString(data.action),
+    chatJid: readString(data.chat_jid) ?? readString(data.chatJid),
+    anchorMessageId: readString(data.anchor_message_id) ?? readString(data.anchorMessageId),
+    anchorSource: readString(data.anchor_source) ?? readString(data.anchorSource),
+    count: readNumber(data.count),
+    bridgeDependent: readBoolean(data.bridge_dependent) ?? readBoolean(data.bridgeDependent),
+    historicalIngestion: readString(data.historical_ingestion) ?? readString(data.historicalIngestion),
+    operatorMessage: readString(data.operator_message) ?? readString(root.message),
+    raw: payload,
+  };
+};
+
+const backfillHistory = async ({ instanceId, data }: HistoryBackfillParams): Promise<InstanceHistoryBackfillResult> => {
+  const response = await apiGlobal.post(`/instance/id/${instanceId}/history/backfill`, data);
+  return normalizeHistoryBackfillResponse(response.data);
 };
 
 const getQRCode = async (instanceId: string) => {
@@ -135,18 +177,22 @@ const getTextMessageJobStatus = async (statusEndpoint: string) => {
 };
 
 export function useManageInstance() {
-  const connectMutation = useManageMutation(connect, {
+  const reconnectMutation = useManageMutation(reconnect, {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "status"],
+      ["instance", "qrcode"],
       ["instance", "runtime"],
       ["instance", "runtime-history"],
     ],
   });
-  const disconnectMutation = useManageMutation(disconnect, {
+  const pairMutation = useManageMutation(pair, {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
+      ["instance", "status"],
+      ["instance", "qrcode"],
       ["instance", "runtime"],
       ["instance", "runtime-history"],
     ],
@@ -166,14 +212,8 @@ export function useManageInstance() {
     invalidateKeys: [
       ["instance", "fetchInstance"],
       ["instance", "fetchInstances"],
-      ["instance", "runtime"],
-      ["instance", "runtime-history"],
-    ],
-  });
-  const restartMutation = useManageMutation(restart, {
-    invalidateKeys: [
-      ["instance", "fetchInstance"],
-      ["instance", "fetchInstances"],
+      ["instance", "status"],
+      ["instance", "qrcode"],
       ["instance", "runtime"],
       ["instance", "runtime-history"],
     ],
@@ -181,15 +221,25 @@ export function useManageInstance() {
   const createInstanceMutation = useManageMutation(createInstance, {
     invalidateKeys: [["instance", "fetchInstances"]],
   });
+  const backfillHistoryMutation = useManageMutation(backfillHistory, {
+    invalidateKeys: [
+      ["instance", "fetchInstance"],
+      ["instance", "fetchInstances"],
+      ["instance", "runtime"],
+      ["instance", "runtime-history"],
+      ["chat", "threads"],
+      ["chat", "history"],
+    ],
+  });
   const sendTextMessageMutation = useManageMutation(sendTextMessage);
 
   return {
-    connect: connectMutation,
-    disconnect: disconnectMutation,
+    reconnect: reconnectMutation,
+    pair: pairMutation,
     updateSettings: updateSettingsMutation,
     deleteInstance: deleteInstanceMutation,
     logout: logoutMutation,
-    restart: restartMutation,
+    backfillHistory: backfillHistoryMutation,
     createInstance: createInstanceMutation,
     sendTextMessage: sendTextMessageMutation,
   };
@@ -221,22 +271,19 @@ export { getTextMessageJobStatus };
 Usage Examples:
 
 // All operations now use ID-based routes with JWT authentication
-const { connect, disconnect, restart, logout, deleteInstance } = useManageInstance();
+const { reconnect, pair, logout, deleteInstance } = useManageInstance();
 
-// Connect instance
-await connect.mutateAsync({ instanceId: "123", token: "apiKey" });
+// Request reconnect / QR refresh
+await reconnect("123");
 
-// Disconnect instance
-await disconnect.mutateAsync("123");
-
-// Restart instance
-await restart.mutateAsync("123");
+// Request pairing code
+await pair({ instanceId: "123", phone: "15551234567" });
 
 // Logout instance
-await logout.mutateAsync("123");
+await logout("123");
 
 // Delete instance
-await deleteInstance.mutateAsync("123");
+await deleteInstance("123");
 
 // Using query hooks for status and QR code
 const { data: qrCode } = useInstanceQRCode("123");

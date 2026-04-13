@@ -250,11 +250,15 @@ function DashboardInstance() {
   const [messageSendFeedback, setMessageSendFeedback] = useState<MessageSendFeedback | null>(null);
   const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
   const [lifecycleFeedback, setLifecycleFeedback] = useState<LifecycleFeedback | null>(null);
+  const [backfillChatJid, setBackfillChatJid] = useState("");
+  const [backfillCount, setBackfillCount] = useState("50");
+  const [backfillFeedback, setBackfillFeedback] = useState<LifecycleFeedback | null>(null);
+  const [isBackfillRunning, setIsBackfillRunning] = useState(false);
   const messageSendAttemptRef = useRef(0);
   const { theme } = useTheme();
 
   const { instance, reloadInstance } = useInstance();
-  const { connect, logout, restart, sendTextMessage } = useManageInstance();
+  const { reconnect, pair, logout, backfillHistory, sendTextMessage } = useManageInstance();
 
   // Use React Query hooks for status and QR code
   const { data: instanceStatus, refetch: refetchStatus } = useInstanceStatus(instance?.id || "");
@@ -290,36 +294,42 @@ function DashboardInstance() {
     // This effect can be used for any additional UI state management if needed
   }, [instance?.id]);
 
-  const handleReload = async () => {
+  const refreshInstanceLifecycleData = async () => {
     await reloadInstance();
+    await refetchStatus();
+    await refetchQRCode();
     await refetchRuntime();
     await refetchRuntimeHistory();
   };
 
-  const handleRestart = async (instanceId: string) => {
+  const handleReload = async () => {
+    await refreshInstanceLifecycleData();
+  };
+
+  const handleReconnect = async (instanceId: string) => {
     try {
       setLifecycleFeedback({
         status: "running",
-        title: "Restarting runtime",
-        detail: "Waiting for the bridge to acknowledge the restart request.",
+        title: "Requesting reconnect",
+        detail: "Waiting for the backend to reopen the session and refresh runtime state.",
       });
-      await restart(instanceId);
-      await reloadInstance();
-      await refetchRuntime();
-      await refetchRuntimeHistory();
+      setQRCode(null);
+      setPairingCode("");
+      await reconnect(instanceId);
+      await refreshInstanceLifecycleData();
       setLifecycleFeedback({
         status: "success",
-        title: "Restart requested",
-        detail: "Runtime state and recent lifecycle history have been refreshed.",
+        title: "Reconnect requested",
+        detail: "Runtime status, QR availability, and lifecycle history have been refreshed.",
       });
     } catch (error) {
       console.error("Error:", error);
       setLifecycleFeedback({
         status: "error",
-        title: "Restart failed",
-        detail: getApiErrorMessage(error, "Failed to restart instance"),
+        title: "Reconnect failed",
+        detail: getApiErrorMessage(error, "Failed to request reconnect."),
       });
-      toast.error(getApiErrorMessage(error, "Failed to restart instance"));
+      toast.error(getApiErrorMessage(error, "Failed to request reconnect."));
     }
   };
 
@@ -327,70 +337,63 @@ function DashboardInstance() {
     try {
       setLifecycleFeedback({
         status: "running",
-        title: "Disconnecting instance",
-        detail: "Waiting for logout and runtime refresh.",
-      });
-      await logout(instanceId);
-      await reloadInstance();
-      await refetchRuntime();
-      await refetchRuntimeHistory();
-      setLifecycleFeedback({
-        status: "success",
-        title: "Disconnect requested",
-        detail: "Runtime state and lifecycle history were refreshed after logout.",
-      });
-    } catch (error) {
-      console.error("Error:", error);
-      setLifecycleFeedback({
-        status: "error",
-        title: "Disconnect failed",
-        detail: getApiErrorMessage(error, "Failed to disconnect instance"),
-      });
-      toast.error(getApiErrorMessage(error, "Failed to disconnect instance"));
-    }
-  };
-
-  const handleConnect = async (instanceId: string, pairingCode: boolean) => {
-    try {
-      setLifecycleFeedback({
-        status: "running",
-        title: pairingCode ? "Requesting pairing code" : "Requesting reconnect",
-        detail: "Refreshing runtime state as soon as the backend responds.",
+        title: "Logging out instance",
+        detail: "Waiting for logout to complete and for runtime state to refresh.",
       });
       setQRCode(null);
       setPairingCode("");
-
-      if (pairingCode) {
-        const data = await connect({
-          instanceId,
-          number: instance?.number,
-        });
-
-        setPairingCode(data.pairingCode || data.code);
-      } else {
-        await connect({ instanceId });
-      }
-
-      // Refresh instance data after connect
-      await reloadInstance();
-      // Refetch status and QR code
-      await refetchStatus();
-      await refetchQRCode();
-      await refetchRuntime();
-      await refetchRuntimeHistory();
+      await logout(instanceId);
+      await refreshInstanceLifecycleData();
       setLifecycleFeedback({
         status: "success",
-        title: pairingCode ? "Pairing requested" : "Reconnect requested",
-        detail: "Runtime state and lifecycle history have been refreshed.",
+        title: "Logout completed",
+        detail: "Runtime status and lifecycle history were refreshed after the logout request.",
       });
     } catch (error) {
       console.error("Error:", error);
       setLifecycleFeedback({
         status: "error",
-        title: pairingCode ? "Pairing request failed" : "Reconnect failed",
-        detail: getApiErrorMessage(error, "Failed to connect instance"),
+        title: "Logout failed",
+        detail: getApiErrorMessage(error, "Failed to log out the instance."),
       });
-      toast.error(getApiErrorMessage(error, "Failed to connect instance"));
+      toast.error(getApiErrorMessage(error, "Failed to log out the instance."));
+    }
+  };
+
+  const handlePairingCode = async (instanceId: string) => {
+    if (!instance?.number) {
+      toast.error("A phone number is required before requesting a pairing code.");
+      return;
+    }
+
+    try {
+      setLifecycleFeedback({
+        status: "running",
+        title: "Requesting pairing code",
+        detail: "Waiting for the backend to generate a code for this phone number.",
+      });
+      setQRCode(null);
+      setPairingCode("");
+      const data = await pair({
+        instanceId,
+        phone: instance.number,
+      });
+
+      setPairingCode(data.pairingCode || data.code || "");
+      await refreshInstanceLifecycleData();
+      setLifecycleFeedback({
+        status: "success",
+        title: "Pairing code ready",
+        detail: "Use the code below in WhatsApp. Runtime status and lifecycle history have been refreshed.",
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      setLifecycleFeedback({
+        status: "error",
+        title: "Pairing request failed",
+        detail: getApiErrorMessage(error, "Failed to request a pairing code."),
+      });
+      toast.error(getApiErrorMessage(error, "Failed to request a pairing code."));
     }
   };
 
@@ -398,6 +401,61 @@ function DashboardInstance() {
     setQRCode(null);
     setPairingCode("");
     await reloadInstance();
+  };
+
+  const handleHistoryBackfill = async () => {
+    if (!instance?.id) {
+      return;
+    }
+
+    const chatJid = backfillChatJid.trim();
+    const parsedCount = Number.parseInt(backfillCount, 10);
+
+    if (!chatJid) {
+      toast.error("Chat JID is required to request history backfill.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedCount) || parsedCount <= 0) {
+      toast.error("Backfill count must be greater than 0.");
+      return;
+    }
+
+    try {
+      setIsBackfillRunning(true);
+      setBackfillFeedback({
+        status: "running",
+        title: "Requesting history backfill",
+        detail: "This asks the live bridge for a bounded history sync. It does not guarantee a full replay.",
+      });
+
+      const result = await backfillHistory({
+        instanceId: instance.id,
+        data: {
+          chat_jid: chatJid,
+          count: parsedCount,
+        },
+      });
+
+      await refreshInstanceLifecycleData();
+      setBackfillFeedback({
+        status: "success",
+        title: "History backfill requested",
+        detail:
+          result.operatorMessage ||
+          "The bridge accepted the recovery request. Stored chat history will only change if a sync blob is returned.",
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      setBackfillFeedback({
+        status: "error",
+        title: "History backfill failed",
+        detail: getApiErrorMessage(error, "Unable to request history backfill."),
+      });
+      toast.error(getApiErrorMessage(error, "Unable to request history backfill."));
+    } finally {
+      setIsBackfillRunning(false);
+    }
   };
 
   const handleSendTextMessage = async () => {
@@ -601,14 +659,14 @@ function DashboardInstance() {
                 <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
 
                 <Dialog>
-                  <DialogTrigger onClick={() => handleConnect(instance.id, false)} asChild>
-                    <Button variant="warning">{t("instance.dashboard.button.qrcode.label")}</Button>
+                  <DialogTrigger onClick={() => handleReconnect(instance.id)} asChild>
+                    <Button variant="warning">Reconnect with QR</Button>
                   </DialogTrigger>
                   <DialogContent onCloseAutoFocus={closeQRCodePopup}>
                     <DialogHeader>
-                      <DialogTitle>{t("instance.dashboard.button.qrcode.title")}</DialogTitle>
+                      <DialogTitle>Reconnect with QR</DialogTitle>
                       <DialogDescription>
-                        {t("instance.dashboard.button.qrcode.description") || "Scan this QR code with WhatsApp to connect your instance"}
+                        Scan this QR code with WhatsApp after requesting reconnect. The backend decides whether a live QR is available for the current session state.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="flex items-center justify-center">
@@ -627,17 +685,17 @@ function DashboardInstance() {
 
                 {instance.number && (
                   <Dialog>
-                    <DialogTrigger className="connect-code-button" onClick={() => handleConnect(instance.id, true)}>
-                      {t("instance.dashboard.button.pairingCode.label")}
+                    <DialogTrigger className="connect-code-button" onClick={() => handlePairingCode(instance.id)}>
+                      Pair with code
                     </DialogTrigger>
                     <DialogContent onCloseAutoFocus={closeQRCodePopup}>
                       <DialogHeader>
-                        <DialogTitle>{t("instance.dashboard.button.pairingCode.title")}</DialogTitle>
+                        <DialogTitle>Pair with code</DialogTitle>
                         <DialogDescription>
                           {displayQRCode ? (
                             <div className="py-3">
                               <p className="text-center">
-                                <strong>{t("instance.dashboard.button.pairingCode.title")}</strong>
+                                <strong>Pair with code</strong>
                               </p>
                               <p className="pairing-code text-center">
                                 {displayQRCode.substring(0, 4)}-{displayQRCode.substring(4, 8)}
@@ -658,11 +716,11 @@ function DashboardInstance() {
             <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload}>
               <RefreshCw size="20" />
             </Button>
-            <Button className="action-button" variant="secondary" onClick={() => handleRestart(instance.id)}>
-              {t("instance.dashboard.button.restart").toUpperCase()}
+            <Button className="action-button" variant="secondary" onClick={() => handleReconnect(instance.id)}>
+              RECONNECT
             </Button>
             <Button variant="destructive" onClick={() => handleLogout(instance.id)} disabled={instance.connectionStatus === "close"}>
-              {t("instance.dashboard.button.disconnect").toUpperCase()}
+              LOG OUT
             </Button>
           </CardFooter>
         </Card>
@@ -777,6 +835,61 @@ function DashboardInstance() {
             <p className="text-sm text-muted-foreground">
               Recent lifecycle events help explain why an instance is connected, disconnected, pairing, or recovering. Event completeness still depends on bridge availability.
             </p>
+            <div className="rounded-lg border p-4">
+              <div className="mb-2 text-sm font-medium">History recovery</div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Request a bounded history backfill for one WhatsApp chat JID. This is a recovery tool, not a guaranteed full replay, and it only works when the live bridge can return a sync blob.
+              </p>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_auto]">
+                <div className="grid gap-2">
+                  <Label htmlFor="history-backfill-chat-jid">Chat JID</Label>
+                  <Input
+                    id="history-backfill-chat-jid"
+                    value={backfillChatJid}
+                    onChange={(event) => setBackfillChatJid(event.target.value)}
+                    placeholder="5215512345678@s.whatsapp.net"
+                    disabled={isBackfillRunning}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="history-backfill-count">Count</Label>
+                  <Input
+                    id="history-backfill-count"
+                    type="number"
+                    min="1"
+                    max="200"
+                    value={backfillCount}
+                    onChange={(event) => setBackfillCount(event.target.value)}
+                    disabled={isBackfillRunning}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleHistoryBackfill}
+                    disabled={isBackfillRunning || instance.connectionStatus !== "open"}>
+                    {isBackfillRunning ? "Requesting..." : "Request backfill"}
+                  </Button>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                The backend needs a stored anchor for this chat JID and a live bridge session. If the bridge is offline or no anchor exists, the request will fail honestly.
+              </p>
+            </div>
+            {backfillFeedback && backfillFeedback.status !== "idle" && (
+              <Alert
+                variant={
+                  backfillFeedback.status === "running"
+                    ? "info"
+                    : backfillFeedback.status === "success"
+                      ? "success"
+                      : "destructive"
+                }>
+                <AlertTitle>{backfillFeedback.title}</AlertTitle>
+                {backfillFeedback.detail && <AlertDescription>{backfillFeedback.detail}</AlertDescription>}
+              </Alert>
+            )}
             {runtimeHistoryLoading ? (
               <div className="flex min-h-32 items-center justify-center">
                 <LoadingSpinner />

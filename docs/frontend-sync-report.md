@@ -13,7 +13,7 @@ Updated on 2026-04-12.
 - auth and tenant session flow
 - dashboard metrics and instance listing
 - instance CRUD entry points used by dashboard
-- instance detail, QR, pairing, connect/disconnect, and status
+- instance detail, QR, pairing, reconnect/logout, and status
 - advanced settings
 - webhook
 - websocket
@@ -26,6 +26,7 @@ Updated on 2026-04-12.
 - tenant-safe chat list and conversation history on supported instance chat routes
 - tenant-safe media/audio send wiring inside the active conversation composer
 - tenant-safe instance runtime state and runtime history observability on the dashboard
+- tenant-safe history backfill recovery requests from the instance dashboard
 
 ## Backend-Partial Surfaces Kept Honest
 
@@ -98,7 +99,8 @@ Frontend handling after this sync:
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
-- Instance dashboard now refreshes runtime state/history after reconnect, pairing, restart, and logout actions so operators can see lifecycle truth in one place.
+- Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
+- Instance dashboard now refreshes status, QR, runtime state, and runtime history after reconnect, pairing, logout, and backfill actions so operators can see lifecycle truth in one place.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
@@ -112,7 +114,7 @@ Frontend handling after this sync:
 
 ### Blocked by backend
 
-- historical backfill for older chat sessions
+- complete historical replay for older chat sessions that the bridge cannot return during backfill
 - full inbound history completeness when runtime events were not captured
 - complete media preview/download metadata for all stored messages
 - Kafka surface
