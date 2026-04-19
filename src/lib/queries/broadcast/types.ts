@@ -1,3 +1,10 @@
+export interface BroadcastRecipientAnalyticsResponse {
+  total?: number | null;
+  sent?: number | null;
+  failed?: number | null;
+  pending?: number | null;
+}
+
 export interface BroadcastJobResponse {
   id: string;
   instance_id: string;
@@ -12,6 +19,22 @@ export interface BroadcastJobResponse {
   completed_at?: string | null;
   failed_at?: string | null;
   created_at?: string;
+  analytics?: BroadcastRecipientAnalyticsResponse | null;
+  recipients?: BroadcastRecipientAnalyticsResponse | null;
+  recipient_totals?: BroadcastRecipientAnalyticsResponse | null;
+  recipient_total?: number | null;
+  sent_count?: number | null;
+  failed_count?: number | null;
+  pending_count?: number | null;
+}
+
+export interface BroadcastRecipientAnalyticsView {
+  total: number | null;
+  sent: number | null;
+  failed: number | null;
+  pending: number | null;
+  progressPercent: number | null;
+  analyticsAvailable: boolean;
 }
 
 export interface BroadcastView {
@@ -27,6 +50,7 @@ export interface BroadcastView {
   completedAt: string | null;
   failedAt: string | null;
   createdAt: string;
+  recipientAnalytics: BroadcastRecipientAnalyticsView;
 }
 
 export interface CreateBroadcastInput {

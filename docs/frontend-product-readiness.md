@@ -42,8 +42,11 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - queue summary cards for queued, processing, completed, and failed jobs
   - clearer status badges, schedule copy, retry visibility, and queue-history readability
   - inline validation feedback plus explicit runtime-dependency messaging
+  - recipient analytics UI contract prepared so totals, sent, failed, pending, and progress can surface as soon as the backend returns them
+  - honest placeholder copy when analytics are not yet reported
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
+  - now safe to lazy-load without changing route behavior or auth handling
 - `/manager/api-keys`
   - informational by design
   - explicitly marked as an informational-only surface
@@ -52,6 +55,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 
 - `/manager/instance/:instanceId/dashboard`
   - polished lifecycle/status hero with clearer timestamps and operator guidance
+  - now lazy-loaded so the heaviest runtime/QR/action surface no longer ships in the initial bundle
   - status and QR handling
   - pairing code flow
   - refresh / reconnect / logout controls aligned to the tenant-safe backend contract
@@ -75,6 +79,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - stronger unread/preview emphasis when the backend exposes them
   - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
   - honest empty/error states when persisted history is missing or partial
+  - incremental thread rendering keeps larger chat lists responsive without pretending full virtualization is necessary yet
 
 ## What Is Only Partial
 
@@ -88,6 +93,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - contacts, tags, and notes work
 - no delete flow
 - no pipeline/workflow management
+- large filtered datasets now render incrementally so the contact table stays lighter on larger tenants
 
 ### Text messaging
 
@@ -115,6 +121,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 - instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly
+- heavy operator routes now lazy-load safely under the existing auth guards and layouts
+- contact, chat, and broadcast list rendering now favors incremental display over full eager rendering for large tenant datasets
 
 ## What Is Intentionally Gated
 
@@ -144,6 +152,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 
 - tenant-safe support for Chatwoot, SQS, and legacy AI/integration CRUD suites
 - richer aggregate metrics for messages, contacts, and broadcasts
+- rich per-recipient broadcast analytics data
 - Kafka support
 
 ## Readiness Assessment
@@ -160,8 +169,10 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - text/media/audio outbound dispatch from supported instance surfaces
   - tenant-safe chat list/detail conversation handling on supported instance chat routes
   - demoable MVP walkthroughs across the currently supported operator surfaces
+  - lighter first-load behavior for the heaviest operator surfaces through route-level lazy loading
 - Not yet suitable for:
   - full upstream-manager parity
   - chat parity for older sessions that were never captured by the runtime
   - guaranteed bridge recovery after a failed reconnect, pair, logout, or history backfill request
   - legacy integration management parity
+  - full analytics-grade broadcast recipient reporting until the backend exposes it

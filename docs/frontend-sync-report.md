@@ -97,6 +97,7 @@ Frontend handling after this sync:
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, stronger unread/preview emphasis, faster-feeling thread filtering, and clearer in-thread caveats when history is partial.
+- Heavy operator routes now lazy-load behind the same auth guards and layouts, including dashboard, broadcast, chat, instance dashboard, and AI settings.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
 - Instance dashboard now refreshes status, QR, runtime state, and runtime history after reconnect, pairing, logout, and backfill actions so operators can see lifecycle truth in one place.
@@ -104,6 +105,8 @@ Frontend handling after this sync:
 - Runtime status and runtime history panels now keep their last successful data visible during failed refetches, while showing operator-facing warnings instead of implying auth or session loss.
 - Reconnect, pairing, and history-backfill feedback now uses explicit bridge/runtime-unavailable wording, and backfill acceptance copy no longer implies the requested count equals imported rows.
 - Broadcast now adds queue summary cards, clearer status/schedule/retry readability, inline validation feedback, and explicit reminders that delivery still depends on runtime/backend conditions.
+- Broadcast adapters and UI now normalize optional recipient analytics fields so totals, sent, failed, pending, and progress can surface without another page rewrite once the backend returns them.
+- Contacts, chat, and broadcast now use incremental list rendering for larger datasets instead of eagerly painting every row/card at once.
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
@@ -136,7 +139,7 @@ Remaining frontend-only work is mostly presentational:
 - more operational actions on dashboard cards
 - deeper QA across dense-data scenarios and long chat/broadcast/contact lists
 - wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
-- better bundle splitting for the large production chunk reported by `vite build`
+- deeper vendor/manual chunk splitting for the remaining large production chunk reported by `vite build`
 
 ## Verification
 

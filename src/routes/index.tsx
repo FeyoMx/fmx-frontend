@@ -1,34 +1,34 @@
+import { Suspense, lazy, type ReactNode } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "@/components/providers/protected-route";
 import PublicRoute from "@/components/providers/public-route";
+import { RouteFallback } from "@/components/route-fallback";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
-import { ChatShell } from "@/features/chat/ChatShell";
-
 import { InstanceLayout } from "@/layout/InstanceLayout";
 import { MainLayout } from "@/layout/MainLayout";
-
-import Dashboard from "@/pages/Dashboard";
-import { CRM } from "@/pages/CRM";
-import { Broadcast } from "@/pages/Broadcast";
-import { AISettings } from "@/pages/AISettings";
 import { APIKeys } from "@/pages/APIKeys";
-import { DashboardInstance } from "@/pages/instance/DashboardInstance";
+import { CRM } from "@/pages/CRM";
+import Home from "@/pages/Home";
+import Login from "@/pages/Login";
 import { Proxy } from "@/pages/instance/Proxy";
 import { Rabbitmq } from "@/pages/instance/Rabbitmq";
 import { Settings } from "@/pages/instance/Settings";
 import { Webhook } from "@/pages/instance/Webhook";
 import { Websocket } from "@/pages/instance/Websocket";
-import Login from "@/pages/Login";
-import Home from "@/pages/Home";
+
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Broadcast = lazy(async () => import("@/pages/Broadcast").then((module) => ({ default: module.Broadcast })));
+const AISettings = lazy(async () => import("@/pages/AISettings").then((module) => ({ default: module.AISettings })));
+const DashboardInstance = lazy(async () => import("@/pages/instance/DashboardInstance").then((module) => ({ default: module.DashboardInstance })));
+const ChatShell = lazy(async () => import("@/features/chat/ChatShell").then((module) => ({ default: module.ChatShell })));
 
 function InstancePlaceholderRoute({ title, description }: { title: string; description: string }) {
-  return (
-    <UnsupportedInstanceFeature
-      title={title}
-      description={description}
-    />
-  );
+  return <UnsupportedInstanceFeature title={title} description={description} />;
+}
+
+function withLazyBoundary(children: ReactNode, description?: string) {
+  return <Suspense fallback={<RouteFallback description={description} />}>{children}</Suspense>;
 }
 
 const router = createBrowserRouter([
@@ -49,7 +49,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MainLayout>
-          <Dashboard />
+          {withLazyBoundary(<Dashboard />, "Loading the dashboard status overview and operator cards.")}
         </MainLayout>
       </ProtectedRoute>
     ),
@@ -69,7 +69,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MainLayout>
-          <Broadcast />
+          {withLazyBoundary(<Broadcast />, "Loading the broadcast queue view and job history.")}
         </MainLayout>
       </ProtectedRoute>
     ),
@@ -79,7 +79,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MainLayout>
-          <AISettings />
+          {withLazyBoundary(<AISettings />, "Loading tenant AI settings and per-instance toggles.")}
         </MainLayout>
       </ProtectedRoute>
     ),
@@ -99,7 +99,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <DashboardInstance />
+          {withLazyBoundary(<DashboardInstance />, "Loading lifecycle controls, runtime observability, and instance actions.")}
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -109,7 +109,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <ChatShell />
+          {withLazyBoundary(<ChatShell />, "Loading the tenant-safe chat shell and conversation composer.")}
         </InstanceLayout>
       </ProtectedRoute>
     ),
@@ -119,7 +119,7 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <InstanceLayout>
-          <ChatShell />
+          {withLazyBoundary(<ChatShell />, "Loading the selected conversation and persisted thread history.")}
         </InstanceLayout>
       </ProtectedRoute>
     ),

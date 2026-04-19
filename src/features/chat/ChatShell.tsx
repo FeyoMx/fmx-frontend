@@ -1,5 +1,5 @@
 import { ImageIcon, Mic, Search, Video } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useChatCapabilities, useChatHistory, useChatThreads } from "@/lib/queries/chat/tenantChat";
 import { ChatThread } from "@/lib/queries/chat/types";
 import { formatCompactTimestamp, formatRelativeTime } from "@/lib/operator-format";
+import { useIncrementalList } from "@/lib/use-incremental-list";
 import { useMediaQuery } from "@/utils/useMediaQuery";
 
 import { ChatConversationPanel } from "./ChatConversationPanel";
@@ -122,12 +123,19 @@ function ChatShell() {
     );
   }, [threads]);
 
+  const visibleThreads = useIncrementalList(threads ?? [], {
+    initialCount: 75,
+    step: 75,
+  });
+
   const handleThreadSelect = (thread: ChatThread) => {
     if (!instance?.id) {
       return;
     }
 
-    navigate(`/manager/instance/${instance.id}/chat/${encodeURIComponent(thread.remoteJid)}`);
+    startTransition(() => {
+      navigate(`/manager/instance/${instance.id}/chat/${encodeURIComponent(thread.remoteJid)}`);
+    });
   };
 
   return (
@@ -176,7 +184,8 @@ function ChatShell() {
               ) : threadsError ? (
                 <ChatEmptyState title="Chat list unavailable" description={getApiErrorMessage(threadsError, "Unable to load tenant-safe chats for this instance.")} />
               ) : threads && threads.length > 0 ? (
-                threads.map((thread) => {
+                <>
+                  {visibleThreads.visibleItems.map((thread) => {
                   const isActive = thread.remoteJid === remoteJid;
                   const hasUnread = (thread.unreadCount ?? 0) > 0;
 
@@ -224,7 +233,18 @@ function ChatShell() {
                       </div>
                     </Button>
                   );
-                })
+                })}
+                  {visibleThreads.hasMore ? (
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
+                      <div className="text-xs text-muted-foreground">
+                        Showing {visibleThreads.visibleCount} of {visibleThreads.totalCount} surfaced threads to keep large chat lists responsive.
+                      </div>
+                      <Button variant="outline" onClick={visibleThreads.showMore}>
+                        Show 75 more
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
               ) : (
                 <ChatEmptyState
                   title={search.trim() ? "No chats match this search" : "No chats surfaced yet"}

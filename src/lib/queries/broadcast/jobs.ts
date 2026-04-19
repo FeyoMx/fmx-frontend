@@ -1,5 +1,33 @@
 import { apiGlobal } from "../api";
-import { BroadcastJobResponse, BroadcastView, CreateBroadcastInput } from "./types";
+import { BroadcastJobResponse, BroadcastRecipientAnalyticsResponse, BroadcastRecipientAnalyticsView, BroadcastView, CreateBroadcastInput } from "./types";
+
+function normalizeCount(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function normalizeRecipientAnalytics(job: BroadcastJobResponse): BroadcastRecipientAnalyticsView {
+  const candidate: BroadcastRecipientAnalyticsResponse | null | undefined = job.analytics ?? job.recipients ?? job.recipient_totals;
+  const total = normalizeCount(candidate?.total ?? job.recipient_total);
+  const sent = normalizeCount(candidate?.sent ?? job.sent_count);
+  const failed = normalizeCount(candidate?.failed ?? job.failed_count);
+  const pending = normalizeCount(candidate?.pending ?? job.pending_count);
+  const analyticsAvailable = [total, sent, failed, pending].some((value) => value !== null);
+
+  let progressPercent: number | null = null;
+  if (total && total > 0) {
+    const completed = (sent ?? 0) + (failed ?? 0);
+    progressPercent = Math.max(0, Math.min(100, Math.round((completed / total) * 100)));
+  }
+
+  return {
+    total,
+    sent,
+    failed,
+    pending,
+    progressPercent,
+    analyticsAvailable,
+  };
+}
 
 const normalizeJob = (job: BroadcastJobResponse): BroadcastView => ({
   id: job.id,
@@ -14,6 +42,7 @@ const normalizeJob = (job: BroadcastJobResponse): BroadcastView => ({
   completedAt: job.completed_at ?? null,
   failedAt: job.failed_at ?? null,
   createdAt: job.created_at ?? "",
+  recipientAnalytics: normalizeRecipientAnalytics(job),
 });
 
 export const getBroadcastJobs = async (): Promise<BroadcastView[]> => {

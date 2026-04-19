@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - History backfill recovery control on the instance dashboard using the tenant-safe backend route
 - Centralized bridge-unavailable adapter for lifecycle, runtime, and backfill queries
 - Shared operator-formatting helpers for timestamps, relative timing, and status copy across the supported MVP pages
+- Lazy route fallback component for heavy operator surfaces
+- Incremental list rendering hook for large operator datasets
+- Broadcast recipient analytics adapter/view model that stays dormant until backend analytics fields are returned
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -73,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat list/detail now feels faster and clearer for operators via deferred search input, stronger unread/preview emphasis, richer conversation framing, and better composer feedback
 - Instance dashboard now has improved timestamp visibility, cleaner lifecycle/runtime hierarchy, and more readable runtime history cards
 - Sidebar navigation now emphasizes supported operator surfaces first while keeping informational/reference links secondary
+- Heavy operator routes such as chat, broadcast, instance dashboard, AI settings, and the main dashboard now lazy-load under the existing auth/layout flow
+- Chat, contacts, and broadcast surfaces now use incremental rendering for larger datasets instead of eagerly painting every row at once
+- Broadcast history/search is now structured to surface recipient totals, sent, failed, pending, and progress immediately when the backend starts returning those fields
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -92,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instance dashboard and chat-recovery flows no longer imply auth/session failure when bridge-unavailable lifecycle or backfill requests fail
 - Runtime status and runtime history panels now keep their last successful data visible during failed bridge-unavailable refetches
 - Production build now passes after the operator-UX polish sweep
+- Build output now ships major operator pages in separate route chunks, reducing the initial main bundle even though one large vendor chunk warning still remains
 
 ### Removed
 - Unused legacy `apiLegacy` client
