@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LoaderCircle, Mic, Paperclip, Send, X } from "lucide-react";
+import { LoaderCircle, Mic, Paperclip, Send, ShieldAlert, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
-import { getApiErrorMessage } from "@/lib/queries/errors";
 import { chatHistoryKey, fetchTenantChatTextStatus, useTenantChatAudio, useTenantChatMedia, useTenantChatText } from "@/lib/queries/chat/tenantChat";
 import { ChatCapabilities, ChatHistoryMessage, ChatHistoryResponse, ChatSendResult } from "@/lib/queries/chat/types";
+import { getApiErrorMessage } from "@/lib/queries/errors";
 
 type ComposerFeedbackStatus = "queued" | "sending" | "provider_sent" | "delivered" | "read" | "success" | "error";
 
@@ -176,7 +176,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "error",
-              title: "Error al enviar",
+              title: "Send failed",
               detail: status.error || "The backend rejected the send request.",
             });
             return;
@@ -193,7 +193,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "read",
-              title: "Leído",
+              title: "Read",
               detail: status.read_at ? `Read at ${new Date(status.read_at).toLocaleString()}` : "The recipient opened the message.",
             });
             setText("");
@@ -211,7 +211,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "delivered",
-              title: "Entregado",
+              title: "Delivered",
               detail: status.delivered_at ? `Delivered at ${new Date(status.delivered_at).toLocaleString()}` : "Delivery confirmed by the provider.",
             });
             setText("");
@@ -228,7 +228,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "provider_sent",
-              title: "Enviado al proveedor",
+              title: "Sent to provider",
               detail: "Still waiting for delivery confirmation.",
             });
             continue;
@@ -244,7 +244,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "sending",
-              title: "Enviando",
+              title: "Sending",
               detail: "Backend is processing the send request.",
             });
             continue;
@@ -253,8 +253,8 @@ function ChatComposer({
 
         setFeedback({
           status: "provider_sent",
-          title: "Seguimiento pendiente",
-          detail: "The message send is still in progress. The thread will refresh again as delivery state settles.",
+          title: "Tracking still in progress",
+          detail: "The send request is still settling. The thread will refresh again as backend delivery state becomes available.",
         });
         setText("");
         void invalidateHistory();
@@ -278,7 +278,7 @@ function ChatComposer({
     } catch (error) {
       setFeedback({
         status: "error",
-        title: "Error al enviar",
+        title: "Send failed",
         detail: getApiErrorMessage(error, "Unable to send text message."),
       });
       void invalidateHistory();
@@ -325,7 +325,7 @@ function ChatComposer({
           raw: result,
         }),
       );
-      setFeedback(buildSendResultFeedback(result, "Media sent"));
+      setFeedback(buildSendResultFeedback(result, "Media accepted by backend"));
       setMediaFile(null);
       setCaption("");
       void invalidateHistory();
@@ -371,7 +371,7 @@ function ChatComposer({
           raw: result,
         }),
       );
-      setFeedback(buildSendResultFeedback(result, "Audio sent"));
+      setFeedback(buildSendResultFeedback(result, "Audio accepted by backend"));
       setAudioFile(null);
       void invalidateHistory();
     } catch (error) {
@@ -390,9 +390,9 @@ function ChatComposer({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+    <div className="space-y-4 rounded-2xl border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
           <h3 className="text-sm font-semibold">Composer</h3>
           <p className="text-xs text-muted-foreground">Thread target: {recipientNumber}</p>
         </div>
@@ -403,6 +403,14 @@ function ChatComposer({
           <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" />
         </div>
       </div>
+
+      <Alert variant="info">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Send feedback reflects backend truth as it arrives.</AlertTitle>
+        <AlertDescription>
+          Text sends can move through queued, sending, provider-sent, delivered, and read states. Media and audio sends are accepted here, but history preview can stay partial until the backend republishes richer metadata.
+        </AlertDescription>
+      </Alert>
 
       <Tabs value={mode} onValueChange={(value) => setMode(value as "text" | "media" | "audio")}>
         <TabsList>

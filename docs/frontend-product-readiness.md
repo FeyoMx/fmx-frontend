@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-13.
+Updated on 2026-04-19.
 
 ## Summary
 
@@ -31,15 +31,17 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 ### Main product surfaces
 
 - `/manager`
-  - operational dashboard cards
-  - instance list
-  - new status overview chart based on real instance statuses
-  - explicit notice that aggregate counters are still backend-limited
-  - clearer operator-focus copy aligned with the supported MVP scope
+  - upgraded operator dashboard hero with clearer healthy / needs-attention / disconnected summaries
+  - instance list now prioritizes items needing attention and uses stronger empty/filter states
+  - status overview chart stays tied to real instance statuses
+  - aggregate counters remain explicitly labeled as backend-limited or snapshot-only
+  - clearer operator messaging about what is trustworthy now versus still sparse
 - `/manager/contacts`
   - consistent header, support caveat, and cleaner empty/filter states
 - `/manager/broadcast`
-  - consistent status badges and queue/history framing
+  - queue summary cards for queued, processing, completed, and failed jobs
+  - clearer status badges, schedule copy, retry visibility, and queue-history readability
+  - inline validation feedback plus explicit runtime-dependency messaging
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
 - `/manager/api-keys`
@@ -49,6 +51,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 ### Instance operations
 
 - `/manager/instance/:instanceId/dashboard`
+  - polished lifecycle/status hero with clearer timestamps and operator guidance
   - status and QR handling
   - pairing code flow
   - refresh / reconnect / logout controls aligned to the tenant-safe backend contract
@@ -68,8 +71,9 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - real conversation detail route on `/manager/instance/:instanceId/chat/:remoteJid`
   - normalized history loaded from `POST /instance/:id/messages/search`
   - grouped conversation timeline with clearer timestamps, delivery indicators, and scroll-to-latest behavior
-  - thread previews and unread badges when the backend exposes them
-  - text, media, and audio composers already pointed at SaaS routes
+  - faster-feeling thread filtering via deferred search updates
+  - stronger unread/preview emphasis when the backend exposes them
+  - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
   - honest empty/error states when persisted history is missing or partial
 
 ## What Is Only Partial
@@ -105,11 +109,12 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 
 ### MVP polish pass
 
-- supported operator pages now use more consistent labels, spacing, and empty-state language
+- supported operator pages now use more consistent labels, spacing, empty-state language, and status framing
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 - instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
+- dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly
 
 ## What Is Intentionally Gated
 
@@ -146,6 +151,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 - Suitable now for:
   - internal tenant operations
   - operational instance management
+  - quick triage of healthy, degraded, and disconnected instance posture from the main dashboard
   - connection troubleshooting
   - runtime state and lifecycle event inspection from the instance dashboard
   - honest bridge-unavailable handling for lifecycle actions and bounded chat-history recovery requests

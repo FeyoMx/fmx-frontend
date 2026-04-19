@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Explicit gating for legacy embed chat/messages routes so operators enter chat through the tenant-safe instance chat flow only
 - History backfill recovery control on the instance dashboard using the tenant-safe backend route
 - Centralized bridge-unavailable adapter for lifecycle, runtime, and backfill queries
+- Shared operator-formatting helpers for timestamps, relative timing, and status copy across the supported MVP pages
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -67,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instance dashboard lifecycle controls now align with backend SaaS semantics by using reconnect, pair, and DELETE logout instead of stale restart/disconnect wording
 - Instance dashboard now refreshes status, QR, runtime state, and runtime history after lifecycle and backfill actions
 - Lifecycle and backfill operator feedback now stays honest when the live runtime bridge is unavailable, tolerating both current `500 internal_error` responses and future `409 conflict` normalization
+- Main dashboard now surfaces clearer healthy / needs-attention / disconnected summaries, better sparse-data empty states, and stronger confidence cues for backend-limited metrics
+- Broadcast now reads as an operational queue surface with clearer validation, job-state summaries, retry/schedule readability, and explicit runtime-dependency caveats
+- Chat list/detail now feels faster and clearer for operators via deferred search input, stronger unread/preview emphasis, richer conversation framing, and better composer feedback
+- Instance dashboard now has improved timestamp visibility, cleaner lifecycle/runtime hierarchy, and more readable runtime history cards
+- Sidebar navigation now emphasizes supported operator surfaces first while keeping informational/reference links secondary
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -85,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lifecycle query wiring no longer calls the stale restart route or POST logout contract
 - Instance dashboard and chat-recovery flows no longer imply auth/session failure when bridge-unavailable lifecycle or backfill requests fail
 - Runtime status and runtime history panels now keep their last successful data visible during failed bridge-unavailable refetches
+- Production build now passes after the operator-UX polish sweep
 
 ### Removed
 - Unused legacy `apiLegacy` client

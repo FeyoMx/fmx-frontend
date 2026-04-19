@@ -1,10 +1,13 @@
+import { History, MessagesSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { getChatHistoryCapabilityMessage } from "@/lib/queries/chat/tenantChat";
 import { ChatCapabilities, ChatHistoryMessage, ChatHistoryResponse, ChatThread } from "@/lib/queries/chat/types";
+import { formatCompactTimestamp } from "@/lib/operator-format";
 
 import { ChatCapabilityStatus } from "./ChatCapabilityStatus";
 import { ChatComposer } from "./ChatComposer";
@@ -78,17 +81,29 @@ function ChatConversationPanel({
     });
   };
 
+  const lastPersistedAt = mergedMessages[mergedMessages.length - 1]?.timestamp;
+
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle>{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{activeThread.remoteJid}</p>
-            <p className="text-xs text-muted-foreground">
-              Persisted history is live for this chat. Older sessions are not backfilled, and inbound or media records can still be partial when runtime capture was incomplete.
-            </p>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <CardTitle>{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
+              <p className="text-sm text-muted-foreground">{activeThread.remoteJid}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {activeThread.unreadCount ? <Badge variant="warning">{activeThread.unreadCount} unread</Badge> : <Badge variant="outline">No unread marker</Badge>}
+              <Badge variant="outline">{lastPersistedAt ? `Last persisted ${formatCompactTimestamp(lastPersistedAt)}` : "No persisted messages yet"}</Badge>
+            </div>
           </div>
+          <Alert variant="info">
+            <History className="h-4 w-4" />
+            <AlertTitle>History stays honest about what the backend has actually stored.</AlertTitle>
+            <AlertDescription>
+              Persisted history is live for this chat. Older sessions are not backfilled automatically, and inbound or media records can still be partial when runtime capture was incomplete.
+            </AlertDescription>
+          </Alert>
         </CardHeader>
         <CardContent className="space-y-4">
           <ChatCapabilityStatus capabilities={capabilities} />
@@ -96,7 +111,8 @@ function ChatConversationPanel({
           {historyLoading ? (
             <ChatEmptyState title="Loading conversation" description="Fetching persisted message history for this chat." />
           ) : historyError ? (
-            <Alert>
+            <Alert variant="warning">
+              <MessagesSquare className="h-4 w-4" />
               <AlertTitle>Conversation history unavailable</AlertTitle>
               <AlertDescription>{getChatHistoryCapabilityMessage(historyError)}</AlertDescription>
             </Alert>

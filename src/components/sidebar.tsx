@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChevronDown, CircleHelp, Cog, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle } from "lucide-react";
+import { ChevronDown, CircleHelp, Cog, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { InstanceContext } from "@/contexts/InstanceContext";
-
 import { cn } from "@/lib/utils";
 
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
@@ -16,108 +16,123 @@ function Sidebar() {
   const instanceContext = useContext(InstanceContext);
   const instance = instanceContext?.instance ?? null;
 
-  const Menus = useMemo(
+  const menus = useMemo(
     () => [
       {
-        id: "dashboard",
-        title: t("sidebar.dashboard"),
-        icon: LayoutDashboard,
-        path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"),
-      },
-      {
-        navLabel: true,
-        title: t("sidebar.management"),
-        icon: Cog,
-        children: [
+        section: "Primary",
+        items: [
+          {
+            id: "dashboard",
+            title: t("sidebar.dashboard"),
+            icon: LayoutDashboard,
+            highlight: "Supported",
+            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"),
+          },
           {
             id: "contacts",
             title: t("sidebar.contacts"),
+            icon: ShieldCheck,
+            highlight: "Supported",
             path: "/manager/contacts",
-          },
-          {
-            id: "chats",
-            title: t("sidebar.chats"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/chat` : undefined),
           },
           {
             id: "broadcast",
             title: t("sidebar.broadcast"),
+            icon: IterationCcw,
+            highlight: "Queue view",
             path: "/manager/broadcast",
           },
           {
             id: "aiSettings",
             title: t("sidebar.aiSettings"),
+            icon: Sparkles,
+            highlight: "Tenant defaults",
             path: "/manager/ai-settings",
           },
+        ],
+      },
+      {
+        section: "Instance",
+        items: [
+          {
+            title: "Conversations",
+            icon: MessageCircle,
+            children: [
+              {
+                id: "chats",
+                title: t("sidebar.chats"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/chat` : undefined),
+              },
+            ],
+          },
+          {
+            title: "Runtime & setup",
+            icon: Wrench,
+            children: [
+              {
+                id: "settings",
+                title: t("sidebar.settings"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/settings` : undefined),
+              },
+              {
+                id: "proxy",
+                title: t("sidebar.proxy"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/proxy` : undefined),
+              },
+              {
+                id: "webhook",
+                title: t("sidebar.webhook"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/webhook` : undefined),
+              },
+              {
+                id: "websocket",
+                title: t("sidebar.websocket"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/websocket` : undefined),
+              },
+              {
+                id: "rabbitmq",
+                title: t("sidebar.rabbitmq"),
+                path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/rabbitmq` : undefined),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        section: "Reference",
+        items: [
           {
             id: "apiKeys",
             title: t("sidebar.apiKeys"),
+            icon: Cog,
+            highlight: "Info only",
             path: "/manager/api-keys",
           },
-        ],
-      },
-      {
-        navLabel: true,
-        title: t("sidebar.configurations"),
-        icon: Cog,
-        children: [
           {
-            id: "settings",
-            title: t("sidebar.settings"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/settings` : undefined),
+            id: "documentation",
+            title: t("sidebar.documentation"),
+            icon: FileQuestion,
+            link: "https://doc.evolution-api.com",
           },
           {
-            id: "proxy",
-            title: t("sidebar.proxy"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/proxy` : undefined),
-          },
-        ],
-      },
-      {
-        title: t("sidebar.events"),
-        icon: IterationCcw,
-        children: [
-          {
-            id: "webhook",
-            title: t("sidebar.webhook"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/webhook` : undefined),
+            id: "postman",
+            title: t("sidebar.postman"),
+            icon: CircleHelp,
+            link: "https://evolution-api.com/postman",
           },
           {
-            id: "websocket",
-            title: t("sidebar.websocket"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/websocket` : undefined),
+            id: "discord",
+            title: t("sidebar.discord"),
+            icon: MessageCircle,
+            link: "https://evolution-api.com/discord",
           },
           {
-            id: "rabbitmq",
-            title: t("sidebar.rabbitmq"),
-            path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/rabbitmq` : undefined),
+            id: "support-premium",
+            title: t("sidebar.supportPremium"),
+            icon: LifeBuoy,
+            link: "https://evolution-api.com/suporte-pro",
           },
         ],
-      },
-      {
-        id: "documentation",
-        title: t("sidebar.documentation"),
-        icon: FileQuestion,
-        link: "https://doc.evolution-api.com",
-        divider: true,
-      },
-      {
-        id: "postman",
-        title: t("sidebar.postman"),
-        icon: CircleHelp,
-        link: "https://evolution-api.com/postman",
-      },
-      {
-        id: "discord",
-        title: t("sidebar.discord"),
-        icon: MessageCircle,
-        link: "https://evolution-api.com/discord",
-      },
-      {
-        id: "support-premium",
-        title: t("sidebar.supportPremium"),
-        icon: LifeBuoy,
-        link: "https://evolution-api.com/suporte-pro",
       },
     ],
     [t],
@@ -139,71 +154,87 @@ function Sidebar() {
     if (menu.link) window.open(menu.link, "_blank");
   };
 
-  const links = useMemo(
+  const sections = useMemo(
     () =>
-      Menus.map((menu) => ({
-        ...menu,
-        children:
-          "children" in menu
-            ? menu.children?.map((child) => ({
-                ...child,
-                resolvedPath: resolvePath(child.path),
-                isActive: "path" in child ? pathname === resolvePath(child.path) : false,
-              }))
-            : undefined,
-        resolvedPath: "path" in menu ? resolvePath(menu.path) : undefined,
-        isActive: "path" in menu && menu.path ? pathname === resolvePath(menu.path) : false,
-      })).map((menu) => ({
-        ...menu,
-        isActive: menu.isActive || ("children" in menu && menu.children?.some((child) => child.isActive)),
+      menus.map((section) => ({
+        ...section,
+        items: section.items.map((item) => ({
+          ...item,
+          children:
+            "children" in item
+              ? item.children?.map((child) => ({
+                  ...child,
+                  resolvedPath: resolvePath(child.path),
+                  isActive: pathname === resolvePath(child.path),
+                }))
+              : undefined,
+          resolvedPath: "path" in item ? resolvePath(item.path) : undefined,
+          isActive:
+            ("path" in item && !!item.path && pathname === resolvePath(item.path)) ||
+            ("children" in item && item.children?.some((child) => pathname === resolvePath(child.path))),
+        })),
       })),
-    [Menus, instance?.id, pathname],
+    [menus, pathname, instance?.id],
   );
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-border">
-      <div className="px-3 py-4 border-b border-border">
+    <div className="flex h-full w-full flex-col border-r border-border bg-background">
+      <div className="border-b border-border px-4 py-4">
         <div className="text-sm font-bold text-primary">FMX Evolution</div>
-        <div className="text-xs text-muted-foreground">Multi-tenant SaaS</div>
+        <div className="text-xs text-muted-foreground">Operator workspace</div>
       </div>
-      <ul className="flex h-full w-full flex-col gap-2 px-2">
-        {links.map((menu) => (
-          <li key={menu.title} className={"divider" in menu ? "mt-auto" : undefined}>
-          {menu.children ? (
-            <Collapsible defaultOpen={menu.isActive}>
-              <CollapsibleTrigger asChild>
-                <Button className={cn("flex w-full items-center justify-start gap-2")} variant={menu.isActive ? "secondary" : "link"}>
-                  {menu.icon && <menu.icon size="15" />}
-                  <span>{menu.title}</span>
-                  <ChevronDown size="15" className="ml-auto" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <ul className="my-4 ml-6 flex flex-col gap-2 text-sm">
-                  {menu.children.map((child) => (
-                    <li key={child.id}>
-                      <button
-                        onClick={() => handleNavigate(child)}
-                        disabled={!child.resolvedPath && !("link" in child && child.link)}
-                        className={cn(child.isActive ? "text-foreground" : "text-muted-foreground", !child.resolvedPath && "cursor-not-allowed opacity-50")}>
-                        <span className="nav-label">{child.title}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </CollapsibleContent>
-            </Collapsible>
-          ) : (
-            <Button className={cn("relative flex w-full items-center justify-start gap-2", menu.isActive && "pointer-events-none")} variant={menu.isActive ? "secondary" : "link"}>
-              {"link" in menu && <a href={menu.link} target="_blank" rel="noreferrer" className="absolute inset-0 h-full w-full" />}
-              {"resolvedPath" in menu && menu.resolvedPath && <Link to={menu.resolvedPath} className="absolute inset-0 h-full w-full" />}
-              {menu.icon && <menu.icon size="15" />}
-              <span>{menu.title}</span>
-            </Button>
-          )}
-        </li>
-      ))}
-      </ul>
+
+      <div className="flex h-full flex-col gap-5 px-3 py-4">
+        {sections.map((section) => (
+          <div key={section.section} className="space-y-2">
+            <div className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{section.section}</div>
+            <ul className="flex flex-col gap-1">
+              {section.items.map((item) => (
+                <li key={("id" in item && item.id) ? item.id : item.title}>
+                  {item.children ? (
+                    <Collapsible defaultOpen={item.isActive}>
+                      <CollapsibleTrigger asChild>
+                        <Button className="flex w-full items-center justify-start gap-2 rounded-xl" variant={item.isActive ? "secondary" : "ghost"}>
+                          {item.icon && <item.icon size={15} />}
+                          <span>{item.title}</span>
+                          <ChevronDown size={15} className="ml-auto" />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <ul className="mt-2 ml-5 flex flex-col gap-1 border-l pl-4 text-sm">
+                          {item.children.map((child) => (
+                            <li key={child.id}>
+                              <button
+                                onClick={() => handleNavigate(child)}
+                                disabled={!child.resolvedPath && !("link" in child && child.link)}
+                                className={cn(
+                                  "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition-colors",
+                                  child.isActive ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                                  !child.resolvedPath && "cursor-not-allowed opacity-50",
+                                )}>
+                                <span>{child.title}</span>
+                                {!child.resolvedPath ? <Badge variant="outline">Select instance</Badge> : null}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <Button className={cn("relative flex w-full items-center justify-start gap-2 rounded-xl", item.isActive && "pointer-events-none")} variant={item.isActive ? "secondary" : "ghost"}>
+                      {"link" in item && <a href={item.link} target="_blank" rel="noreferrer" className="absolute inset-0 h-full w-full" />}
+                      {"resolvedPath" in item && item.resolvedPath && <Link to={item.resolvedPath} className="absolute inset-0 h-full w-full" />}
+                      {item.icon && <item.icon size={15} />}
+                      <span>{item.title}</span>
+                      {"highlight" in item && item.highlight ? <Badge variant="outline" className="ml-auto">{item.highlight}</Badge> : null}
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

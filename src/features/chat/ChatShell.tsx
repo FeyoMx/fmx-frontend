@@ -1,8 +1,9 @@
 import { ImageIcon, Mic, Search, Video } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,10 +11,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 import { useInstance } from "@/contexts/InstanceContext";
-
+import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useChatCapabilities, useChatHistory, useChatThreads } from "@/lib/queries/chat/tenantChat";
 import { ChatThread } from "@/lib/queries/chat/types";
-import { getApiErrorMessage } from "@/lib/queries/errors";
+import { formatCompactTimestamp, formatRelativeTime } from "@/lib/operator-format";
 import { useMediaQuery } from "@/utils/useMediaQuery";
 
 import { ChatConversationPanel } from "./ChatConversationPanel";
@@ -26,15 +27,15 @@ const previewLabel = (thread: ChatThread): string => {
 
   switch (thread.previewType) {
     case "image":
-      return "Image";
+      return "Image message";
     case "video":
-      return "Video";
+      return "Video message";
     case "audio":
-      return "Audio";
+      return "Audio message";
     case "document":
-      return "Document";
+      return "Document message";
     default:
-      return "No preview available";
+      return "No preview available yet";
   }
 };
 
@@ -60,10 +61,11 @@ function ChatShell() {
   const { instance } = useInstance();
   const { remoteJid } = useParams<{ remoteJid: string }>();
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
 
   const { data: threads, isLoading: threadsLoading, error: threadsError } = useChatThreads({
     instanceId: instance?.id,
-    search,
+    search: deferredSearch,
   });
 
   const activeThread = useMemo<ChatThread | null>(() => {
@@ -98,6 +100,28 @@ function ChatShell() {
     historyMessages,
   });
 
+  const threadSummary = useMemo(() => {
+    return (threads ?? []).reduce(
+      (summary, thread) => {
+        summary.total += 1;
+        if ((thread.unreadCount ?? 0) > 0) {
+          summary.unreadThreads += 1;
+          summary.unreadMessages += thread.unreadCount ?? 0;
+        }
+        if (thread.lastMessageAt) {
+          summary.withPreview += 1;
+        }
+        return summary;
+      },
+      {
+        total: 0,
+        unreadThreads: 0,
+        unreadMessages: 0,
+        withPreview: 0,
+      },
+    );
+  }, [threads]);
+
   const handleThreadSelect = (thread: ChatThread) => {
     if (!instance?.id) {
       return;
@@ -109,19 +133,42 @@ function ChatShell() {
   return (
     <div className="h-[calc(100vh-160px)] overflow-hidden">
       <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full">
-        <ResizablePanel defaultSize={30} minSize={25}>
+        <ResizablePanel defaultSize={32} minSize={25}>
           <Card className="h-full rounded-r-none border-r-0">
-            <CardHeader className="space-y-4">
-              <div>
+            <CardHeader className="space-y-4 border-b">
+              <div className="space-y-2">
                 <CardTitle>Chats</CardTitle>
-                <p className="text-sm text-muted-foreground">Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID.</p>
+                <p className="text-sm text-muted-foreground">
+                  Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID. Older sessions may stay partial until runtime capture or a successful backfill request exists.
+                </p>
               </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border p-3">
+                  <div className="text-xs text-muted-foreground">Surfaced threads</div>
+                  <div className="mt-2 text-2xl font-semibold">{threadSummary.total}</div>
+                </div>
+                <div className="rounded-xl border p-3">
+                  <div className="text-xs text-muted-foreground">Unread threads</div>
+                  <div className="mt-2 text-2xl font-semibold">{threadSummary.unreadThreads}</div>
+                </div>
+                <div className="rounded-xl border p-3">
+                  <div className="text-xs text-muted-foreground">Unread messages</div>
+                  <div className="mt-2 text-2xl font-semibold">{threadSummary.unreadMessages}</div>
+                </div>
+              </div>
+
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search chats already exposed by backend" className="pl-9" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search surfaced chats"
+                  className="pl-9"
+                />
               </div>
             </CardHeader>
-            <CardContent className="flex h-[calc(100%-152px)] flex-col gap-3 overflow-y-auto">
+            <CardContent className="flex h-[calc(100%-265px)] flex-col gap-3 overflow-y-auto p-4">
               {threadsLoading ? (
                 <div className="flex flex-1 items-center justify-center">
                   <LoadingSpinner />
@@ -131,38 +178,48 @@ function ChatShell() {
               ) : threads && threads.length > 0 ? (
                 threads.map((thread) => {
                   const isActive = thread.remoteJid === remoteJid;
+                  const hasUnread = (thread.unreadCount ?? 0) > 0;
+
                   return (
                     <Button
                       key={thread.id}
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={`h-auto justify-start gap-3 whitespace-normal rounded-xl px-3 py-3 text-left transition-colors ${
-                        isActive ? "border border-primary/30 bg-primary/10 shadow-sm" : "border border-transparent hover:border-border hover:bg-muted/70"
+                      variant="ghost"
+                      className={`h-auto justify-start gap-3 whitespace-normal rounded-2xl border px-3 py-3 text-left transition-colors ${
+                        isActive
+                          ? "border-primary/30 bg-primary/10 shadow-sm"
+                          : hasUnread
+                            ? "border-amber-200/70 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50"
+                            : "border-transparent hover:border-border hover:bg-muted/70"
                       }`}
                       onClick={() => handleThreadSelect(thread)}>
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-11 w-11">
                         <AvatarImage src={thread.profilePicUrl} alt={thread.pushName} />
                         <AvatarFallback>{(thread.pushName || thread.remoteJid).slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="truncate font-medium">{thread.pushName || thread.remoteJid.split("@")[0]}</div>
+                            <div className={`truncate font-medium ${hasUnread ? "text-foreground" : ""}`}>{thread.pushName || thread.remoteJid.split("@")[0]}</div>
                             <div className="truncate text-xs text-muted-foreground">{thread.remoteJid}</div>
                           </div>
                           <div className="shrink-0 text-[11px] text-muted-foreground">
-                            {thread.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}
+                            {thread.lastMessageAt ? formatCompactTimestamp(thread.lastMessageAt, "") : ""}
                           </div>
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                          <div className={`flex min-w-0 items-center gap-1.5 text-xs ${hasUnread ? "text-foreground" : "text-muted-foreground"}`}>
                             <PreviewIcon type={thread.previewType} />
                             <span className="truncate">{previewLabel(thread)}</span>
                           </div>
-                          {thread.unreadCount && thread.unreadCount > 0 ? (
+                          {hasUnread ? (
                             <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                              {thread.unreadCount > 99 ? "99+" : thread.unreadCount}
+                              {thread.unreadCount! > 99 ? "99+" : thread.unreadCount}
                             </span>
                           ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                          <Badge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Unread activity" : "Seen"}</Badge>
+                          <span>{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
                         </div>
                       </div>
                     </Button>
@@ -170,8 +227,12 @@ function ChatShell() {
                 })
               ) : (
                 <ChatEmptyState
-                  title="No chats surfaced yet"
-                  description="The backend chat list route is active, but no tenant-safe conversations were returned for this instance with the current search."
+                  title={search.trim() ? "No chats match this search" : "No chats surfaced yet"}
+                  description={
+                    search.trim()
+                      ? "Try a different number, name, or remote JID fragment. Only tenant-safe conversations returned by the backend appear here."
+                      : "The backend chat list route is active, but no tenant-safe conversations were returned for this instance yet."
+                  }
                 />
               )}
             </CardContent>
@@ -180,7 +241,7 @@ function ChatShell() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={70}>
+        <ResizablePanel defaultSize={68}>
           <div className="h-full overflow-y-auto pl-4">
             {!instance?.id ? (
               <Card className="h-full">

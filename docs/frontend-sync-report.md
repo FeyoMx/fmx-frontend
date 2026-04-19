@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-13.
+Updated on 2026-04-19.
 
 ## Scope
 
@@ -92,18 +92,19 @@ Frontend handling after this sync:
 
 ### Product-visible
 
-- Dashboard now shows an operational status overview chart using real instance status data from the backend.
-- Dashboard now explicitly warns when aggregate counters are backend-limited instead of implying those numbers are trustworthy.
+- Dashboard now uses a stronger operator-health summary, instance prioritization, clearer sparse-data empty states, and more explicit confidence labels for backend-limited counters.
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
-- Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, and thread previews/unread hints when available from the backend.
+- Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, stronger unread/preview emphasis, faster-feeling thread filtering, and clearer in-thread caveats when history is partial.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
 - Instance dashboard now refreshes status, QR, runtime state, and runtime history after reconnect, pairing, logout, and backfill actions so operators can see lifecycle truth in one place.
 - Bridge-unavailable lifecycle and recovery failures are now normalized near the instance query layer so reconnect, pair, logout, runtime fetches, runtime history fetches, and history backfill tolerate both the current `500 internal_error` behavior and future `409 conflict` normalization.
 - Runtime status and runtime history panels now keep their last successful data visible during failed refetches, while showing operator-facing warnings instead of implying auth or session loss.
 - Reconnect, pairing, and history-backfill feedback now uses explicit bridge/runtime-unavailable wording, and backfill acceptance copy no longer implies the requested count equals imported rows.
+- Broadcast now adds queue summary cards, clearer status/schedule/retry readability, inline validation feedback, and explicit reminders that delivery still depends on runtime/backend conditions.
+- Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
@@ -135,7 +136,9 @@ Remaining frontend-only work is mostly presentational:
 - more operational actions on dashboard cards
 - deeper QA across dense-data scenarios and long chat/broadcast/contact lists
 - wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
+- better bundle splitting for the large production chunk reported by `vite build`
 
 ## Verification
 
 - `npm run type-check`
+- `npm run build`

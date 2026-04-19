@@ -25,6 +25,7 @@ import { isBridgeUnavailableError } from "@/lib/queries/instance/bridgeAvailabil
 import { useInstanceRuntime, useInstanceRuntimeHistory } from "@/lib/queries/instance/runtime";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
+import { formatCompactTimestamp, formatOperatorTimestamp } from "@/lib/operator-format";
 import { InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 import { toast } from "react-toastify";
 import { FetchInstanceRuntimeHistoryResponse } from "@/lib/queries/instance/types";
@@ -227,21 +228,24 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
         const Icon = runtimeEventIcon(event.event);
 
         return (
-          <div key={event.id} className="flex items-start gap-3 rounded-lg border p-3">
-            <div className="rounded-full border p-2">
+          <div key={event.id} className="flex items-start gap-3 rounded-xl border p-4">
+            <div className="rounded-full border bg-muted/30 p-2">
               <Icon className={`h-4 w-4 ${event.event === "reconnect_requested" ? "animate-pulse" : ""}`} />
             </div>
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="font-medium">{formatRuntimeLabel(event.event)}</div>
-                {event.status && (
-                  <Badge variant={getRuntimeBadgeVariant(event.status)}>
-                    {formatRuntimeLabel(event.status)}
-                  </Badge>
-                )}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="font-medium">{formatRuntimeLabel(event.event)}</div>
+                  {event.status && (
+                    <Badge variant={getRuntimeBadgeVariant(event.status)}>
+                      {formatRuntimeLabel(event.status)}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Not observed yet")}</div>
               </div>
-              <div className="text-xs text-muted-foreground">{formatOptionalTimestamp(event.timestamp)}</div>
               {event.detail && <div className="text-sm text-muted-foreground">{event.detail}</div>}
+              <div className="text-xs text-muted-foreground">Full timestamp: {formatOptionalTimestamp(event.timestamp)}</div>
             </div>
           </div>
         );
@@ -687,19 +691,53 @@ function DashboardInstance() {
   const showPairDialogError = pairDialogOpen && lifecycleFeedback?.action === "pair" && lifecycleFeedback.status === "error";
   const showReconnectDialogLoading = reconnectDialogOpen && activeLifecycleAction === "reconnect";
   const showPairDialogLoading = pairDialogOpen && activeLifecycleAction === "pair";
-
   if (!instance) {
     return <LoadingSpinner />;
   }
 
+  const runtimeSnapshot = [
+    {
+      label: "Connection status",
+      value: formatRuntimeLabel(instance.connectionStatus),
+      detail: instance.updatedAt ? `Instance updated ${formatCompactTimestamp(instance.updatedAt)}` : "Waiting for backend update timestamp",
+    },
+    {
+      label: "Runtime state",
+      value: runtimeState ? formatRuntimeLabel(runtimeState.state) : runtimeLoading ? "Loading" : "Not reported",
+      detail: runtimeState?.lastUpdatedAt ? `Runtime updated ${formatCompactTimestamp(runtimeState.lastUpdatedAt)}` : "Runtime endpoint has not returned a timestamp yet",
+    },
+    {
+      label: "Bridge signal",
+      value: runtimeState?.bridgeHealthy === undefined ? "Not reported" : runtimeState.bridgeHealthy ? "Healthy" : "Degraded",
+      detail: runtimeState?.lastObservedStatus ? `Last observed ${formatRuntimeLabel(runtimeState.lastObservedStatus)}` : "No last observed runtime status returned yet",
+    },
+  ];
+
   return (
     <main className="flex flex-col gap-8">
-      <section>
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <h2 className="break-all text-lg font-semibold">{instance.name}</h2>
-              <InstanceStatus status={instance.connectionStatus} />
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <Card className="border-border/70 bg-gradient-to-br from-background via-background to-muted/30">
+          <CardHeader className="space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">Instance dashboard</Badge>
+                  <InstanceStatus status={instance.connectionStatus} />
+                </div>
+                <h2 className="break-all text-2xl font-semibold tracking-tight">{instance.name}</h2>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  Lifecycle actions, runtime observability, and bounded recovery tools are active here. Delivery and history completeness still depend on the bridge and current backend capture depth.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {runtimeSnapshot.map((item) => (
+                <div key={item.label} className="rounded-2xl border bg-background/85 p-4 shadow-sm">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
+                  <div className="mt-2 text-xl font-semibold">{item.value}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{item.detail}</div>
+                </div>
+              ))}
             </div>
           </CardHeader>
           <CardContent className="flex flex-col items-start space-y-6">
@@ -813,7 +851,10 @@ function DashboardInstance() {
               </Alert>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap items-center justify-end gap-3">
+          <CardFooter className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-muted-foreground">
+              Created {formatOperatorTimestamp(instance.createdAt)}{instance.updatedAt ? ` · Updated ${formatOperatorTimestamp(instance.updatedAt)}` : ""}
+            </div>
             <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning}>
               <RefreshCw size="20" />
             </Button>
@@ -825,7 +866,30 @@ function DashboardInstance() {
             </Button>
           </CardFooter>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Operator notes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant={instance.connectionStatus === "open" ? "success" : "warning"}>
+              <AlertTitle>{instance.connectionStatus === "open" ? "Instance is ready for supported operator work" : "Connection work is still required"}</AlertTitle>
+              <AlertDescription>
+                {instance.connectionStatus === "open"
+                  ? "Chat, broadcast, and direct-send flows can use this instance, subject to backend runtime health and queue conditions."
+                  : "Reconnect, QR scan, or pairing may still be required before queue-backed sends and chat operations can complete."}
+              </AlertDescription>
+            </Alert>
+            <Alert variant="info">
+              <AlertTitle>History and delivery are runtime-dependent</AlertTitle>
+              <AlertDescription>
+                Runtime state, lifecycle history, bounded backfill, and async text delivery all reflect the backend truth currently available. Missing timestamps or sparse history are shown honestly instead of being inferred.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
       </section>
+
       <section className="grid grid-cols-[repeat(auto-fit,_minmax(15rem,_1fr))] gap-6">
         <Card className="instance-card">
           <CardHeader>
@@ -882,6 +946,7 @@ function DashboardInstance() {
                 <div className="rounded-lg border p-4">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Current runtime state</div>
                   <Badge variant={getRuntimeBadgeVariant(runtimeState.state)}>{formatRuntimeLabel(runtimeState.state)}</Badge>
+                  <div className="mt-2 text-xs text-muted-foreground">{formatOperatorTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
                 <div className="rounded-lg border p-4">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Last observed status</div>
@@ -989,7 +1054,13 @@ function DashboardInstance() {
                 <LoadingSpinner />
               </div>
             ) : runtimeHistory && runtimeHistory.length > 0 ? (
-              <RuntimeHistoryList events={runtimeHistory.slice(0, 10)} />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                  <span>Showing the 10 most recent lifecycle events.</span>
+                  <span>Newest event: {formatCompactTimestamp(runtimeHistory[0]?.timestamp, "Not observed yet")}</span>
+                </div>
+                <RuntimeHistoryList events={runtimeHistory.slice(0, 10)} />
+              </div>
             ) : !runtimeHistoryError ? (
               <Alert variant="warning">
                 <AlertTitle>No runtime history yet</AlertTitle>
@@ -1049,6 +1120,12 @@ function DashboardInstance() {
                   {messageSendFeedback.detail && <AlertDescription>{messageSendFeedback.detail}</AlertDescription>}
                 </Alert>
               )}
+              <Alert variant="info">
+                <AlertTitle>Direct send stays explicit about backend confirmation</AlertTitle>
+                <AlertDescription>
+                  A queued or sent state here means the backend accepted the job or handed it to the provider. Final delivery/read confirmation still depends on the async status endpoint continuing to report progress.
+                </AlertDescription>
+              </Alert>
               {instance.connectionStatus !== "open" && (
                 <Alert variant="warning">
                   <AlertTitle>Connect the instance before sending text messages.</AlertTitle>
