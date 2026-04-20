@@ -128,6 +128,7 @@ Frontend handling after this sync:
   - `recipient_partial`
   - `recipient_analytics`
   - paginated `recipients` detail payloads
+- Build output now uses focused manual vendor chunks so the largest production dependencies no longer collapse into one `~762 kB` shared JavaScript bundle
 
 ## Remaining Gaps
 
@@ -151,9 +152,28 @@ Remaining frontend-only work is mostly presentational:
 - more operational actions on dashboard cards
 - deeper QA across dense-data scenarios and long chat/broadcast/contact lists
 - wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
-- deeper vendor/manual chunk splitting for the remaining large production chunk reported by `vite build`
+- deeper chart-specific optimization if `recharts` continues to dominate future builds
+- tighter auditing of the new `vendor-misc` chunk if more cross-route dependencies accumulate there
 
 ## Verification
 
 - `npm run type-check`
 - `npm run build`
+
+## Current Bundle Snapshot
+
+- Previous issue addressed:
+  - the old single `~762 kB` JavaScript chunk warning is gone after the vendor split
+- Largest chunks in the current build:
+  - `vendor-charts` at about `284.82 kB`
+  - `vendor-misc` at about `259.22 kB`
+  - `index` app chunk at about `188.12 kB`
+  - `vendor-react` at about `157.08 kB`
+  - `vendor-ui` at about `146.08 kB`
+- Heaviest dependency families identified during this pass:
+  - `recharts`
+  - `lucide-react`
+  - `react-dom`
+  - `@radix-ui/*`
+  - `axios`
+  - `socket.io-client`

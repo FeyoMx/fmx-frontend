@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Incremental list rendering hook for large operator datasets
 - Broadcast recipient analytics adapter/view model that stays dormant until backend analytics fields are returned
 - Broadcast campaign detail workflow backed by real backend summary and paginated recipient endpoints
+- Focused Vite vendor chunk splitting for shared frontend dependency groups
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -82,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broadcast history/search is now structured to surface recipient totals, sent, failed, pending, and progress immediately when the backend starts returning those fields
 - Broadcast inspection now surfaces real recipient analytics and paginated recipient rows with status filters, attempt counts, last errors, and attempt/result timestamps
 - Broadcast UX now distinguishes queue/send-attempt outcome from absent delivery/read receipts instead of implying unsupported delivery analytics
+- Production build now separates React/router, UI primitives, forms, data, i18n, realtime, charts, and remaining shared dependencies into dedicated vendor chunks instead of shipping a single ~762 kB shared JavaScript bundle
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -103,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production build now passes after the operator-UX polish sweep
 - Build output now ships major operator pages in separate route chunks, reducing the initial main bundle even though one large vendor chunk warning still remains
 - Broadcast detail now aligns with backend status names such as `completed_with_failures` and recipient fields such as `attempted` and `partial`
+- Current repo-hygiene sprint intentionally leaves unrelated local auth/chat edits untouched while improving build-time chunking only on supported product surfaces
 
 ### Removed
 - Unused legacy `apiLegacy` client

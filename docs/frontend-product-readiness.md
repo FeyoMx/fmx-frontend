@@ -149,6 +149,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - heavy operator routes now lazy-load safely under the existing auth guards and layouts
 - contact, chat, and broadcast list rendering now favors incremental display over full eager rendering for large tenant datasets
 - broadcast campaign monitoring now supports a practical operator workflow for larger campaigns: searchable job history, explicit inspect action, paginated recipient detail, and status filtering
+- Vite now splits shared frontend dependencies into focused vendor chunks so the remaining build output stays below the old single-chunk 762 kB warning threshold without changing supported product behavior
 
 ## What Is Intentionally Gated
 
@@ -181,6 +182,22 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 - rich per-recipient broadcast analytics data
 - true delivery/read receipt analytics for broadcast recipients
 - Kafka support
+
+## Build And Performance Notes
+
+- route-level lazy loading remains active for dashboard, broadcast, AI settings, chat, and instance dashboard
+- shared dependency code is now split into focused vendor chunks:
+  - `vendor-charts` for `recharts` and chart helpers
+  - `vendor-react` for `react`, `react-dom`, and router runtime
+  - `vendor-ui` for Radix, iconography, toast, and command palette primitives
+  - `vendor-forms`, `vendor-data`, `vendor-i18n`, and `vendor-realtime` for the corresponding shared libraries
+  - `vendor-misc` for the remaining cross-route shared dependencies
+- the previous single large `~762 kB` JavaScript chunk no longer appears in the production build
+- the heaviest remaining chunks after this pass are currently:
+  - `vendor-charts` at about `285 kB`
+  - `vendor-misc` at about `259 kB`
+  - `index` route/application chunk at about `188 kB`
+- richer broadcast delivery/read-state analytics still depend on backend DTO expansion, so no unsupported states are shown yet
 
 ## Readiness Assessment
 
