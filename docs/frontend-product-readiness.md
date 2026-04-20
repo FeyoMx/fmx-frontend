@@ -44,6 +44,9 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - inline validation feedback plus explicit runtime-dependency messaging
   - recipient analytics UI contract prepared so totals, sent, failed, pending, and progress can surface as soon as the backend returns them
   - honest placeholder copy when analytics are not yet reported
+  - campaign detail now uses the real backend broadcast detail endpoint
+  - recipient inspection now uses the real paginated recipient endpoint with status/query filters
+  - recipient rows now surface attempt count, last error, and attempt/result timestamps when returned
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
   - now safe to lazy-load without changing route behavior or auth handling
@@ -101,6 +104,28 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - reflects true async delivery state now
 - still does not provide the upstream inbox/thread experience
 
+### Broadcast monitoring
+
+- campaign-level recipient analytics now use real backend fields for:
+  - total
+  - attempted
+  - sent
+  - failed
+  - pending
+  - partial
+- recipient detail rows now surface real backend fields for:
+  - queue/send-attempt status
+  - attempt count
+  - last error
+  - last attempt timestamp
+  - sent timestamp
+  - failed timestamp
+  - message ID / server ID / chat JID when available
+- still intentionally absent:
+  - delivery receipts
+  - read receipts
+  - any status the backend does not actually return
+
 ### Chat conversations
 
 - thread list is backed by the current tenant-safe backend route
@@ -123,6 +148,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly
 - heavy operator routes now lazy-load safely under the existing auth guards and layouts
 - contact, chat, and broadcast list rendering now favors incremental display over full eager rendering for large tenant datasets
+- broadcast campaign monitoring now supports a practical operator workflow for larger campaigns: searchable job history, explicit inspect action, paginated recipient detail, and status filtering
 
 ## What Is Intentionally Gated
 
@@ -153,6 +179,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 - tenant-safe support for Chatwoot, SQS, and legacy AI/integration CRUD suites
 - richer aggregate metrics for messages, contacts, and broadcasts
 - rich per-recipient broadcast analytics data
+- true delivery/read receipt analytics for broadcast recipients
 - Kafka support
 
 ## Readiness Assessment
@@ -170,6 +197,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - tenant-safe chat list/detail conversation handling on supported instance chat routes
   - demoable MVP walkthroughs across the currently supported operator surfaces
   - lighter first-load behavior for the heaviest operator surfaces through route-level lazy loading
+  - practical large-campaign inspection using real broadcast detail and recipient endpoints
 - Not yet suitable for:
   - full upstream-manager parity
   - chat parity for older sessions that were never captured by the runtime

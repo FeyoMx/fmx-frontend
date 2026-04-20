@@ -106,6 +106,8 @@ Frontend handling after this sync:
 - Reconnect, pairing, and history-backfill feedback now uses explicit bridge/runtime-unavailable wording, and backfill acceptance copy no longer implies the requested count equals imported rows.
 - Broadcast now adds queue summary cards, clearer status/schedule/retry readability, inline validation feedback, and explicit reminders that delivery still depends on runtime/backend conditions.
 - Broadcast adapters and UI now normalize optional recipient analytics fields so totals, sent, failed, pending, and progress can surface without another page rewrite once the backend returns them.
+- Broadcast now uses the real backend detail flow on `GET /broadcast/:id` plus paginated recipient inspection on `GET /broadcast/:id/recipients`.
+- Broadcast campaign inspection now exposes recipient totals, attempted, sent, failed, pending, and partial status when the backend returns them, along with filtered recipient rows, last error, attempt count, and attempt/result timestamps.
 - Contacts, chat, and broadcast now use incremental list rendering for larger datasets instead of eagerly painting every row/card at once.
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
@@ -117,6 +119,15 @@ Frontend handling after this sync:
 - Text-message delivery state stays aligned with the async backend contract introduced on the instance dashboard flow.
 - Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
 - Lifecycle/runtime/backfill bridge-unavailable interpretation is centralized under `src/lib/queries/instance/bridgeAvailability.ts`.
+- Broadcast adapters now align with the backend DTOs for:
+  - `recipient_total`
+  - `recipient_attempted`
+  - `recipient_sent`
+  - `recipient_failed`
+  - `recipient_pending`
+  - `recipient_partial`
+  - `recipient_analytics`
+  - paginated `recipients` detail payloads
 
 ## Remaining Gaps
 
@@ -128,6 +139,7 @@ Frontend handling after this sync:
 - Kafka surface
 - integration CRUD parity for Chatwoot, OpenAI, Typebot, Dify, N8N, EvoAI, Evolution Bot, and Flowise
 - richer aggregate analytics
+- true broadcast delivery/read receipts beyond send-attempt outcome
 
 ### Blocked only by frontend
 

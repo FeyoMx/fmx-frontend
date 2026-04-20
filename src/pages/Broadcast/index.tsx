@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, CheckCircle2, Clock3, PauseCircle, RadioTower, RefreshCw, Search, Send, TimerReset, Users, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock3, PauseCircle, RadioTower, RefreshCw, Search, Send, TimerReset, Users, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
@@ -14,8 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 import { useTenant } from "@/contexts/TenantContext";
-import { createBroadcastJob, getBroadcastJobs } from "@/lib/queries/broadcast/jobs";
-import { BroadcastRecipientAnalyticsView, BroadcastView } from "@/lib/queries/broadcast/types";
+import { createBroadcastJob, getBroadcastJob, getBroadcastJobs, getBroadcastRecipients } from "@/lib/queries/broadcast/jobs";
+import { BroadcastJobStatus, BroadcastRecipientAnalyticsView, BroadcastRecipientListView, BroadcastView } from "@/lib/queries/broadcast/types";
 import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 import { formatCompactTimestamp, formatOperatorStatusLabel, formatOperatorTimestamp, truncateOperatorText } from "@/lib/operator-format";
@@ -44,10 +44,19 @@ const initialFormState: FormState = {
   scheduledTime: "",
 };
 
-function getStatusBadgeVariant(status: BroadcastView["status"]): "default" | "secondary" | "destructive" | "warning" {
+const recipientStatusFilters = [
+  { value: "", label: "All statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "sent", label: "Sent" },
+  { value: "failed", label: "Failed" },
+];
+
+function getStatusBadgeVariant(status: BroadcastJobStatus): "default" | "secondary" | "destructive" | "warning" {
   switch (status) {
     case "completed":
       return "default";
+    case "completed_with_failures":
+      return "warning";
     case "processing":
       return "secondary";
     case "failed":
@@ -57,10 +66,12 @@ function getStatusBadgeVariant(status: BroadcastView["status"]): "default" | "se
   }
 }
 
-function getStatusIcon(status: BroadcastView["status"]) {
+function getStatusIcon(status: BroadcastJobStatus) {
   switch (status) {
     case "completed":
       return CheckCircle2;
+    case "completed_with_failures":
+      return AlertTriangle;
     case "processing":
       return TimerReset;
     case "failed":
@@ -70,18 +81,261 @@ function getStatusIcon(status: BroadcastView["status"]) {
   }
 }
 
+function getRecipientStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "warning" {
+  switch (status) {
+    case "sent":
+      return "default";
+    case "failed":
+      return "destructive";
+    case "pending":
+      return "warning";
+    default:
+      return "secondary";
+  }
+}
+
 function BroadcastRecipientSummary({ analytics }: { analytics: BroadcastRecipientAnalyticsView }) {
   if (!analytics.analyticsAvailable) {
     return <span className="text-xs text-muted-foreground">Recipient analytics not yet reported by backend</span>;
   }
 
   return (
-    <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+    <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3 xl:grid-cols-6">
       <div>Total: {analytics.total ?? "-"}</div>
+      <div>Attempted: {analytics.attempted ?? "-"}</div>
       <div>Sent: {analytics.sent ?? "-"}</div>
       <div>Failed: {analytics.failed ?? "-"}</div>
       <div>Pending: {analytics.pending ?? "-"}</div>
+      <div>{analytics.partial ? "Partial analytics" : "Complete analytics"}</div>
     </div>
+  );
+}
+
+function BroadcastRecipientDetailPanel({
+  broadcast,
+  instanceName,
+}: {
+  broadcast: BroadcastView;
+  instanceName: string;
+}) {
+  const [recipientData, setRecipientData] = useState<BroadcastRecipientListView | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [recipientsError, setRecipientsError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [recipientQuery, setRecipientQuery] = useState("");
+  const deferredRecipientQuery = useDeferredValue(recipientQuery);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, deferredRecipientQuery, broadcast.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRecipients = async () => {
+      setIsLoading(true);
+      setRecipientsError(null);
+      try {
+        const data = await getBroadcastRecipients({
+          broadcastId: broadcast.id,
+          page,
+          limit: 50,
+          status: statusFilter || undefined,
+          query: deferredRecipientQuery || undefined,
+        });
+
+        if (!cancelled) {
+          setRecipientData(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRecipientsError(getApiErrorMessage(error, "Unable to load recipient progress for this broadcast."));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadRecipients();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [broadcast.id, deferredRecipientQuery, page, statusFilter]);
+
+  const summary = recipientData?.summary ?? broadcast.recipientAnalytics;
+
+  return (
+    <Card className="border-border/70">
+      <CardHeader className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <CardTitle className="text-xl">Campaign detail</CardTitle>
+            <CardDescription>{instanceName}</CardDescription>
+          </div>
+          <Badge variant={getStatusBadgeVariant(broadcast.status)}>{formatOperatorStatusLabel(broadcast.status)}</Badge>
+        </div>
+        <div className="rounded-xl border bg-muted/20 p-4">
+          <div className="font-medium">{truncateOperatorText(broadcast.message, 240)}</div>
+          <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+            <div>Created: {formatOperatorTimestamp(broadcast.createdAt)}</div>
+            <div>Available: {formatOperatorTimestamp(broadcast.availableAt, "Not reported")}</div>
+            <div>Started: {formatOperatorTimestamp(broadcast.startedAt, "Not started")}</div>
+            <div>Completed: {formatOperatorTimestamp(broadcast.completedAt || broadcast.failedAt, "Not finished")}</div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          {[
+            { label: "Total", value: summary.total, tone: "text-foreground" },
+            { label: "Attempted", value: summary.attempted, tone: "text-sky-600" },
+            { label: "Sent", value: summary.sent, tone: "text-emerald-600" },
+            { label: "Failed", value: summary.failed, tone: "text-rose-600" },
+            { label: "Pending", value: summary.pending, tone: "text-amber-600" },
+            { label: "Partial", value: summary.partial ? "Yes" : "No", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border p-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
+              <div className={`mt-2 text-2xl font-semibold ${item.tone}`}>{item.value ?? "-"}</div>
+            </div>
+          ))}
+        </div>
+
+        <Alert variant="info">
+          <RadioTower className="h-4 w-4" />
+          <AlertTitle>Recipient detail tracks send attempts and queue outcomes.</AlertTitle>
+          <AlertDescription>
+            This panel shows attempt and queue-result data returned by the backend. It does not claim WhatsApp delivery or read receipts unless those states are explicitly exposed in the API, which they are not today.
+          </AlertDescription>
+        </Alert>
+
+        {broadcast.lastError ? (
+          <Alert variant="warning">
+            <AlertTitle>Last job-level error</AlertTitle>
+            <AlertDescription>{broadcast.lastError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <div className="grid gap-3 lg:grid-cols-[12rem_minmax(0,1fr)]">
+          <div className="grid gap-2">
+            <Label htmlFor="broadcast-recipient-status">Recipient status</Label>
+            <select
+              id="broadcast-recipient-status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+              {recipientStatusFilters.map((option) => (
+                <option key={option.value || "all"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="broadcast-recipient-search">Recipient search</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="broadcast-recipient-search"
+                value={recipientQuery}
+                onChange={(event) => setRecipientQuery(event.target.value)}
+                placeholder="Search by phone or contact ID"
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </div>
+
+        {recipientsError ? (
+          <Alert variant="warning">
+            <AlertTitle>Recipient detail unavailable</AlertTitle>
+            <AlertDescription>{recipientsError}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Recipient</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Attempts</TableHead>
+                <TableHead>Attempt/result timing</TableHead>
+                <TableHead>Last error</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Loading recipient detail...
+                  </TableCell>
+                </TableRow>
+              ) : recipientData && recipientData.items.length > 0 ? (
+                recipientData.items.map((recipient) => (
+                  <TableRow key={recipient.id}>
+                    <TableCell className="min-w-[220px]">
+                      <div className="space-y-1">
+                        <div className="font-medium">{recipient.phone}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {recipient.chatJid || recipient.contactId || "No chat/contact identifier reported"}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRecipientStatusBadgeVariant(recipient.status)}>{formatOperatorStatusLabel(recipient.status)}</Badge>
+                    </TableCell>
+                    <TableCell>{recipient.attemptCount}</TableCell>
+                    <TableCell className="min-w-[220px]">
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div>Last attempt: {formatOperatorTimestamp(recipient.lastAttemptAt, "Not attempted")}</div>
+                        <div>Sent at: {formatOperatorTimestamp(recipient.sentAt, "Not sent")}</div>
+                        <div>Failed at: {formatOperatorTimestamp(recipient.failedAt, "Not failed")}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[260px]">
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div>{recipient.lastError || "No error reported"}</div>
+                        {recipient.messageId ? <div>Message ID: {recipient.messageId}</div> : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    No recipients match the current filters.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {recipientData ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
+            <div className="text-sm text-muted-foreground">
+              Page {recipientData.page} of {Math.max(1, recipientData.totalPages || 1)} · {recipientData.total} recipient row{recipientData.total === 1 ? "" : "s"}
+              {recipientData.partial ? " · Summary is marked partial by backend." : ""}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1 || isLoading}>
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPage((current) => current + 1)} disabled={isLoading || !recipientData.totalPages || page >= recipientData.totalPages}>
+                Next
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -91,6 +345,10 @@ function Broadcast() {
   const { data: instances } = useFetchInstances();
 
   const [broadcasts, setBroadcasts] = useState<BroadcastView[]>([]);
+  const [selectedBroadcastId, setSelectedBroadcastId] = useState<string | null>(null);
+  const [selectedBroadcast, setSelectedBroadcast] = useState<BroadcastView | null>(null);
+  const [selectedBroadcastLoading, setSelectedBroadcastLoading] = useState(false);
+  const [selectedBroadcastError, setSelectedBroadcastError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
@@ -110,6 +368,41 @@ function Broadcast() {
     }
   }, [formData.instanceId, instances]);
 
+  useEffect(() => {
+    if (!selectedBroadcastId) {
+      setSelectedBroadcast(null);
+      setSelectedBroadcastError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadBroadcast = async () => {
+      setSelectedBroadcastLoading(true);
+      setSelectedBroadcastError(null);
+      try {
+        const detail = await getBroadcastJob(selectedBroadcastId);
+        if (!cancelled) {
+          setSelectedBroadcast(detail);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSelectedBroadcastError(getApiErrorMessage(error, "Unable to load campaign detail."));
+        }
+      } finally {
+        if (!cancelled) {
+          setSelectedBroadcastLoading(false);
+        }
+      }
+    };
+
+    void loadBroadcast();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBroadcastId]);
+
   const fetchBroadcasts = async () => {
     setIsLoading(true);
     try {
@@ -125,10 +418,12 @@ function Broadcast() {
     return broadcasts.reduce(
       (summary, item) => {
         summary.total += 1;
-        summary[item.status] += 1;
-        if (item.recipientAnalytics.analyticsAvailable) {
-          summary.analyticsReady += 1;
-        }
+        if (item.status === "queued") summary.queued += 1;
+        if (item.status === "processing") summary.processing += 1;
+        if (item.status === "completed") summary.completed += 1;
+        if (item.status === "completed_with_failures") summary.completedWithFailures += 1;
+        if (item.status === "failed") summary.failed += 1;
+        if (item.recipientAnalytics.analyticsAvailable) summary.analyticsReady += 1;
         return summary;
       },
       {
@@ -136,6 +431,7 @@ function Broadcast() {
         queued: 0,
         processing: 0,
         completed: 0,
+        completedWithFailures: 0,
         failed: 0,
         analyticsReady: 0,
       },
@@ -161,7 +457,7 @@ function Broadcast() {
       return (
         broadcast.message.toLowerCase().includes(normalizedSearch) ||
         instanceName.toLowerCase().includes(normalizedSearch) ||
-        broadcast.status.toLowerCase().includes(normalizedSearch)
+        String(broadcast.status).toLowerCase().includes(normalizedSearch)
       );
     });
   }, [deferredHistorySearch, instances, sortedBroadcasts]);
@@ -250,7 +546,7 @@ function Broadcast() {
 
     try {
       setSubmitting(true);
-      await createBroadcastJob({
+      const created = await createBroadcastJob({
         instance_id: formData.instanceId,
         message: formData.message.trim(),
         rate_per_hour: formData.ratePerHour,
@@ -262,6 +558,7 @@ function Broadcast() {
       setShowForm(false);
       resetComposer();
       await fetchBroadcasts();
+      setSelectedBroadcastId(created.id);
     } catch (error) {
       toast.error(getApiErrorMessage(error, t("broadcast.error.send") || "Failed to send broadcast"));
     } finally {
@@ -293,16 +590,17 @@ function Broadcast() {
         <RadioTower className="h-4 w-4" />
         <AlertTitle>Broadcast queueing is supported; delivery still depends on runtime health.</AlertTitle>
         <AlertDescription>
-          Jobs can be created and reviewed here, but actual dispatch still depends on the selected instance being connected and the backend queue/runtime pipeline remaining healthy. Recipient-level analytics will appear here only when the backend returns them.
+          Jobs can be created and reviewed here, but actual dispatch still depends on the selected instance being connected and the backend queue/runtime pipeline remaining healthy. Recipient analytics below represent send attempts and queue outcomes, not WhatsApp delivery/read receipts.
         </AlertDescription>
       </Alert>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         {[
           { label: "Queued", value: queueSummary.queued, icon: Clock3, tone: "text-amber-600" },
           { label: "Processing", value: queueSummary.processing, icon: TimerReset, tone: "text-sky-600" },
           { label: "Completed", value: queueSummary.completed, icon: CheckCircle2, tone: "text-emerald-600" },
-          { label: "Failed", value: queueSummary.failed, icon: AlertTriangle, tone: "text-rose-600" },
+          { label: "Completed w/ failures", value: queueSummary.completedWithFailures, icon: AlertTriangle, tone: "text-amber-600" },
+          { label: "Failed", value: queueSummary.failed, icon: XCircle, tone: "text-rose-600" },
           { label: "Analytics-ready", value: queueSummary.analyticsReady, icon: Users, tone: "text-violet-600" },
         ].map((item) => (
           <Card key={item.label}>
@@ -403,7 +701,7 @@ function Broadcast() {
                 </div>
 
                 <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  This page creates queue jobs, not guaranteed deliveries. If the instance disconnects, runtime workers stall, or backend queue conditions degrade, the status history here will reflect that limitation honestly. Recipient totals will render automatically when the backend starts exposing them.
+                  This page creates queue jobs, not guaranteed deliveries. Recipient detail below will only show real attempt/outcome data returned by the backend; it will not invent delivery or read receipts.
                 </div>
               </div>
             </div>
@@ -464,21 +762,23 @@ function Broadcast() {
                       <TableHead>Attempts</TableHead>
                       <TableHead>Recipient analytics</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead>Detail</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center">
+                        <TableCell colSpan={7} className="text-center">
                           {t("common.loading") || "Loading..."}
                         </TableCell>
                       </TableRow>
                     ) : (
                       visibleBroadcasts.visibleItems.map((broadcast) => {
                         const StatusIcon = getStatusIcon(broadcast.status);
+                        const isSelected = selectedBroadcastId === broadcast.id;
 
                         return (
-                          <TableRow key={broadcast.id}>
+                          <TableRow key={broadcast.id} className={isSelected ? "bg-muted/40" : undefined}>
                             <TableCell className="min-w-[280px]">
                               <div className="space-y-1">
                                 <div className="font-medium">{instanceNameById(broadcast.instanceId)}</div>
@@ -505,57 +805,21 @@ function Broadcast() {
                                 <div className="text-xs text-muted-foreground">Rate {broadcast.ratePerHour || 0}/hr</div>
                               </div>
                             </TableCell>
-                            <TableCell className="min-w-[220px]">
-                              {broadcast.recipientAnalytics.analyticsAvailable ? (
-                                <div className="space-y-1 text-xs text-muted-foreground">
-                                  <div>Total {broadcast.recipientAnalytics.total ?? "-"}</div>
-                                  <div>
-                                    Sent {broadcast.recipientAnalytics.sent ?? "-"} · Failed {broadcast.recipientAnalytics.failed ?? "-"} · Pending {broadcast.recipientAnalytics.pending ?? "-"}
-                                  </div>
-                                  <div>Progress {broadcast.recipientAnalytics.progressPercent ?? 0}%</div>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">Pending backend analytics</span>
-                              )}
+                            <TableCell className="min-w-[240px]">
+                              <BroadcastRecipientSummary analytics={broadcast.recipientAnalytics} />
                             </TableCell>
                             <TableCell>{formatCompactTimestamp(broadcast.createdAt)}</TableCell>
+                            <TableCell>
+                              <Button variant={isSelected ? "secondary" : "outline"} size="sm" onClick={() => setSelectedBroadcastId(isSelected ? null : broadcast.id)}>
+                                {isSelected ? "Hide detail" : "Inspect"}
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })
                     )}
                   </TableBody>
                 </Table>
-              </div>
-
-              <div className="grid gap-3 lg:grid-cols-2">
-                {visibleBroadcasts.visibleItems.slice(0, Math.min(6, visibleBroadcasts.visibleItems.length)).map((broadcast) => {
-                  const StatusIcon = getStatusIcon(broadcast.status);
-                  return (
-                    <div key={`summary-${broadcast.id}`} className="rounded-xl border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="font-medium">{instanceNameById(broadcast.instanceId)}</div>
-                          <div className="text-xs text-muted-foreground">{truncateOperatorText(broadcast.message, 120)}</div>
-                        </div>
-                        <Badge variant={getStatusBadgeVariant(broadcast.status)} className="gap-1.5">
-                          <StatusIcon className="h-3.5 w-3.5" />
-                          {formatOperatorStatusLabel(broadcast.status)}
-                        </Badge>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-                          <div>Created: {formatCompactTimestamp(broadcast.createdAt)}</div>
-                          <div>Schedule: {broadcast.scheduledAt ? formatCompactTimestamp(broadcast.scheduledAt) : "Immediate"}</div>
-                          <div>Attempts: {broadcast.attempts}/{broadcast.maxAttempts}</div>
-                        </div>
-                        <div className="rounded-lg border border-dashed p-3">
-                          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Recipient analytics readiness</div>
-                          <BroadcastRecipientSummary analytics={broadcast.recipientAnalytics} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
 
               {visibleBroadcasts.hasMore ? (
@@ -572,6 +836,21 @@ function Broadcast() {
           )}
         </CardContent>
       </Card>
+
+      {selectedBroadcastId ? (
+        selectedBroadcastLoading ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">Loading campaign detail...</CardContent>
+          </Card>
+        ) : selectedBroadcastError ? (
+          <Alert variant="warning">
+            <AlertTitle>Campaign detail unavailable</AlertTitle>
+            <AlertDescription>{selectedBroadcastError}</AlertDescription>
+          </Alert>
+        ) : selectedBroadcast ? (
+          <BroadcastRecipientDetailPanel broadcast={selectedBroadcast} instanceName={instanceNameById(selectedBroadcast.instanceId)} />
+        ) : null
+      ) : null}
     </div>
   );
 }

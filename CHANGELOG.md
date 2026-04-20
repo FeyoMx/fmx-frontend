@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lazy route fallback component for heavy operator surfaces
 - Incremental list rendering hook for large operator datasets
 - Broadcast recipient analytics adapter/view model that stays dormant until backend analytics fields are returned
+- Broadcast campaign detail workflow backed by real backend summary and paginated recipient endpoints
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -79,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Heavy operator routes such as chat, broadcast, instance dashboard, AI settings, and the main dashboard now lazy-load under the existing auth/layout flow
 - Chat, contacts, and broadcast surfaces now use incremental rendering for larger datasets instead of eagerly painting every row at once
 - Broadcast history/search is now structured to surface recipient totals, sent, failed, pending, and progress immediately when the backend starts returning those fields
+- Broadcast inspection now surfaces real recipient analytics and paginated recipient rows with status filters, attempt counts, last errors, and attempt/result timestamps
+- Broadcast UX now distinguishes queue/send-attempt outcome from absent delivery/read receipts instead of implying unsupported delivery analytics
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -99,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Runtime status and runtime history panels now keep their last successful data visible during failed bridge-unavailable refetches
 - Production build now passes after the operator-UX polish sweep
 - Build output now ships major operator pages in separate route chunks, reducing the initial main bundle even though one large vendor chunk warning still remains
+- Broadcast detail now aligns with backend status names such as `completed_with_failures` and recipient fields such as `attempted` and `partial`
 
 ### Removed
 - Unused legacy `apiLegacy` client
