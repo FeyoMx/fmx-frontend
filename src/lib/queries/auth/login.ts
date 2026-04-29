@@ -31,13 +31,14 @@ export const getCurrentUser = async (token: string): Promise<AuthMeResponse> => 
   return response.data;
 };
 
-export const logout = async (token: string): Promise<void> => {
+export const logout = async (token: string, refreshToken?: string | null, tenantId?: string | null): Promise<void> => {
   await axios.post(
     `${API_BASE_URL}/auth/logout`,
-    {},
+    refreshToken ? { refresh_token: refreshToken } : {},
     {
       headers: {
         Authorization: `Bearer ${token}`,
+        ...(tenantId ? { "X-Tenant-ID": tenantId } : {}),
       },
       timeout: 30000,
     },

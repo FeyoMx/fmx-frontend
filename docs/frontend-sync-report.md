@@ -116,8 +116,10 @@ Frontend handling after this sync:
 ### API / adapter alignment
 
 - Shared API error handling now includes clearer `404` and `429` messages.
+- Header logout now clears tenant/user/token state and React Query cache immediately, calls `POST /auth/logout` as a best-effort protected acknowledgement, and never lets backend logout failure block local session cleanup.
 - Text-message delivery state stays aligned with the async backend contract introduced on the instance dashboard flow.
 - Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
+- Chat history now uses the registered tenant-safe `POST /instance/:id/messages/search` route directly and only sends backend-supported filters: remote JID, optional message ID, optional text query, optional limit, and optional cursor.
 - Lifecycle/runtime/backfill bridge-unavailable interpretation is centralized under `src/lib/queries/instance/bridgeAvailability.ts`.
 - Broadcast adapters now align with the backend DTOs for:
   - `recipient_total`

@@ -105,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production build now passes after the operator-UX polish sweep
 - Build output now ships major operator pages in separate route chunks, reducing the initial main bundle even though one large vendor chunk warning still remains
 - Broadcast detail now aligns with backend status names such as `completed_with_failures` and recipient fields such as `attempted` and `partial`
-- Current repo-hygiene sprint intentionally leaves unrelated local auth/chat edits untouched while improving build-time chunking only on supported product surfaces
+- Logout now calls the stateless backend acknowledgement best-effort while always clearing local auth, tenant context, and cached session state
+- Chat history now uses the registered `POST /instance/:id/messages/search` route directly with only backend-supported filters instead of probing an unregistered ID-style route first
 
 ### Removed
 - Unused legacy `apiLegacy` client

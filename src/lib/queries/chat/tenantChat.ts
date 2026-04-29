@@ -16,6 +16,10 @@ type ChatQueryParams = {
 
 type ChatHistoryParams = ChatQueryParams & {
   remoteJid: string;
+  limit?: number;
+  cursor?: string;
+  query?: string;
+  messageId?: string;
 };
 
 type SendTextResponse = InstanceTextMessageResult & {
@@ -23,28 +27,66 @@ type SendTextResponse = InstanceTextMessageResult & {
 };
 
 export const chatThreadsKey = (instanceId?: string, search?: string) => ["chat", "threads", instanceId ?? "", search ?? ""];
-export const chatHistoryKey = (instanceId?: string, remoteJid?: string) => ["chat", "history", instanceId ?? "", remoteJid ?? ""];
+export const chatHistoryKey = (
+  instanceId?: string,
+  remoteJid?: string,
+  options?: {
+    limit?: number;
+    cursor?: string;
+    query?: string;
+    messageId?: string;
+  },
+) => [
+  "chat",
+  "history",
+  instanceId ?? "",
+  remoteJid ?? "",
+  options?.limit ?? "",
+  options?.cursor ?? "",
+  options?.query ?? "",
+  options?.messageId ?? "",
+];
 
 const buildChatListPayload = (search: string): ChatHistorySearchPayload => ({
   where: search.trim() ? { query: search.trim() } : {},
 });
 
-const buildChatHistoryPayload = (remoteJid: string): ChatHistorySearchPayload => ({
-  where: {
-    remoteJid,
-    key: {
-      remoteJid,
+const buildChatHistoryPayload = ({
+  remoteJid,
+  limit,
+  cursor,
+  query,
+  messageId,
+}: Omit<ChatHistoryParams, "instanceId">): ChatHistorySearchPayload => {
+  const payload: ChatHistorySearchPayload = {
+    where: {
+      key: {
+        remoteJid,
+        ...(messageId ? { id: messageId } : {}),
+      },
+      ...(query?.trim() ? { query: query.trim() } : {}),
     },
-  },
-});
+  };
+
+  if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) {
+    payload.limit = limit;
+  }
+
+  if (cursor?.trim()) {
+    payload.cursor = cursor.trim();
+  }
+
+  return payload;
+};
 
 export const fetchChatThreads = async ({ instanceId, search = "" }: ChatQueryParams & { search?: string }): Promise<ChatThreadsResponse> => {
   const response = await apiGlobal.post(`/instance/${instanceId}/chats/search`, buildChatListPayload(search));
   return normalizeChatThreads(response.data);
 };
 
-export const fetchChatHistory = async ({ instanceId, remoteJid }: ChatHistoryParams): Promise<ChatHistoryResponse> => {
-  const response = await apiGlobal.post(`/instance/${instanceId}/messages/search`, buildChatHistoryPayload(remoteJid));
+export const fetchChatHistory = async ({ instanceId, remoteJid, limit, cursor, query, messageId }: ChatHistoryParams): Promise<ChatHistoryResponse> => {
+  const payload = buildChatHistoryPayload({ remoteJid, limit, cursor, query, messageId });
+  const response = await apiGlobal.post(`/instance/${instanceId}/messages/search`, payload);
   return normalizeChatHistory(response.data);
 };
 
@@ -132,12 +174,12 @@ export const useChatThreads = (props: UseQueryParams<ChatThreadsResponse> & Part
 };
 
 export const useChatHistory = (props: UseQueryParams<ChatHistoryResponse> & Partial<ChatHistoryParams>) => {
-  const { instanceId, remoteJid, ...rest } = props;
+  const { instanceId, remoteJid, limit, cursor, query, messageId, ...rest } = props;
 
   return useQuery<ChatHistoryResponse>({
     ...rest,
-    queryKey: chatHistoryKey(instanceId, remoteJid),
-    queryFn: () => fetchChatHistory({ instanceId: instanceId!, remoteJid: remoteJid! }),
+    queryKey: chatHistoryKey(instanceId, remoteJid, { limit, cursor, query, messageId }),
+    queryFn: () => fetchChatHistory({ instanceId: instanceId!, remoteJid: remoteJid!, limit, cursor, query, messageId }),
     enabled: !!instanceId && !!remoteJid,
     retry: false,
   });
@@ -190,8 +232,8 @@ export const useTenantChatAudio = () => {
 
 export const getChatHistoryCapabilityMessage = (error: unknown): string => {
   if (!error) {
-    return "Conversation history is active for this route. Older or inbound messages may still be missing when the runtime never captured them.";
+    return "Persisted conversation history is active for this route. Older or inbound messages may still be missing when the runtime never captured them.";
   }
 
-  return getApiErrorMessage(error, "Conversation history is still unavailable.");
+  return getApiErrorMessage(error, "Persisted conversation history is unavailable right now.");
 };

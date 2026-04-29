@@ -18,6 +18,13 @@ Updated on 2026-04-12.
 - `apiGlobal` retries once on `401` after `POST /auth/refresh`
 - On refresh failure, auth storage is cleared and the user is redirected to `/manager/login`
 
+## Logout Flow
+
+- Frontend logout clears local access token, refresh token, tenant, user, and cached query data.
+- When an access token is available, the frontend calls `POST /auth/logout` as a best-effort acknowledgement before local cleanup finishes.
+- Backend logout is currently stateless and protected by the bearer token; refresh tokens are JWTs and are not server-revoked by this endpoint.
+- Backend logout failure never blocks local logout or traps the operator in stale session UI.
+
 ## Shared Error Handling
 
 `src/lib/queries/errors.ts` is the shared adapter for user-facing backend errors.
@@ -42,11 +49,13 @@ The supported MVP chat flow now lives on the instance chat routes:
 
 These routes use tenant-safe SaaS endpoints for:
 
-- chat list
-- persisted message history
-- text send
-- media send
-- audio send
+- chat list: `POST /instance/:id/chats/search`
+- persisted message history: `POST /instance/:id/messages/search`
+- text send: `POST /instance/:id/messages/text`
+- media send: `POST /instance/:id/messages/media`
+- audio send: `POST /instance/:id/messages/audio`
+
+The message-history request supports `where.key.remoteJid`, optional `where.key.id` / `where.messageId`, optional `where.query` / `where.search` / `where.text`, optional `limit`, and optional `cursor`.
 
 Legacy embed chat routes remain in the repo only as gated placeholders. They are not part of the supported operator flow and still depend on older token/query-param contracts.
 

@@ -48,6 +48,8 @@ export type ChatHistoryResponse = ChatHistoryMessage[];
 
 export type ChatHistorySearchPayload = {
   where: Record<string, unknown>;
+  limit?: number;
+  cursor?: string;
 };
 
 export type ChatSendMediaInput = {

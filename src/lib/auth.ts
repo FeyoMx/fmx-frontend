@@ -1,4 +1,4 @@
-import { refreshTokenAPI, logout as logoutAPI } from "@/lib/queries/auth/login";
+import { logout as logoutAPI, refreshTokenAPI } from "@/lib/queries/auth/login";
 import { User } from "@/types/auth.types";
 
 const ACCESS_TOKEN_KEY = "access_token";
@@ -108,14 +108,17 @@ export const refreshAuthToken = async (): Promise<string | null> => {
 
 export const performLogout = async (): Promise<void> => {
   const token = getAuthToken();
-  if (token) {
-    try {
-      await logoutAPI(token);
-    } catch (error) {
-      // Ignore logout API errors, just clear local session
-      console.warn("Logout API call failed:", error);
+  const refreshToken = getRefreshToken();
+  const tenantId = getTenantId();
+
+  try {
+    if (token) {
+      await logoutAPI(token, refreshToken, tenantId);
     }
+  } catch (error) {
+    console.warn("Logout API call failed; clearing local session anyway:", error);
+  } finally {
+    clearAuthTokens();
+    localStorage.removeItem("accessToken");
   }
-  clearAuthTokens();
-  localStorage.removeItem("accessToken");
 };

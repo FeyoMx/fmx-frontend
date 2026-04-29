@@ -2,6 +2,7 @@ import { DoorOpen } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useFetchInstance } from "@/lib/queries/instance/fetchInstance";
 import { performLogout } from "@/lib/auth";
@@ -12,17 +13,23 @@ import { LanguageToggle } from "./language-toggle";
 import { ModeToggle } from "./mode-toggle";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader } from "./ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 function Header({ instanceId }: { instanceId?: string }) {
   const { t } = useTranslation();
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
-  const { user } = useTenant();
+  const queryClient = useQueryClient();
+  const { user, setTenant, setUser, setToken } = useTenant();
 
   const handleClose = async () => {
+    setLogoutConfirmation(false);
+    setToken(null);
+    setUser(null);
+    setTenant(null);
+    queryClient.clear();
     await performLogout();
-    navigate("/manager/login");
+    navigate("/manager/login", { replace: true });
   };
 
   const navigateToDashboard = () => {
@@ -63,7 +70,10 @@ function Header({ instanceId }: { instanceId?: string }) {
         <Dialog onOpenChange={setLogoutConfirmation} open={logoutConfirmation}>
           <DialogContent>
             <DialogClose />
-            <DialogHeader>{t("header.logout.confirm") || "Are you sure you want to logout?"}</DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{t("header.logout.button") || "Logout"}</DialogTitle>
+              <DialogDescription>{t("header.logout.confirm") || "Are you sure you want to logout?"}</DialogDescription>
+            </DialogHeader>
             <DialogFooter>
               <div className="flex items-center gap-4">
                 <Button onClick={() => setLogoutConfirmation(false)} size="sm" variant="outline">
