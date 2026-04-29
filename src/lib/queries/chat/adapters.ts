@@ -1,4 +1,4 @@
-import { ChatHistoryMessage, ChatHistoryResponse, ChatSendResult, ChatThread, ChatThreadsResponse } from "./types";
+import { ChatHistoryMessage, ChatHistoryResponse, ChatListMetadata, ChatSendResult, ChatThread, ChatThreadsResponse, ChatThreadsView } from "./types";
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
@@ -25,6 +25,18 @@ const firstString = (...values: unknown[]): string => {
   }
 
   return "";
+};
+
+const normalizeChatListMetadata = (payload: unknown): ChatListMetadata => {
+  const root = asRecord(payload) ?? {};
+  const meta = asRecord(root.meta) ?? asRecord(root.metadata) ?? {};
+
+  return {
+    cached: readBoolean(root.cached) || readBoolean(meta.cached),
+    stale: readBoolean(root.stale) || readBoolean(meta.stale),
+    source: firstString(root.source, meta.source),
+    refreshedAt: normalizeTimestamp(firstString(root.refreshed_at, root.refreshedAt, meta.refreshed_at, meta.refreshedAt)),
+  };
 };
 
 const extractMessageRecord = (message: unknown): Record<string, unknown> => asRecord(message) ?? {};
@@ -172,7 +184,7 @@ const normalizeTimestamp = (value: unknown): string => {
   return "";
 };
 
-export const normalizeChatThreads = (payload: unknown): ChatThreadsResponse => {
+const normalizeChatThreadArray = (payload: unknown): ChatThreadsResponse => {
   if (!Array.isArray(payload)) {
     return [];
   }
@@ -198,6 +210,23 @@ export const normalizeChatThreads = (payload: unknown): ChatThreadsResponse => {
       lastMessageAt: normalizeTimestamp(lastMessage?.messageTimestamp || record.updatedAt),
     } satisfies ChatThread;
   });
+};
+
+export const normalizeChatThreads = (payload: unknown): ChatThreadsView => {
+  const root = asRecord(payload);
+  const items =
+    root && Array.isArray(root.items)
+      ? root.items
+      : root && Array.isArray(root.chats)
+        ? root.chats
+        : root && Array.isArray(root.data)
+          ? root.data
+          : payload;
+
+  return {
+    items: normalizeChatThreadArray(items),
+    metadata: normalizeChatListMetadata(payload),
+  };
 };
 
 const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {

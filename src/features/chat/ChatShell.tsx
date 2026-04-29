@@ -64,13 +64,15 @@ function ChatShell() {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
 
-  const { data: threads, isLoading: threadsLoading, error: threadsError } = useChatThreads({
+  const { data: threadData, isLoading: threadsLoading, error: threadsError } = useChatThreads({
     instanceId: instance?.id,
     search: deferredSearch,
   });
+  const threads = useMemo(() => threadData?.items ?? [], [threadData?.items]);
+  const chatListMetadata = threadData?.metadata;
 
   const activeThread = useMemo<ChatThread | null>(() => {
-    const matched = threads?.find((thread) => thread.remoteJid === remoteJid) ?? null;
+    const matched = threads.find((thread) => thread.remoteJid === remoteJid) ?? null;
     if (matched || !remoteJid) {
       return matched;
     }
@@ -102,7 +104,7 @@ function ChatShell() {
   });
 
   const threadSummary = useMemo(() => {
-    return (threads ?? []).reduce(
+    return threads.reduce(
       (summary, thread) => {
         summary.total += 1;
         if ((thread.unreadCount ?? 0) > 0) {
@@ -123,7 +125,22 @@ function ChatShell() {
     );
   }, [threads]);
 
-  const visibleThreads = useIncrementalList(threads ?? [], {
+  const chatListStatusCopy = useMemo(() => {
+    if (!chatListMetadata || (!chatListMetadata.cached && !chatListMetadata.stale)) {
+      return null;
+    }
+
+    const source = chatListMetadata.source ? ` Source: ${chatListMetadata.source}.` : "";
+    const refreshedAt = chatListMetadata.refreshedAt ? ` Refreshed ${formatCompactTimestamp(chatListMetadata.refreshedAt)}.` : "";
+
+    if (chatListMetadata.stale) {
+      return `Showing stored chat-list data while the live bridge refreshes.${source}${refreshedAt}`;
+    }
+
+    return `Showing cached chat-list data from the backend.${source}${refreshedAt}`;
+  }, [chatListMetadata]);
+
+  const visibleThreads = useIncrementalList(threads, {
     initialCount: 75,
     step: 75,
   });
@@ -149,6 +166,11 @@ function ChatShell() {
                 <p className="text-sm text-muted-foreground">
                   Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID. Older sessions may stay partial until runtime capture or a successful backfill request exists.
                 </p>
+                {chatListStatusCopy ? (
+                  <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                    {chatListStatusCopy}
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
@@ -183,7 +205,7 @@ function ChatShell() {
                 </div>
               ) : threadsError ? (
                 <ChatEmptyState title="Chat list unavailable" description={getApiErrorMessage(threadsError, "Unable to load tenant-safe chats for this instance.")} />
-              ) : threads && threads.length > 0 ? (
+              ) : threads.length > 0 ? (
                 <>
                   {visibleThreads.visibleItems.map((thread) => {
                   const isActive = thread.remoteJid === remoteJid;

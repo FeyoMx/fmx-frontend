@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broadcast inspection now surfaces real recipient analytics and paginated recipient rows with status filters, attempt counts, last errors, and attempt/result timestamps
 - Broadcast UX now distinguishes queue/send-attempt outcome from absent delivery/read receipts instead of implying unsupported delivery analytics
 - Production build now separates React/router, UI primitives, forms, data, i18n, realtime, charts, and remaining shared dependencies into dedicated vendor chunks instead of shipping a single ~762 kB shared JavaScript bundle
+- Chat list now surfaces backend cache/staleness metadata with subtle operator copy while keeping stale chat results searchable and navigable
 
 ### Fixed
 - FormInput component invalid onCheckedChange props

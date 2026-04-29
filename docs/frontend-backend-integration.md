@@ -55,6 +55,8 @@ These routes use tenant-safe SaaS endpoints for:
 - media send: `POST /instance/:id/messages/media`
 - audio send: `POST /instance/:id/messages/audio`
 
+The chat-list adapter accepts either the current array response or an envelope with `items` / `chats` / `data` plus optional metadata fields: `cached`, `stale`, `source`, and `refreshed_at`. Cached or stale chat-list data is not treated as an error; the UI shows subtle operator copy while keeping search and thread navigation active.
+
 The message-history request supports `where.key.remoteJid`, optional `where.key.id` / `where.messageId`, optional `where.query` / `where.search` / `where.text`, optional `limit`, and optional `cursor`.
 
 Legacy embed chat routes remain in the repo only as gated placeholders. They are not part of the supported operator flow and still depend on older token/query-param contracts.

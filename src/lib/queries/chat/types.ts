@@ -44,6 +44,18 @@ export type ChatHistoryMessage = {
 
 export type ChatThreadsResponse = ChatThread[];
 
+export type ChatListMetadata = {
+  cached: boolean;
+  stale: boolean;
+  source: string;
+  refreshedAt: string;
+};
+
+export type ChatThreadsView = {
+  items: ChatThread[];
+  metadata: ChatListMetadata;
+};
+
 export type ChatHistoryResponse = ChatHistoryMessage[];
 
 export type ChatHistorySearchPayload = {

@@ -8,7 +8,7 @@ import { getApiErrorMessage, isApiStatus } from "../errors";
 import { useManageMutation } from "../mutateQuery";
 import { UseQueryParams } from "../types";
 import { normalizeChatHistory, normalizeChatSendResult, normalizeChatThreads } from "./adapters";
-import { ChatCapabilities, ChatCapabilityState, ChatHistoryResponse, ChatHistorySearchPayload, ChatSendAudioInput, ChatSendMediaInput, ChatSendResult, ChatThreadsResponse } from "./types";
+import { ChatCapabilities, ChatCapabilityState, ChatHistoryResponse, ChatHistorySearchPayload, ChatSendAudioInput, ChatSendMediaInput, ChatSendResult, ChatThreadsView } from "./types";
 
 type ChatQueryParams = {
   instanceId: string;
@@ -79,7 +79,7 @@ const buildChatHistoryPayload = ({
   return payload;
 };
 
-export const fetchChatThreads = async ({ instanceId, search = "" }: ChatQueryParams & { search?: string }): Promise<ChatThreadsResponse> => {
+export const fetchChatThreads = async ({ instanceId, search = "" }: ChatQueryParams & { search?: string }): Promise<ChatThreadsView> => {
   const response = await apiGlobal.post(`/instance/${instanceId}/chats/search`, buildChatListPayload(search));
   return normalizeChatThreads(response.data);
 };
@@ -162,10 +162,10 @@ const capabilityFromHistoryQuery = (enabled: boolean, isLoading: boolean, error:
   return "pending_backend";
 };
 
-export const useChatThreads = (props: UseQueryParams<ChatThreadsResponse> & Partial<ChatQueryParams> & { search?: string }) => {
+export const useChatThreads = (props: UseQueryParams<ChatThreadsView> & Partial<ChatQueryParams> & { search?: string }) => {
   const { instanceId, search = "", ...rest } = props;
 
-  return useQuery<ChatThreadsResponse>({
+  return useQuery<ChatThreadsView>({
     ...rest,
     queryKey: chatThreadsKey(instanceId, search),
     queryFn: () => fetchChatThreads({ instanceId: instanceId!, search }),
