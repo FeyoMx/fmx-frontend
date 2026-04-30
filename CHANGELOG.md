@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production build now separates React/router, UI primitives, forms, data, i18n, realtime, charts, and remaining shared dependencies into dedicated vendor chunks instead of shipping a single ~762 kB shared JavaScript bundle
 - Chat list now surfaces backend cache/staleness metadata with subtle operator copy while keeping stale chat results searchable and navigable
 - MVP operator polish tightened chat responsive layout, composer send states, broadcast recipient inspection, contacts/AI settings loading states, and bounded recovery wording without adding unsupported backend surfaces
+- Dense-data operator UI hardening for long contact fields, broadcast errors and identifiers, chat JIDs, message/media placeholders, pagination footers, and runtime/backfill feedback
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -110,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Logout now calls the stateless backend acknowledgement best-effort while always clearing local auth, tenant context, and cached session state
 - Chat history now uses the registered `POST /instance/:id/messages/search` route directly with only backend-supported filters instead of probing an unregistered ID-style route first
 - Chat failed-send statuses now render as failures instead of using a generic sent/check indicator
+- Narrow-width overflow risks in supported MVP tables, chat panels, dashboard cards, broadcast recipient detail, and runtime history cards
 
 ### Removed
 - Unused legacy `apiLegacy` client

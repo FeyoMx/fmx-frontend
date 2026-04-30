@@ -88,9 +88,9 @@ function ChatConversationPanel({
       <Card>
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <CardTitle>{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
-              <p className="text-sm text-muted-foreground">{activeThread.remoteJid}</p>
+            <div className="min-w-0 space-y-1">
+              <CardTitle className="break-words">{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
+              <p className="break-all text-sm text-muted-foreground">{activeThread.remoteJid}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {activeThread.unreadCount ? <Badge variant="warning">{activeThread.unreadCount} unread</Badge> : <Badge variant="outline">No unread marker</Badge>}

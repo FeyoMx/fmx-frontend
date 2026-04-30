@@ -250,14 +250,14 @@ function ChatShell() {
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                             <Badge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Unread activity" : "Seen"}</Badge>
-                            <span>{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
+                            <span className="min-w-0 break-words">{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
                           </div>
                         </div>
                       </Button>
                     );
                   })}
                   {visibleThreads.hasMore ? (
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
                       <div className="text-xs text-muted-foreground">
                         Showing {visibleThreads.visibleCount} of {visibleThreads.totalCount} surfaced threads to keep large chat lists responsive.
                       </div>

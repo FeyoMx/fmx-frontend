@@ -133,8 +133,8 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <img src={message.mediaUrl} alt={message.caption || message.fileName || "Image message"} className="max-h-72 w-full object-cover" loading="lazy" />
           </a>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
-            <ImageIcon className="h-4 w-4" />
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+            <ImageIcon className="h-4 w-4 shrink-0" />
             Image metadata is partial and no preview URL was provided.
           </div>
         )}
@@ -149,8 +149,8 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         {message.mediaUrl ? (
           <video src={message.mediaUrl} controls className="max-h-72 w-full rounded-xl border bg-black/80" />
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
-            <Video className="h-4 w-4" />
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+            <Video className="h-4 w-4 shrink-0" />
             Video metadata is partial and no playable URL was provided.
           </div>
         )}
@@ -167,8 +167,8 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <source src={message.mediaUrl} type={message.mimeType || "audio/mpeg"} />
           </audio>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
-            <Mic className="h-4 w-4" />
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+            <Mic className="h-4 w-4 shrink-0" />
             Audio metadata is partial and no playable URL was provided.
           </div>
         )}
@@ -180,9 +180,9 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
   if (message.contentType === "document") {
     return (
       <div className="space-y-2">
-        <div className="flex items-center gap-2 rounded-xl border bg-background/60 px-3 py-3">
-          <FileText className="h-4 w-4" />
-          <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border bg-background/60 px-3 py-3">
+          <FileText className="h-4 w-4 shrink-0" />
+          <div className="min-w-0 flex-1">
             <div className="truncate font-medium">{message.fileName || "Document"}</div>
             {message.mimeType && <div className="truncate text-xs opacity-70">{message.mimeType}</div>}
           </div>

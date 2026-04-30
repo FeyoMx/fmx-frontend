@@ -1041,7 +1041,7 @@ function DashboardInstance() {
             {backfillFeedback && backfillFeedback.status !== "idle" && (
               <Alert variant={backfillVariant}>
                 <AlertTitle>{backfillFeedback.title}</AlertTitle>
-                {backfillFeedback.detail && <AlertDescription>{backfillFeedback.detail}</AlertDescription>}
+                {backfillFeedback.detail && <AlertDescription className="break-words">{backfillFeedback.detail}</AlertDescription>}
               </Alert>
             )}
             {runtimeHistoryError ? (

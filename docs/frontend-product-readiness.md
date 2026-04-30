@@ -147,6 +147,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 
 - supported operator pages now use more consistent labels, spacing, empty-state language, and status framing
 - follow-up polish tightened loading/disabled button states, responsive wrapping, broadcast recipient inspection copy, chat composer feedback, and runtime/backfill wording without expanding MVP scope
+- dense-data hardening pass added safer wrapping/truncation for long contact fields, phone numbers, JIDs, broadcast errors, message IDs, chat headers, media placeholders, pagination footers, and runtime/backfill feedback
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
@@ -154,6 +155,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly
 - heavy operator routes now lazy-load safely under the existing auth guards and layouts
 - contact, chat, and broadcast list rendering now favors incremental display over full eager rendering for large tenant datasets
+- dense contact, broadcast, chat, dashboard, and runtime-history views now prefer horizontal table scrolling plus wrapped identifiers instead of allowing narrow-width overflow
 - broadcast campaign monitoring now supports a practical operator workflow for larger campaigns: searchable job history, explicit inspect action, paginated recipient detail, and status filtering
 - Vite now splits shared frontend dependencies into focused vendor chunks so the remaining build output stays below the old single-chunk 762 kB warning threshold without changing supported product behavior
 
@@ -204,6 +206,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
   - `vendor-misc` at about `259 kB`
   - `index` route/application chunk at about `188 kB`
 - richer broadcast delivery/read-state analytics still depend on backend DTO expansion, so no unsupported states are shown yet
+- Browserslist data refresh was attempted with `npx update-browserslist-db@latest`, but the command timed out after partially touching the lockfile; package files were restored, and the final build no longer emitted stale `baseline-browser-mapping` / `caniuse-lite` warnings in this workspace. If they recur on another machine, rerun the updater with reliable npm registry access.
 
 ## Readiness Assessment
 

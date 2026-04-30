@@ -114,6 +114,7 @@ Frontend handling after this sync:
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Instance dashboard runtime history and bounded history recovery copy now wrap long backend details and explain disabled recovery states more plainly.
 - Chat list/detail/composer polish tightened responsive sizing, failed-send status rendering, media/audio attachment chips, and send-in-progress feedback.
+- Dense-data hardening now protects supported MVP surfaces from narrow-width overflow caused by long contact fields, phone numbers, chat JIDs, broadcast errors, message IDs, media placeholders, pagination copy, and runtime/backfill detail strings.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
@@ -157,7 +158,7 @@ Remaining frontend-only work is mostly presentational:
 
 - richer charts and trends
 - more operational actions on dashboard cards
-- deeper QA across dense-data scenarios and long chat/broadcast/contact lists
+- deeper manual QA across real tenant dense-data scenarios and long chat/broadcast/contact lists
 - wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
 - deeper chart-specific optimization if `recharts` continues to dominate future builds
 - tighter auditing of the new `vendor-misc` chunk if more cross-route dependencies accumulate there
@@ -166,6 +167,7 @@ Remaining frontend-only work is mostly presentational:
 
 - `npm run type-check`
 - `npm run build`
+- Browser data refresh was attempted with `npx update-browserslist-db@latest`, but the updater timed out after partially touching the lockfile. No package update was kept; the final build no longer emitted stale browser-data warnings in this workspace. If warnings recur, rerun the updater with reliable npm registry access.
 
 ## Current Bundle Snapshot
 

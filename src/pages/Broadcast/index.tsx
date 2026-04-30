@@ -179,7 +179,7 @@ function BroadcastRecipientDetailPanel({
           <Badge variant={getStatusBadgeVariant(broadcast.status)}>{formatOperatorStatusLabel(broadcast.status)}</Badge>
         </div>
         <div className="rounded-xl border bg-muted/20 p-4">
-          <div className="font-medium">{truncateOperatorText(broadcast.message, 240)}</div>
+          <div className="whitespace-pre-wrap break-words font-medium">{truncateOperatorText(broadcast.message, 240)}</div>
           <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
             <div>Created: {formatOperatorTimestamp(broadcast.createdAt)}</div>
             <div>Available: {formatOperatorTimestamp(broadcast.availableAt, "Not reported")}</div>
@@ -226,7 +226,7 @@ function BroadcastRecipientDetailPanel({
         {broadcast.lastError ? (
           <Alert variant="warning">
             <AlertTitle>Last job-level error</AlertTitle>
-            <AlertDescription>{broadcast.lastError}</AlertDescription>
+            <AlertDescription className="break-words">{broadcast.lastError}</AlertDescription>
           </Alert>
         ) : null}
 
@@ -268,7 +268,7 @@ function BroadcastRecipientDetailPanel({
         ) : null}
 
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[860px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Recipient</TableHead>
@@ -290,8 +290,8 @@ function BroadcastRecipientDetailPanel({
                   <TableRow key={recipient.id} className="align-top">
                     <TableCell className="min-w-[220px] align-top">
                       <div className="space-y-1">
-                        <div className="font-medium">{recipient.phone}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="break-all font-mono text-xs font-medium">{recipient.phone}</div>
+                        <div className="break-all text-xs text-muted-foreground">
                           {recipient.chatJid || recipient.contactId || "No chat/contact identifier reported"}
                         </div>
                       </div>
@@ -309,7 +309,7 @@ function BroadcastRecipientDetailPanel({
                     </TableCell>
                     <TableCell className="min-w-[260px] align-top">
                       <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className={recipient.lastError ? "text-rose-700" : undefined}>{recipient.lastError || "No error reported"}</div>
+                        <div className={recipient.lastError ? "break-words text-rose-700" : undefined}>{recipient.lastError || "No error reported"}</div>
                         {recipient.messageId ? <div className="break-all">Message ID: {recipient.messageId}</div> : null}
                       </div>
                     </TableCell>
@@ -328,7 +328,7 @@ function BroadcastRecipientDetailPanel({
 
         {recipientData ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
-            <div className="text-sm text-muted-foreground">
+            <div className="min-w-0 break-words text-sm text-muted-foreground">
               Page {recipientData.page} of {Math.max(1, recipientData.totalPages || 1)} - {recipientData.total} recipient row{recipientData.total === 1 ? "" : "s"}
               {statusFilter ? ` - status: ${formatOperatorStatusLabel(statusFilter)}` : " - all statuses"}
               {deferredRecipientQuery ? ` - search: ${deferredRecipientQuery}` : ""}
@@ -765,7 +765,7 @@ function Broadcast() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[980px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Job</TableHead>
@@ -791,25 +791,25 @@ function Broadcast() {
 
                         return (
                           <TableRow key={broadcast.id} className={isSelected ? "bg-muted/40" : undefined}>
-                            <TableCell className="min-w-[280px]">
+                            <TableCell className="min-w-[280px] align-top">
                               <div className="space-y-1">
-                                <div className="font-medium">{instanceNameById(broadcast.instanceId)}</div>
-                                <div className="text-xs text-muted-foreground">{truncateOperatorText(broadcast.message, 90)}</div>
+                                <div className="break-words font-medium">{instanceNameById(broadcast.instanceId)}</div>
+                                <div className="whitespace-pre-wrap break-words text-xs text-muted-foreground">{truncateOperatorText(broadcast.message, 90)}</div>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <Badge variant={getStatusBadgeVariant(broadcast.status)} className="gap-1.5">
                                 <StatusIcon className="h-3.5 w-3.5" />
                                 {formatOperatorStatusLabel(broadcast.status)}
                               </Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="space-y-1 text-sm">
                                 <div>{broadcast.scheduledAt ? formatOperatorTimestamp(broadcast.scheduledAt) : "Immediate queueing"}</div>
                                 <div className="text-xs text-muted-foreground">{broadcast.scheduledAt ? "Scheduled job" : `Delay: ${broadcast.delaySec || 0}s`}</div>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="space-y-1 text-sm">
                                 <div>
                                   {broadcast.attempts}/{broadcast.maxAttempts}
@@ -817,11 +817,11 @@ function Broadcast() {
                                 <div className="text-xs text-muted-foreground">Rate {broadcast.ratePerHour || 0}/hr</div>
                               </div>
                             </TableCell>
-                            <TableCell className="min-w-[240px]">
+                            <TableCell className="min-w-[240px] align-top">
                               <BroadcastRecipientSummary analytics={broadcast.recipientAnalytics} />
                             </TableCell>
-                            <TableCell>{formatCompactTimestamp(broadcast.createdAt)}</TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">{formatCompactTimestamp(broadcast.createdAt)}</TableCell>
+                            <TableCell className="align-top">
                               <Button variant={isSelected ? "secondary" : "outline"} size="sm" onClick={() => setSelectedBroadcastId(isSelected ? null : broadcast.id)}>
                                 {isSelected ? "Hide detail" : "Inspect recipients"}
                               </Button>
@@ -835,8 +835,8 @@ function Broadcast() {
               </div>
 
               {visibleBroadcasts.hasMore ? (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
-                  <div className="text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
+                  <div className="min-w-0 text-sm text-muted-foreground">
                     Showing {visibleBroadcasts.visibleCount} of {visibleBroadcasts.totalCount} filtered jobs to keep queue history responsive on larger datasets.
                   </div>
                   <Button variant="outline" onClick={visibleBroadcasts.showMore}>

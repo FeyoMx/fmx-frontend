@@ -157,7 +157,7 @@ export function CRM() {
           )}
 
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[760px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("crm.table.name") || "Name"}</TableHead>
@@ -184,21 +184,21 @@ export function CRM() {
                   </TableRow>
                 ) : (
                   visibleContacts.visibleItems.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell className="font-medium">{contact.name}</TableCell>
-                      <TableCell>{contact.email || "-"}</TableCell>
-                      <TableCell>{contact.phone || "-"}</TableCell>
-                      <TableCell>
+                    <TableRow key={contact.id} className="align-top">
+                      <TableCell className="max-w-[180px] break-words font-medium">{contact.name}</TableCell>
+                      <TableCell className="max-w-[220px] break-all">{contact.email || "-"}</TableCell>
+                      <TableCell className="min-w-[140px] break-all font-mono text-xs">{contact.phone || "-"}</TableCell>
+                      <TableCell className="max-w-[220px]">
                         <div className="flex flex-wrap gap-1">
                           {contact.tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge key={tag} variant="secondary" className="max-w-[10rem] truncate text-xs" title={tag}>
                               {tag}
                             </Badge>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell>{contact.pipelineStage || "-"}</TableCell>
-                      <TableCell>{formatCompactTimestamp(contact.updatedAt || contact.createdAt, "-")}</TableCell>
+                      <TableCell className="max-w-[140px] break-words">{contact.pipelineStage || "-"}</TableCell>
+                      <TableCell className="min-w-[120px]">{formatCompactTimestamp(contact.updatedAt || contact.createdAt, "-")}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" disabled title="Delete is not supported by the current backend">
                           Not available
@@ -212,7 +212,7 @@ export function CRM() {
           </div>
 
           {visibleContacts.hasMore ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
               <div className="text-sm text-muted-foreground">
                 Showing {visibleContacts.visibleCount} of {visibleContacts.totalCount} filtered contacts to keep large datasets responsive.
               </div>

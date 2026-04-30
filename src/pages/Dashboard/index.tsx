@@ -539,8 +539,8 @@ function Dashboard() {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter className="flex items-center justify-between gap-3">
-                    <div className="text-xs text-muted-foreground">Seen {formatCompactTimestamp(instance.updatedAt || instance.createdAt, "Recently unavailable")}</div>
+                  <CardFooter className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0 text-xs text-muted-foreground">Seen {formatCompactTimestamp(instance.updatedAt || instance.createdAt, "Recently unavailable")}</div>
                     <Button variant="destructive" size="sm" onClick={() => setDeleteConfirmation({ id: instance.id, name: instance.name })} disabled={deleting.includes(instance.name)}>
                       {deleting.includes(instance.name) ? <span>{t("button.deleting")}</span> : <span>{t("button.delete")}</span>}
                     </Button>

@@ -1,6 +1,6 @@
 # QA Checklist
 
-Updated on 2026-04-06.
+Updated on 2026-04-30.
 
 ## Operator Walkthrough
 
@@ -69,3 +69,37 @@ Updated on 2026-04-06.
 - Buttons, spacing, and badges should feel consistent across dashboard, contacts, broadcast, AI settings, and instance dashboard.
 - Loading, empty, and error states should use similar tone and structure.
 - Supported pages should feel demoable without needing to explain hidden caveats on every step.
+
+## Dense Data And Narrow Width Checks
+
+1. Dashboard with many instances
+- Confirm many instance cards wrap into the grid without card-footer overflow.
+- Confirm long instance names, profile names, owner JIDs, and timestamps do not push actions off card edges.
+
+2. Contacts with 100+ contacts
+- Confirm the contact table keeps horizontal scrolling instead of overflowing the page.
+- Confirm long names, emails, phone numbers, tags, and pipeline stages wrap or truncate cleanly.
+- Confirm the incremental "Show 100 more" footer wraps with the button still reachable.
+
+3. Broadcast with many jobs and recipient rows
+- Confirm queue history keeps table scrolling contained on narrow screens.
+- Confirm long messages, recipient phone numbers, chat/contact IDs, message IDs, and backend errors stay readable without breaking layout.
+- Confirm recipient pagination/filter summary wraps and Previous/Next remain usable.
+- Confirm partial analytics caveats remain visible without implying delivery/read receipts.
+
+4. Chat list with many threads
+- Confirm the split-pane list scrolls internally and thread cards do not resize the page.
+- Confirm long push names, remote JIDs, preview text, unread badges, and "Show 75 more" footer remain readable on narrow widths.
+
+5. Chat conversation with many messages
+- Confirm long text messages wrap inside bubbles.
+- Confirm media/audio/document placeholders and filenames do not overflow.
+- Confirm the newest-message control remains reachable after scrolling.
+
+6. Runtime history with many events
+- Confirm long event details and bounded-backfill feedback wrap in the card.
+- Confirm recovery form fields and the submit button remain usable on narrow widths.
+
+7. Browser data warnings
+- Run `npx update-browserslist-db@latest` when npm registry access is reliable.
+- If the updater changes `package-lock.json`, rerun `npm run type-check` and `npm run build` before committing.
