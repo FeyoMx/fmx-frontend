@@ -57,6 +57,18 @@ const buildSendResultFeedback = (result: ChatSendResult, fallbackTitle: string):
   detail: result.message_id ? `Message ID: ${result.message_id}` : result.message || undefined,
 });
 
+const formatFileSize = (bytes: number): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "size unavailable";
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 function ChatComposer({
   instanceId,
   remoteJid,
@@ -398,9 +410,10 @@ function ChatComposer({
         </div>
         <div className="grid gap-1">
           <Label htmlFor="chat-send-delay" className="text-xs">
-            Delay (ms)
+            Send delay (ms)
           </Label>
           <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" />
+          <p className="text-[11px] text-muted-foreground">0 sends immediately.</p>
         </div>
       </div>
 
@@ -414,56 +427,63 @@ function ChatComposer({
 
       <Tabs value={mode} onValueChange={(value) => setMode(value as "text" | "media" | "audio")}>
         <TabsList>
-          <TabsTrigger value="text" disabled={capabilities.textSend !== "available"}>
+          <TabsTrigger value="text" disabled={capabilities.textSend !== "available" || isSending}>
             Text
           </TabsTrigger>
-          <TabsTrigger value="media" disabled={capabilities.mediaSend !== "available"}>
+          <TabsTrigger value="media" disabled={capabilities.mediaSend !== "available" || isSending}>
             Media
           </TabsTrigger>
-          <TabsTrigger value="audio" disabled={capabilities.audioSend !== "available"}>
+          <TabsTrigger value="audio" disabled={capabilities.audioSend !== "available" || isSending}>
             Audio
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="text" className="space-y-3">
-          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Write a message for this conversation" />
-          <div className="flex justify-end">
+          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Write a message for this conversation" className="min-h-24" disabled={isSending} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-muted-foreground">{text.trim().length} character{text.trim().length === 1 ? "" : "s"} ready to send.</div>
             <Button onClick={handleTextSend} disabled={!text.trim() || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send text
+              {isSending ? "Sending text..." : "Send text"}
             </Button>
           </div>
         </TabsContent>
 
         <TabsContent value="media" className="space-y-3">
-          <Input type="file" onChange={onFileChange(setMediaFile)} />
+          <Input type="file" accept="image/*,video/*,audio/*,application/pdf,text/*" onChange={onFileChange(setMediaFile)} disabled={isSending} />
           {mediaFile && (
             <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs">
               <div className="flex min-w-0 items-center gap-2">
                 <Paperclip className="h-3.5 w-3.5" />
-                <span className="truncate">{mediaFile.name}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{mediaFile.name}</span>
+                  <span className="block truncate text-muted-foreground">{mediaFile.type || "Unknown type"} - {formatFileSize(mediaFile.size)}</span>
+                </span>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMediaFile(null)} disabled={isSending}>
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           )}
-          <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="Optional caption" />
+          <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="Optional caption" disabled={isSending} />
           <div className="flex justify-end">
             <Button onClick={handleMediaSend} disabled={!mediaFile || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send media
+              {isSending ? "Sending media..." : "Send media"}
             </Button>
           </div>
         </TabsContent>
 
         <TabsContent value="audio" className="space-y-3">
-          <Input type="file" accept="audio/*" onChange={onFileChange(setAudioFile)} />
+          <Input type="file" accept="audio/*" onChange={onFileChange(setAudioFile)} disabled={isSending} />
           {audioFile && (
             <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs">
               <div className="flex min-w-0 items-center gap-2">
                 <Mic className="h-3.5 w-3.5" />
-                <span className="truncate">{audioFile.name}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{audioFile.name}</span>
+                  <span className="block truncate text-muted-foreground">{audioFile.type || "Unknown type"} - {formatFileSize(audioFile.size)}</span>
+                </span>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAudioFile(null)} disabled={isSending}>
                 <X className="h-3.5 w-3.5" />
@@ -473,7 +493,7 @@ function ChatComposer({
           <div className="flex justify-end">
             <Button onClick={handleAudioSend} disabled={!audioFile || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send audio
+              {isSending ? "Sending audio..." : "Send audio"}
             </Button>
           </div>
         </TabsContent>

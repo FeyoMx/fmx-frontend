@@ -100,13 +100,13 @@ function BroadcastRecipientSummary({ analytics }: { analytics: BroadcastRecipien
   }
 
   return (
-    <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-1.5 text-xs text-muted-foreground sm:grid-cols-2">
       <div>Total: {analytics.total ?? "-"}</div>
       <div>Attempted: {analytics.attempted ?? "-"}</div>
       <div>Sent: {analytics.sent ?? "-"}</div>
       <div>Failed: {analytics.failed ?? "-"}</div>
       <div>Pending: {analytics.pending ?? "-"}</div>
-      <div>{analytics.partial ? "Partial analytics" : "Complete analytics"}</div>
+      <div className={analytics.partial ? "text-amber-700" : undefined}>{analytics.partial ? "Partial summary" : "Complete summary"}</div>
     </div>
   );
 }
@@ -191,16 +191,17 @@ function BroadcastRecipientDetailPanel({
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           {[
-            { label: "Total", value: summary.total, tone: "text-foreground" },
-            { label: "Attempted", value: summary.attempted, tone: "text-sky-600" },
-            { label: "Sent", value: summary.sent, tone: "text-emerald-600" },
-            { label: "Failed", value: summary.failed, tone: "text-rose-600" },
-            { label: "Pending", value: summary.pending, tone: "text-amber-600" },
-            { label: "Partial", value: summary.partial ? "Yes" : "No", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
+            { label: "Recipients", value: summary.total, detail: "Rows in campaign scope", tone: "text-foreground" },
+            { label: "Attempted", value: summary.attempted, detail: "Queue attempts started", tone: "text-sky-600" },
+            { label: "Sent", value: summary.sent, detail: "Backend send outcome", tone: "text-emerald-600" },
+            { label: "Failed", value: summary.failed, detail: "Backend failed outcome", tone: "text-rose-600" },
+            { label: "Pending", value: summary.pending, detail: "Still waiting", tone: "text-amber-600" },
+            { label: "Scope", value: summary.partial ? "Partial" : "Complete", detail: "Backend summary marker", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border p-4">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
               <div className={`mt-2 text-2xl font-semibold ${item.tone}`}>{item.value ?? "-"}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{item.detail}</div>
             </div>
           ))}
         </div>
@@ -212,6 +213,15 @@ function BroadcastRecipientDetailPanel({
             This panel shows attempt and queue-result data returned by the backend. It does not claim WhatsApp delivery or read receipts unless those states are explicitly exposed in the API, which they are not today.
           </AlertDescription>
         </Alert>
+
+        {summary.partial ? (
+          <Alert variant="warning">
+            <AlertTitle>Recipient analytics are marked partial</AlertTitle>
+            <AlertDescription>
+              Treat these counts as the backend's current campaign snapshot. Filtering and paging still work, but the summary may not include every final queue outcome yet.
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
         {broadcast.lastError ? (
           <Alert variant="warning">
@@ -272,13 +282,13 @@ function BroadcastRecipientDetailPanel({
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
-                    Loading recipient detail...
+                    Loading recipient rows and queue outcomes...
                   </TableCell>
                 </TableRow>
               ) : recipientData && recipientData.items.length > 0 ? (
                 recipientData.items.map((recipient) => (
-                  <TableRow key={recipient.id}>
-                    <TableCell className="min-w-[220px]">
+                  <TableRow key={recipient.id} className="align-top">
+                    <TableCell className="min-w-[220px] align-top">
                       <div className="space-y-1">
                         <div className="font-medium">{recipient.phone}</div>
                         <div className="text-xs text-muted-foreground">
@@ -286,21 +296,21 @@ function BroadcastRecipientDetailPanel({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="align-top">
                       <Badge variant={getRecipientStatusBadgeVariant(recipient.status)}>{formatOperatorStatusLabel(recipient.status)}</Badge>
                     </TableCell>
-                    <TableCell>{recipient.attemptCount}</TableCell>
-                    <TableCell className="min-w-[220px]">
+                    <TableCell className="align-top">{recipient.attemptCount}</TableCell>
+                    <TableCell className="min-w-[220px] align-top">
                       <div className="space-y-1 text-xs text-muted-foreground">
                         <div>Last attempt: {formatOperatorTimestamp(recipient.lastAttemptAt, "Not attempted")}</div>
                         <div>Sent at: {formatOperatorTimestamp(recipient.sentAt, "Not sent")}</div>
                         <div>Failed at: {formatOperatorTimestamp(recipient.failedAt, "Not failed")}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="min-w-[260px]">
+                    <TableCell className="min-w-[260px] align-top">
                       <div className="space-y-1 text-xs text-muted-foreground">
-                        <div>{recipient.lastError || "No error reported"}</div>
-                        {recipient.messageId ? <div>Message ID: {recipient.messageId}</div> : null}
+                        <div className={recipient.lastError ? "text-rose-700" : undefined}>{recipient.lastError || "No error reported"}</div>
+                        {recipient.messageId ? <div className="break-all">Message ID: {recipient.messageId}</div> : null}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -319,8 +329,10 @@ function BroadcastRecipientDetailPanel({
         {recipientData ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
             <div className="text-sm text-muted-foreground">
-              Page {recipientData.page} of {Math.max(1, recipientData.totalPages || 1)} · {recipientData.total} recipient row{recipientData.total === 1 ? "" : "s"}
-              {recipientData.partial ? " · Summary is marked partial by backend." : ""}
+              Page {recipientData.page} of {Math.max(1, recipientData.totalPages || 1)} - {recipientData.total} recipient row{recipientData.total === 1 ? "" : "s"}
+              {statusFilter ? ` - status: ${formatOperatorStatusLabel(statusFilter)}` : " - all statuses"}
+              {deferredRecipientQuery ? ` - search: ${deferredRecipientQuery}` : ""}
+              {recipientData.partial ? " - partial summary" : ""}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1 || isLoading}>
@@ -811,7 +823,7 @@ function Broadcast() {
                             <TableCell>{formatCompactTimestamp(broadcast.createdAt)}</TableCell>
                             <TableCell>
                               <Button variant={isSelected ? "secondary" : "outline"} size="sm" onClick={() => setSelectedBroadcastId(isSelected ? null : broadcast.id)}>
-                                {isSelected ? "Hide detail" : "Inspect"}
+                                {isSelected ? "Hide detail" : "Inspect recipients"}
                               </Button>
                             </TableCell>
                           </TableRow>

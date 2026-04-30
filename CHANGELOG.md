@@ -85,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broadcast UX now distinguishes queue/send-attempt outcome from absent delivery/read receipts instead of implying unsupported delivery analytics
 - Production build now separates React/router, UI primitives, forms, data, i18n, realtime, charts, and remaining shared dependencies into dedicated vendor chunks instead of shipping a single ~762 kB shared JavaScript bundle
 - Chat list now surfaces backend cache/staleness metadata with subtle operator copy while keeping stale chat results searchable and navigable
+- MVP operator polish tightened chat responsive layout, composer send states, broadcast recipient inspection, contacts/AI settings loading states, and bounded recovery wording without adding unsupported backend surfaces
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -108,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broadcast detail now aligns with backend status names such as `completed_with_failures` and recipient fields such as `attempted` and `partial`
 - Logout now calls the stateless backend acknowledgement best-effort while always clearing local auth, tenant context, and cached session state
 - Chat history now uses the registered `POST /instance/:id/messages/search` route directly with only backend-supported filters instead of probing an unregistered ID-style route first
+- Chat failed-send statuses now render as failures instead of using a generic sent/check indicator
 
 ### Removed
 - Unused legacy `apiLegacy` client

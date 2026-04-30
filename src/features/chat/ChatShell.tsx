@@ -159,7 +159,7 @@ function ChatShell() {
     <div className="h-[calc(100vh-160px)] overflow-hidden">
       <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full">
         <ResizablePanel defaultSize={32} minSize={25}>
-          <Card className="h-full rounded-r-none border-r-0">
+          <Card className="flex h-full flex-col rounded-r-none border-r-0">
             <CardHeader className="space-y-4 border-b">
               <div className="space-y-2">
                 <CardTitle>Chats</CardTitle>
@@ -167,7 +167,7 @@ function ChatShell() {
                   Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID. Older sessions may stay partial until runtime capture or a successful backfill request exists.
                 </p>
                 {chatListStatusCopy ? (
-                  <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  <div role="status" className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
                     {chatListStatusCopy}
                   </div>
                 ) : null}
@@ -175,7 +175,7 @@ function ChatShell() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border p-3">
-                  <div className="text-xs text-muted-foreground">Surfaced threads</div>
+                  <div className="text-xs text-muted-foreground">Visible threads</div>
                   <div className="mt-2 text-2xl font-semibold">{threadSummary.total}</div>
                 </div>
                 <div className="rounded-xl border p-3">
@@ -198,7 +198,7 @@ function ChatShell() {
                 />
               </div>
             </CardHeader>
-            <CardContent className="flex h-[calc(100%-265px)] flex-col gap-3 overflow-y-auto p-4">
+            <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
               {threadsLoading ? (
                 <div className="flex flex-1 items-center justify-center">
                   <LoadingSpinner />
@@ -208,54 +208,54 @@ function ChatShell() {
               ) : threads.length > 0 ? (
                 <>
                   {visibleThreads.visibleItems.map((thread) => {
-                  const isActive = thread.remoteJid === remoteJid;
-                  const hasUnread = (thread.unreadCount ?? 0) > 0;
+                    const isActive = thread.remoteJid === remoteJid;
+                    const hasUnread = (thread.unreadCount ?? 0) > 0;
 
-                  return (
-                    <Button
-                      key={thread.id}
-                      variant="ghost"
-                      className={`h-auto justify-start gap-3 whitespace-normal rounded-2xl border px-3 py-3 text-left transition-colors ${
-                        isActive
-                          ? "border-primary/30 bg-primary/10 shadow-sm"
-                          : hasUnread
-                            ? "border-amber-200/70 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50"
-                            : "border-transparent hover:border-border hover:bg-muted/70"
-                      }`}
-                      onClick={() => handleThreadSelect(thread)}>
-                      <Avatar className="h-11 w-11">
-                        <AvatarImage src={thread.profilePicUrl} alt={thread.pushName} />
-                        <AvatarFallback>{(thread.pushName || thread.remoteJid).slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className={`truncate font-medium ${hasUnread ? "text-foreground" : ""}`}>{thread.pushName || thread.remoteJid.split("@")[0]}</div>
-                            <div className="truncate text-xs text-muted-foreground">{thread.remoteJid}</div>
+                    return (
+                      <Button
+                        key={thread.id}
+                        variant="ghost"
+                        className={`h-auto justify-start gap-3 whitespace-normal rounded-xl border px-3 py-3 text-left transition-colors ${
+                          isActive
+                            ? "border-primary/30 bg-primary/10 shadow-sm"
+                            : hasUnread
+                              ? "border-amber-200/70 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50"
+                              : "border-transparent hover:border-border hover:bg-muted/70"
+                        }`}
+                        onClick={() => handleThreadSelect(thread)}>
+                        <Avatar className="h-11 w-11">
+                          <AvatarImage src={thread.profilePicUrl} alt={thread.pushName} />
+                          <AvatarFallback>{(thread.pushName || thread.remoteJid).slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className={`truncate font-medium ${hasUnread ? "text-foreground" : ""}`}>{thread.pushName || thread.remoteJid.split("@")[0]}</div>
+                              <div className="truncate text-xs text-muted-foreground">{thread.remoteJid}</div>
+                            </div>
+                            <div className="shrink-0 text-[11px] text-muted-foreground">
+                              {thread.lastMessageAt ? formatCompactTimestamp(thread.lastMessageAt, "") : ""}
+                            </div>
                           </div>
-                          <div className="shrink-0 text-[11px] text-muted-foreground">
-                            {thread.lastMessageAt ? formatCompactTimestamp(thread.lastMessageAt, "") : ""}
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <div className={`flex min-w-0 items-center gap-1.5 text-xs ${hasUnread ? "text-foreground" : "text-muted-foreground"}`}>
+                              <PreviewIcon type={thread.previewType} />
+                              <span className="truncate">{previewLabel(thread)}</span>
+                            </div>
+                            {hasUnread ? (
+                              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                                {thread.unreadCount! > 99 ? "99+" : thread.unreadCount}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                            <Badge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Unread activity" : "Seen"}</Badge>
+                            <span>{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
                           </div>
                         </div>
-                        <div className="mt-2 flex items-center justify-between gap-3">
-                          <div className={`flex min-w-0 items-center gap-1.5 text-xs ${hasUnread ? "text-foreground" : "text-muted-foreground"}`}>
-                            <PreviewIcon type={thread.previewType} />
-                            <span className="truncate">{previewLabel(thread)}</span>
-                          </div>
-                          {hasUnread ? (
-                            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                              {thread.unreadCount! > 99 ? "99+" : thread.unreadCount}
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                          <Badge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Unread activity" : "Seen"}</Badge>
-                          <span>{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
-                        </div>
-                      </div>
-                    </Button>
-                  );
-                })}
+                      </Button>
+                    );
+                  })}
                   {visibleThreads.hasMore ? (
                     <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
                       <div className="text-xs text-muted-foreground">

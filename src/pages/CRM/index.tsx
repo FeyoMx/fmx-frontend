@@ -101,10 +101,10 @@ export function CRM() {
         description={tenant?.name}
         actions={
           <>
-            <Button onClick={() => void fetchContacts()} variant="outline" size="icon">
-              <RefreshCw size={20} />
+            <Button onClick={() => void fetchContacts()} variant="outline" size="icon" disabled={isLoading} title="Refresh contacts">
+              <RefreshCw size={20} className={isLoading ? "animate-spin" : undefined} />
             </Button>
-            <Button onClick={() => setShowAddContact(true)}>
+            <Button onClick={() => setShowAddContact(true)} disabled={isLoading}>
               <Plus size={20} className="mr-2" />
               {t("crm.button.addContact") || "Add Contact"}
             </Button>
@@ -173,13 +173,13 @@ export function CRM() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
-                      {t("common.loading") || "Loading..."}
+                      Loading contacts...
                     </TableCell>
                   </TableRow>
                 ) : filteredContacts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
-                      {t("crm.noContacts") || "No contacts found"}
+                      {searchQuery.trim() || selectedTag ? "No contacts match the current filters." : t("crm.noContacts") || "No contacts found"}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -228,7 +228,7 @@ export function CRM() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("crm.dialog.addContact") || "Add New Contact"}</DialogTitle>
-            <DialogDescription>{t("crm.dialog.addContactDescription") || "Create a new contact in your CRM system"}</DialogDescription>
+            <DialogDescription>{t("crm.dialog.addContactDescription") || "Create a contact with the backend-supported name and phone fields."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input type="text" placeholder="Name*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} />
@@ -239,7 +239,9 @@ export function CRM() {
             <Button onClick={() => setShowAddContact(false)} variant="outline">
               {t("common.cancel") || "Cancel"}
             </Button>
-            <Button onClick={handleAddContact}>{t("common.add") || "Add"}</Button>
+            <Button onClick={handleAddContact} disabled={!newContact.name.trim() || !newContact.phone.trim()}>
+              {t("common.add") || "Add"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

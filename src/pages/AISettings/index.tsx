@@ -85,7 +85,7 @@ export function AISettings() {
           inst.instanceId === instanceId
             ? { ...inst, enabled }
             : inst
-        )
+        ),
       );
       toast.success(t("aiSettings.message.updated") || "Instance settings updated");
     } catch (error) {
@@ -99,8 +99,8 @@ export function AISettings() {
         title={t("aiSettings.title") || "AI Settings"}
         description={tenant?.name}
         actions={
-          <Button onClick={() => void fetchSettings()} variant="outline" size="icon">
-            <RefreshCw size={20} />
+          <Button onClick={() => void fetchSettings()} variant="outline" size="icon" disabled={isLoading || isSaving} title="Refresh AI settings">
+            <RefreshCw size={20} className={isLoading ? "animate-spin" : undefined} />
           </Button>
         }
       />
@@ -124,7 +124,7 @@ export function AISettings() {
               <label className="font-medium">{t("aiSettings.enableAI") || "Enable AI"}</label>
               <p className="text-sm text-gray-600">{t("aiSettings.enableAIDescription") || "Enable AI features for this tenant"}</p>
             </div>
-            <Switch checked={aiSettings.enabled} onCheckedChange={(checked) => setAISettings({ ...aiSettings, enabled: checked })} />
+            <Switch checked={aiSettings.enabled} onCheckedChange={(checked) => setAISettings({ ...aiSettings, enabled: checked })} disabled={isLoading || isSaving} />
           </div>
 
           {aiSettings.enabled && (
@@ -132,34 +132,34 @@ export function AISettings() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Provider</label>
-                  <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" />
+                  <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" disabled={isSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Model</label>
-                  <Input value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} placeholder="gpt-4o-mini" />
+                  <Input value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} placeholder="gpt-4o-mini" disabled={isSaving} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Base URL</label>
-                  <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" />
+                  <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" disabled={isSaving} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Tenant auto reply</label>
                   <div className="flex h-10 items-center rounded border px-3">
-                    <Switch checked={aiSettings.autoReply} onCheckedChange={(checked) => setAISettings({ ...aiSettings, autoReply: checked })} />
+                    <Switch checked={aiSettings.autoReply} onCheckedChange={(checked) => setAISettings({ ...aiSettings, autoReply: checked })} disabled={isSaving} />
                   </div>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">System prompt</label>
-                <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Optional system prompt" />
+                <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Optional system prompt" disabled={isSaving} />
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={handleSaveSettings} disabled={isSaving}>
+                <Button onClick={handleSaveSettings} disabled={isSaving || isLoading}>
                   <Save size={20} className="mr-2" />
                   {isSaving ? t("common.saving") || "Saving..." : t("common.save") || "Save"}
                 </Button>
@@ -188,13 +188,13 @@ export function AISettings() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      {t("common.loading") || "Loading..."}
+                      Loading AI settings...
                     </TableCell>
                   </TableRow>
                 ) : instanceSettings.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      {t("aiSettings.noInstances") || "No instances found"}
+                      {t("aiSettings.noInstances") || "No instances are available for per-instance AI settings yet."}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -205,7 +205,7 @@ export function AISettings() {
                         <Badge variant="outline">{instance.model || "Tenant default"}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} />
+                        <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} disabled={isSaving || isLoading} />
                       </TableCell>
                     </TableRow>
                   ))

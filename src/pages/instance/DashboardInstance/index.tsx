@@ -244,8 +244,8 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
                 </div>
                 <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Not observed yet")}</div>
               </div>
-              {event.detail && <div className="text-sm text-muted-foreground">{event.detail}</div>}
-              <div className="text-xs text-muted-foreground">Full timestamp: {formatOptionalTimestamp(event.timestamp)}</div>
+              {event.detail && <div className="break-words text-sm text-muted-foreground">{event.detail}</div>}
+              <div className="text-xs text-muted-foreground">Observed: {formatOptionalTimestamp(event.timestamp)}</div>
             </div>
           </div>
         );
@@ -724,7 +724,7 @@ function DashboardInstance() {
                   <Badge variant="outline">Instance dashboard</Badge>
                   <InstanceStatus status={instance.connectionStatus} />
                 </div>
-                <h2 className="break-all text-2xl font-semibold tracking-tight">{instance.name}</h2>
+                <h2 className="break-words text-2xl font-semibold tracking-tight">{instance.name}</h2>
                 <p className="max-w-2xl text-sm text-muted-foreground">
                   Lifecycle actions, runtime observability, and bounded recovery tools are active here. Delivery and history completeness still depend on the bridge and current backend capture depth.
                 </p>
@@ -859,10 +859,10 @@ function DashboardInstance() {
               <RefreshCw size="20" />
             </Button>
             <Button className="action-button" variant="secondary" onClick={() => void handleReconnect(instance.id)} disabled={isLifecycleRunning}>
-              {activeLifecycleAction === "reconnect" ? "REQUESTING..." : "RECONNECT"}
+              {activeLifecycleAction === "reconnect" ? "Requesting..." : "Reconnect"}
             </Button>
             <Button variant="destructive" onClick={() => void handleLogout(instance.id)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
-              {activeLifecycleAction === "logout" ? "LOGGING OUT..." : "LOG OUT"}
+              {activeLifecycleAction === "logout" ? "Logging out..." : "Log out"}
             </Button>
           </CardFooter>
         </Card>
@@ -996,7 +996,7 @@ function DashboardInstance() {
               Recent lifecycle events help explain why an instance is connected, disconnected, pairing, or recovering. Event completeness still depends on bridge availability.
             </p>
             <div className="rounded-lg border p-4">
-              <div className="mb-2 text-sm font-medium">History recovery</div>
+              <div className="mb-2 text-sm font-medium">Bounded history recovery</div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Request a bounded history backfill for one WhatsApp chat JID. This is a recovery tool, not a guaranteed full replay, and it only works when the live bridge can return a sync blob.
               </p>
@@ -1027,14 +1027,15 @@ function DashboardInstance() {
                   <Button
                     type="button"
                     variant="secondary"
+                    className="w-full md:w-auto"
                     onClick={handleHistoryBackfill}
                     disabled={isBackfillRunning || instance.connectionStatus !== "open"}>
-                    {isBackfillRunning ? "Requesting..." : "Request backfill"}
+                    {isBackfillRunning ? "Requesting..." : "Request bounded backfill"}
                   </Button>
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                The backend needs a stored anchor for this chat JID and a live bridge session. If the bridge is offline or no anchor exists, the request will fail honestly.
+                The backend needs a stored anchor for this chat JID and a live bridge session. If this instance is not open, the request stays disabled; if the bridge cannot return data, the backend will fail the request honestly.
               </p>
             </div>
             {backfillFeedback && backfillFeedback.status !== "idle" && (
@@ -1055,7 +1056,7 @@ function DashboardInstance() {
               </div>
             ) : runtimeHistory && runtimeHistory.length > 0 ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                   <span>Showing the 10 most recent lifecycle events.</span>
                   <span>Newest event: {formatCompactTimestamp(runtimeHistory[0]?.timestamp, "Not observed yet")}</span>
                 </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, CheckCheck, ChevronDown, Clock3, FileText, ImageIcon, Mic, Play, Video } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, ChevronDown, Clock3, FileText, ImageIcon, Mic, Play, Video } from "lucide-react";
 
 import { ChatHistoryMessage } from "@/lib/queries/chat/types";
 
@@ -63,6 +63,8 @@ const statusLabel = (status?: string): string | null => {
     case "queued":
     case "running":
       return "Sending";
+    case "failed":
+      return "Failed";
     default:
       return status ? status.replace(/_/g, " ") : null;
   }
@@ -105,6 +107,15 @@ function StatusMeta({ status }: { status?: string }) {
     );
   }
 
+  if (status === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1 text-destructive">
+        <AlertCircle className="h-3 w-3" />
+        {label}
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex items-center gap-1">
       <Check className="h-3 w-3" />
@@ -122,12 +133,12 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <img src={message.mediaUrl} alt={message.caption || message.fileName || "Image message"} className="max-h-72 w-full object-cover" loading="lazy" />
           </a>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs opacity-80">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <ImageIcon className="h-4 w-4" />
             Image metadata is partial and no preview URL was provided.
           </div>
         )}
-        {(message.caption || message.text) && <div>{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -138,12 +149,12 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         {message.mediaUrl ? (
           <video src={message.mediaUrl} controls className="max-h-72 w-full rounded-xl border bg-black/80" />
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs opacity-80">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <Video className="h-4 w-4" />
             Video metadata is partial and no playable URL was provided.
           </div>
         )}
-        {(message.caption || message.text) && <div>{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -156,12 +167,12 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <source src={message.mediaUrl} type={message.mimeType || "audio/mpeg"} />
           </audio>
         ) : (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs opacity-80">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <Mic className="h-4 w-4" />
             Audio metadata is partial and no playable URL was provided.
           </div>
         )}
-        {(message.caption || message.text) && <div>{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -182,12 +193,12 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             </a>
           )}
         </div>
-        {(message.caption || message.text) && <div>{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
       </div>
     );
   }
 
-  return <div>{message.text || `[${message.messageType}]`}</div>;
+  return <div className="whitespace-pre-wrap break-words">{message.text || `Stored ${message.messageType || "unknown"} message has no previewable text.`}</div>;
 }
 
 type MessageGroup = {
@@ -269,7 +280,7 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
           return (
             <div
               key={entry.key}
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+              className={`max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm shadow-sm sm:max-w-[85%] ${
                 message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background"
               } ${entry.groupedWithPrevious ? "mt-1" : "mt-3"}`}>
               {!entry.groupedWithPrevious && (

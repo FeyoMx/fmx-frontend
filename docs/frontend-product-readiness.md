@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-19.
+Updated on 2026-04-30.
 
 ## Summary
 
@@ -37,7 +37,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - aggregate counters remain explicitly labeled as backend-limited or snapshot-only
   - clearer operator messaging about what is trustworthy now versus still sparse
 - `/manager/contacts`
-  - consistent header, support caveat, and cleaner empty/filter states
+  - consistent header, support caveat, loading/refresh button states, and cleaner empty/filter states
 - `/manager/broadcast`
   - queue summary cards for queued, processing, completed, and failed jobs
   - clearer status badges, schedule copy, retry visibility, and queue-history readability
@@ -47,8 +47,10 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - campaign detail now uses the real backend broadcast detail endpoint
   - recipient inspection now uses the real paginated recipient endpoint with status/query filters
   - recipient rows now surface attempt count, last error, and attempt/result timestamps when returned
+  - recipient detail now separates queue/send outcomes from partial summary caveats more visibly
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
+  - safer disabled/loading states while tenant and per-instance settings are refreshing or saving
   - now safe to lazy-load without changing route behavior or auth handling
 - `/manager/api-keys`
   - informational by design
@@ -63,9 +65,11 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - pairing code flow
   - refresh / reconnect / logout controls aligned to the tenant-safe backend contract
   - runtime observability panel with current runtime state, last observed status, and recent lifecycle history
+  - runtime history cards now wrap long event details and use clearer observed timestamp copy
   - graceful operator warnings when the live runtime bridge is unavailable, without redirecting to login or framing the issue as auth/session loss
   - guarded history backfill recovery action for chat JIDs with stored anchors
   - clear accepted-versus-failed backfill feedback that treats requested count as request scope only
+  - bounded backfill form now uses clearer disabled-state copy when the instance is not open
   - text-only outbound send flow
   - async status polling against `status_endpoint`
 - `/manager/instance/:instanceId/settings`
@@ -81,6 +85,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - faster-feeling thread filtering via deferred search updates
   - stronger unread/preview emphasis when the backend exposes them
   - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
+  - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
   - incremental thread rendering keeps larger chat lists responsive without pretending full virtualization is necessary yet
 
@@ -141,6 +146,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 ### MVP polish pass
 
 - supported operator pages now use more consistent labels, spacing, empty-state language, and status framing
+- follow-up polish tightened loading/disabled button states, responsive wrapping, broadcast recipient inspection copy, chat composer feedback, and runtime/backfill wording without expanding MVP scope
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation

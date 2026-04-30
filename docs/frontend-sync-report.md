@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-19.
+Updated on 2026-04-30.
 
 ## Scope
 
@@ -108,8 +108,12 @@ Frontend handling after this sync:
 - Broadcast adapters and UI now normalize optional recipient analytics fields so totals, sent, failed, pending, and progress can surface without another page rewrite once the backend returns them.
 - Broadcast now uses the real backend detail flow on `GET /broadcast/:id` plus paginated recipient inspection on `GET /broadcast/:id/recipients`.
 - Broadcast campaign inspection now exposes recipient totals, attempted, sent, failed, pending, and partial status when the backend returns them, along with filtered recipient rows, last error, attempt count, and attempt/result timestamps.
+- Broadcast recipient inspection now uses clearer summary labels, partial-summary warning copy, row alignment, and pagination/filter context while still avoiding unsupported delivery/read states.
 - Contacts, chat, and broadcast now use incremental list rendering for larger datasets instead of eagerly painting every row/card at once.
+- Contacts and AI settings now expose clearer refresh/loading/disabled states for the backend-supported actions.
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
+- Instance dashboard runtime history and bounded history recovery copy now wrap long backend details and explain disabled recovery states more plainly.
+- Chat list/detail/composer polish tightened responsive sizing, failed-send status rendering, media/audio attachment chips, and send-in-progress feedback.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
