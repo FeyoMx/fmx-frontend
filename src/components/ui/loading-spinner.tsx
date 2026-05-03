@@ -5,17 +5,18 @@ import { cn } from "@/lib/utils";
 export interface ISVGProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
   className?: string;
+  containerClassName?: string;
+  fullPage?: boolean;
 }
 
-export const LoadingSpinner = ({ size = 45, className, ...props }: ISVGProps) => {
+export const LoadingSpinner = ({ size = 45, className, containerClassName, fullPage = false, ...props }: ISVGProps) => {
   return (
     <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}>
+      className={cn(
+        "flex items-center justify-center",
+        fullPage ? "min-h-screen" : "min-h-32",
+        containerClassName,
+      )}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={size}

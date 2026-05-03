@@ -2,11 +2,11 @@ import { apiGlobal } from "../api";
 import { ContactResponse, ContactView, CreateContactInput } from "./types";
 
 const normalizeContact = (contact: ContactResponse): ContactView => ({
-  id: contact.id,
-  name: contact.name,
+  id: contact.id || contact.phone || "contact-unavailable",
+  name: contact.name || contact.phone || "Unnamed contact",
   email: contact.email ?? "",
   phone: contact.phone ?? "",
-  tags: (contact.tags ?? []).map((tag) => tag.name),
+  tags: (contact.tags ?? []).map((tag) => tag.name).filter(Boolean),
   pipelineStage: "",
   createdAt: contact.createdAt ?? "",
   updatedAt: contact.updatedAt ?? "",

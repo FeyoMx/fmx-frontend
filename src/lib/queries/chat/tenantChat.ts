@@ -170,6 +170,7 @@ export const useChatThreads = (props: UseQueryParams<ChatThreadsView> & Partial<
     queryKey: chatThreadsKey(instanceId, search),
     queryFn: () => fetchChatThreads({ instanceId: instanceId!, search }),
     enabled: !!instanceId,
+    placeholderData: (previous) => previous,
   });
 };
 
@@ -181,6 +182,7 @@ export const useChatHistory = (props: UseQueryParams<ChatHistoryResponse> & Part
     queryKey: chatHistoryKey(instanceId, remoteJid, { limit, cursor, query, messageId }),
     queryFn: () => fetchChatHistory({ instanceId: instanceId!, remoteJid: remoteJid!, limit, cursor, query, messageId }),
     enabled: !!instanceId && !!remoteJid,
+    placeholderData: (previous) => previous,
     retry: false,
   });
 };

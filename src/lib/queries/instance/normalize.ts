@@ -10,8 +10,8 @@ export const normalizeInstance = (raw: BackendInstanceResponse | null | undefine
   const rawCounts = raw?._count;
 
   return {
-    id: raw?.id ?? raw?.instance_id ?? "",
-    name: raw?.name ?? raw?.instanceName ?? "",
+    id: raw?.id ?? raw?.instance_id ?? raw?.name ?? raw?.instanceName ?? "instance-unavailable",
+    name: raw?.name ?? raw?.instanceName ?? raw?.id ?? "Unnamed instance",
     connectionStatus: raw?.connectionStatus ?? raw?.status ?? "close",
     ownerJid,
     profileName: raw?.profileName ?? "",

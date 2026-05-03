@@ -11,7 +11,7 @@ import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -267,6 +267,8 @@ function DashboardInstance() {
   const [textMessagingUnsupported, setTextMessagingUnsupported] = useState(false);
   const [lifecycleFeedback, setLifecycleFeedback] = useState<LifecycleFeedback | null>(null);
   const [activeLifecycleAction, setActiveLifecycleAction] = useState<LifecycleFeedback["action"] | null>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [isRefreshingLifecycle, setIsRefreshingLifecycle] = useState(false);
   const [reconnectDialogOpen, setReconnectDialogOpen] = useState(false);
   const [pairDialogOpen, setPairDialogOpen] = useState(false);
   const [backfillChatJid, setBackfillChatJid] = useState("");
@@ -322,7 +324,19 @@ function DashboardInstance() {
   };
 
   const handleReload = async () => {
-    await refreshInstanceLifecycleData();
+    if (isRefreshingLifecycle) {
+      return;
+    }
+
+    setIsRefreshingLifecycle(true);
+    try {
+      await refreshInstanceLifecycleData();
+      toast.success("Instance status refreshed.");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Unable to refresh instance status."));
+    } finally {
+      setIsRefreshingLifecycle(false);
+    }
   };
 
   const handleReconnect = async (instanceId: string) => {
@@ -340,6 +354,7 @@ function DashboardInstance() {
       setPairingCode("");
       await reconnect(instanceId);
       await refreshInstanceLifecycleData();
+      toast.success("Reconnect requested. Watch this page for QR and runtime updates.");
       setLifecycleFeedback({
         action: "reconnect",
         status: "success",
@@ -378,6 +393,8 @@ function DashboardInstance() {
       setPairingCode("");
       await logout(instanceId);
       await refreshInstanceLifecycleData();
+      setLogoutDialogOpen(false);
+      toast.success("Instance logout requested. Runtime status was refreshed.");
       setLifecycleFeedback({
         action: "logout",
         status: "success",
@@ -427,6 +444,7 @@ function DashboardInstance() {
 
       setPairingCode(data.pairingCode || data.code || "");
       await refreshInstanceLifecycleData();
+      toast.success("Pairing code requested. Use the code shown in the dialog if one is returned.");
       setLifecycleFeedback({
         action: "pair",
         status: "success",
@@ -773,7 +791,12 @@ function DashboardInstance() {
             )}
             {instance.connectionStatus !== "open" && (
               <Alert variant="warning" className="flex flex-wrap items-center justify-between gap-3">
-                <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
+                <div className="min-w-0 space-y-1">
+                  <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
+                  <AlertDescription>
+                    Start with QR reconnect. Pair with code is available when this instance has a phone number configured.
+                  </AlertDescription>
+                </div>
 
                 <Dialog open={reconnectDialogOpen} onOpenChange={(open) => void (open ? setReconnectDialogOpen(true) : closeQRCodePopup())}>
                   <Button variant="warning" disabled={isLifecycleRunning} onClick={() => void handleReconnect(instance.id)}>
@@ -855,17 +878,36 @@ function DashboardInstance() {
             <div className="text-xs text-muted-foreground">
               Created {formatOperatorTimestamp(instance.createdAt)}{instance.updatedAt ? ` · Updated ${formatOperatorTimestamp(instance.updatedAt)}` : ""}
             </div>
-            <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning}>
-              <RefreshCw size="20" />
+            <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning || isRefreshingLifecycle}>
+              <RefreshCw size="20" className={isRefreshingLifecycle ? "animate-spin" : undefined} />
             </Button>
             <Button className="action-button" variant="secondary" onClick={() => void handleReconnect(instance.id)} disabled={isLifecycleRunning}>
               {activeLifecycleAction === "reconnect" ? "Requesting..." : "Reconnect"}
             </Button>
-            <Button variant="destructive" onClick={() => void handleLogout(instance.id)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
-              {activeLifecycleAction === "logout" ? "Logging out..." : "Log out"}
+            <Button variant="destructive" onClick={() => setLogoutDialogOpen(true)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
+              Log out instance
             </Button>
           </CardFooter>
         </Card>
+
+        <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Log out this instance?</DialogTitle>
+              <DialogDescription>
+                This asks the backend to end the WhatsApp session for {instance.name}. Queue-backed sends and chats may stop until the instance is paired or reconnected again.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setLogoutDialogOpen(false)} disabled={activeLifecycleAction === "logout"}>
+                Keep connected
+              </Button>
+              <Button type="button" variant="destructive" onClick={() => void handleLogout(instance.id)} disabled={activeLifecycleAction === "logout"}>
+                {activeLifecycleAction === "logout" ? "Logging out..." : "Confirm logout"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Card>
           <CardHeader>

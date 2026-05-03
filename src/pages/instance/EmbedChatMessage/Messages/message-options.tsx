@@ -24,7 +24,6 @@ const MessageOptions = ({ message, fromMe }: { message: Message; fromMe: boolean
     if (!instance) return;
 
     // TODO: Implement delete functionality
-    console.log("Delete message not implemented yet");
   };
 
   return (

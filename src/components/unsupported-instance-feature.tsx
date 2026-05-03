@@ -27,6 +27,7 @@ function UnsupportedInstanceFeature({
   const location = useLocation();
   const featureName = formatFeatureName(location.pathname);
   const safePath = instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager";
+  const primaryCta = instanceId ? "Go to instance dashboard" : "Go to manager home";
   const resolvedDescription =
     description ?? `${featureName} still depends on backend support that is not available in the current API yet.`;
 
@@ -45,11 +46,13 @@ function UnsupportedInstanceFeature({
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
-              <Link to={safePath}>Go to instance dashboard</Link>
+              <Link to={safePath}>{primaryCta}</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link to="/manager">Go to manager home</Link>
-            </Button>
+            {instanceId ? (
+              <Button asChild variant="outline">
+                <Link to="/manager">Go to manager home</Link>
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>

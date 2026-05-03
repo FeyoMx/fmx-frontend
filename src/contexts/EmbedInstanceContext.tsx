@@ -51,8 +51,6 @@ export function EmbedInstanceProvider({ children }: { children: React.ReactNode 
           },
         });
 
-        console.log("API Response:", data);
-
         // API returns an array with the instance object
         if (data && Array.isArray(data) && data.length > 0) {
           setInstance(data[0]); // Get the first (and only) instance

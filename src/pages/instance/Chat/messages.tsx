@@ -468,13 +468,10 @@ function Messages({ textareaRef, handleTextareaChange, textareaHeight, lastMessa
       });
     };
 
-    // Function to update message status (simplified - just log for now)
+    // Function reserved for future message status support.
     const updateMessageStatus = (data: any) => {
       if (!instance) return;
       if (data.instance !== instance.name) return;
-
-      console.log("Received message status update:", data);
-      // TODO: Implement proper message status updates when Message type supports it
     };
 
     // Set up event listeners

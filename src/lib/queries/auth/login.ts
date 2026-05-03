@@ -1,7 +1,6 @@
 import axios from "axios";
 import { LoginRequest, LoginResponse, AuthMeResponse } from "@/types/auth.types";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import { API_BASE_URL } from "@/lib/config";
 
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials, {

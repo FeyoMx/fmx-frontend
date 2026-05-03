@@ -7,6 +7,7 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "rec
 
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
+import { OperatorErrorState, SkeletonCard } from "@/components/operator-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -137,26 +138,50 @@ function Dashboard() {
   const [deleting, setDeleting] = useState<string[]>([]);
   const [searchStatus, setSearchStatus] = useState("all");
   const [nameSearch, setNameSearch] = useState("");
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [metricsError, setMetricsError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { deleteInstance, logout } = useManageInstance();
-  const { data: instances, refetch } = useFetchInstances();
+  const {
+    data: instances,
+    error: instancesError,
+    isLoading: instancesLoading,
+    isFetching: instancesFetching,
+    refetch,
+  } = useFetchInstances();
 
   useEffect(() => {
     void fetchMetrics();
   }, []);
 
   const fetchMetrics = async () => {
+    setMetricsLoading(true);
+    setMetricsError(null);
     try {
       setMetrics(await getDashboardMetrics());
     } catch (error) {
       console.error("Error fetching metrics:", error);
-      toast.error(getApiErrorMessage(error, "Failed to fetch dashboard metrics"));
+      const message = getApiErrorMessage(error, "Failed to fetch dashboard metrics");
+      setMetricsError(message);
+      toast.error(message);
+    } finally {
+      setMetricsLoading(false);
     }
   };
 
   const resetTable = async () => {
-    await refetch();
-    await fetchMetrics();
+    if (refreshing) {
+      return;
+    }
+
+    setRefreshing(true);
+    try {
+      await refetch();
+      await fetchMetrics();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleDelete = async (instance: { id: string; name: string }) => {
@@ -281,8 +306,8 @@ function Dashboard() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => void resetTable()}>
-                  <RefreshCw size={18} />
+                <Button variant="outline" size="icon" onClick={() => void resetTable()} disabled={refreshing || instancesFetching}>
+                  <RefreshCw size={18} className={refreshing || instancesFetching ? "animate-spin" : undefined} />
                 </Button>
                 <NewInstance resetTable={resetTable} />
               </div>
@@ -349,6 +374,20 @@ function Dashboard() {
                 Instance health and status distribution are the trustworthy operator signals today. Message, contact, and broadcast totals can stay sparse until backend aggregation grows beyond the current snapshot routes.
               </AlertDescription>
             </Alert>
+            {instancesError ? (
+              <OperatorErrorState
+                title="Instance list unavailable"
+                description={getApiErrorMessage(instancesError, "Unable to load tenant instances right now. Last-known dashboard metrics remain visible when available.")}
+                onRetry={() => void resetTable()}
+              />
+            ) : null}
+            {metricsError ? (
+              <OperatorErrorState
+                title="Dashboard metrics unavailable"
+                description={metricsError}
+                onRetry={() => void fetchMetrics()}
+              />
+            ) : null}
           </CardContent>
         </Card>
       </section>
@@ -392,7 +431,7 @@ function Dashboard() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="text-sm font-medium">{metric.label}</div>
-                      <div className="text-2xl font-semibold">{(value ?? 0).toLocaleString()}</div>
+                      <div className="text-2xl font-semibold">{metricsLoading ? "..." : (value ?? 0).toLocaleString()}</div>
                     </div>
                     <Icon className="mt-1 h-4 w-4 text-muted-foreground" />
                   </div>
@@ -442,7 +481,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {filteredInstances.length === 0 ? (
+        {instancesLoading && !instances ? (
+          <main className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonCard key={index} />
+            ))}
+          </main>
+        ) : filteredInstances.length === 0 ? (
           <Card>
             <CardContent className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
               <CircleUser className="h-10 w-10 text-muted-foreground" />

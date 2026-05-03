@@ -139,8 +139,12 @@ function ChatComposer({
   });
 
   const handleTextSend = async () => {
+    if (isSending) {
+      return;
+    }
+
     const trimmedText = text.trim();
-    if (!trimmedText || isSending) {
+    if (!trimmedText) {
       toast.error("Write a message before sending.");
       return;
     }
@@ -181,7 +185,7 @@ function ChatComposer({
           if (status.status === "failed") {
             appendMessage(
               createLocalMessage({
-                id: status.message_id || localMessageId,
+                id: localMessageId,
                 text: trimmedText,
                 status: "failed",
               }),
@@ -197,7 +201,7 @@ function ChatComposer({
           if (status.delivery_status === "read") {
             appendMessage(
               createLocalMessage({
-                id: status.message_id || localMessageId,
+                id: localMessageId,
                 text: trimmedText,
                 status: "read",
                 timestamp: status.read_at || new Date().toISOString(),
@@ -215,7 +219,7 @@ function ChatComposer({
           if (status.delivery_status === "delivered" || status.delivery_confirmed) {
             appendMessage(
               createLocalMessage({
-                id: status.message_id || localMessageId,
+                id: localMessageId,
                 text: trimmedText,
                 status: "delivered",
                 timestamp: status.delivered_at || new Date().toISOString(),
@@ -233,7 +237,7 @@ function ChatComposer({
           if (status.delivery_status === "sent") {
             appendMessage(
               createLocalMessage({
-                id: status.message_id || localMessageId,
+                id: localMessageId,
                 text: trimmedText,
                 status: "sent",
               }),
@@ -249,7 +253,7 @@ function ChatComposer({
           if (status.status === "running") {
             appendMessage(
               createLocalMessage({
-                id: status.message_id || localMessageId,
+                id: localMessageId,
                 text: trimmedText,
                 status: "running",
               }),
@@ -288,6 +292,13 @@ function ChatComposer({
       setText("");
       void invalidateHistory();
     } catch (error) {
+      appendMessage(
+        createLocalMessage({
+          id: localMessageId,
+          text: trimmedText,
+          status: "failed",
+        }),
+      );
       setFeedback({
         status: "error",
         title: "Send failed",
@@ -300,7 +311,11 @@ function ChatComposer({
   };
 
   const handleMediaSend = async () => {
-    if (!mediaFile || isSending) {
+    if (isSending) {
+      return;
+    }
+
+    if (!mediaFile) {
       toast.error("Choose a file before sending media.");
       return;
     }
@@ -353,7 +368,11 @@ function ChatComposer({
   };
 
   const handleAudioSend = async () => {
-    if (!audioFile || isSending) {
+    if (isSending) {
+      return;
+    }
+
+    if (!audioFile) {
       toast.error("Choose an audio file before sending.");
       return;
     }
@@ -412,7 +431,7 @@ function ChatComposer({
           <Label htmlFor="chat-send-delay" className="text-xs">
             Send delay (ms)
           </Label>
-          <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" />
+          <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" disabled={isSending} />
           <p className="text-[11px] text-muted-foreground">0 sends immediately.</p>
         </div>
       </div>

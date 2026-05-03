@@ -64,11 +64,11 @@ function normalizeRecipientAnalyticsFromJob(job: BroadcastJobResponse): Broadcas
 
 function normalizeRecipientProgress(item: BroadcastRecipientProgressResponse): BroadcastRecipientProgressView {
   return {
-    id: item.id,
-    broadcastId: item.broadcast_id,
+    id: item.id || item.phone || "recipient-unavailable",
+    broadcastId: item.broadcast_id || "",
     contactId: item.contact_id ?? null,
-    phone: item.phone,
-    status: item.delivery_status,
+    phone: item.phone || "Phone not reported",
+    status: item.delivery_status || "pending",
     attemptCount: normalizeCount(item.attempt_count) ?? 0,
     lastError: item.last_error ?? null,
     lastAttemptAt: item.last_attempt_at ?? null,
@@ -83,10 +83,10 @@ function normalizeRecipientProgress(item: BroadcastRecipientProgressResponse): B
 }
 
 const normalizeJob = (job: BroadcastJobResponse): BroadcastView => ({
-  id: job.id,
-  instanceId: job.instance_id,
-  message: job.message,
-  status: job.status,
+  id: job.id || "broadcast-unavailable",
+  instanceId: job.instance_id || "",
+  message: job.message || "Message body not reported",
+  status: job.status || "queued",
   ratePerHour: job.rate_per_hour ?? 0,
   delaySec: job.delay_sec ?? 0,
   attempts: job.attempts ?? 0,
@@ -136,11 +136,11 @@ export const getBroadcastRecipients = async ({
 
   const payload = response.data;
   return {
-    broadcastId: payload.broadcast_id,
-    page: payload.page,
-    limit: payload.limit,
-    total: payload.total,
-    totalPages: payload.total_pages,
+    broadcastId: payload.broadcast_id || broadcastId,
+    page: normalizeCount(payload.page) ?? page,
+    limit: normalizeCount(payload.limit) ?? limit,
+    total: normalizeCount(payload.total) ?? 0,
+    totalPages: normalizeCount(payload.total_pages) ?? 1,
     filters: {
       status: payload.filters?.status ?? "",
       query: payload.filters?.query ?? "",

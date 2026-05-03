@@ -25,7 +25,7 @@ export function InteractiveButton({ button, buttonParams }: InteractiveButtonPro
   const handleClick = () => {
     switch (button.name) {
       case "quick_reply":
-        console.log("Reply ID:", id);
+        toast.info(id ? `Reply selected: ${id}` : "Reply selected");
         break;
       case "cta_copy":
         navigator.clipboard.writeText(copyCode!);
@@ -38,7 +38,7 @@ export function InteractiveButton({ button, buttonParams }: InteractiveButtonPro
         window.location.href = `tel:${number}`;
         break;
       default:
-        console.log("Tipo de botão desconhecido");
+        toast.info("Tipo de botão desconhecido");
     }
   };
 

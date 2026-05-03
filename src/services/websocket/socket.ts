@@ -2,6 +2,7 @@ import { io, Socket } from "socket.io-client";
 
 // Store active sockets
 const activeSockets = new Map<string, Socket>();
+const isDev = import.meta.env.DEV;
 
 export interface WebSocketConnection {
   on: (event: string, callback: (data: any) => void) => void;
@@ -32,11 +33,15 @@ export const connectSocket = (serverUrl: string): WebSocketConnection => {
 
   // Set up connection event handlers
   socket.on("connect", () => {
-    console.log(`✅ WebSocket connected to ${serverUrl}`);
+    if (isDev) {
+      console.info(`WebSocket connected to ${serverUrl}`);
+    }
   });
 
   socket.on("disconnect", (reason) => {
-    console.log(`❌ WebSocket disconnected from ${serverUrl}:`, reason);
+    if (isDev) {
+      console.info(`WebSocket disconnected from ${serverUrl}:`, reason);
+    }
   });
 
   socket.on("connect_error", (error) => {
@@ -44,7 +49,9 @@ export const connectSocket = (serverUrl: string): WebSocketConnection => {
   });
 
   socket.on("reconnect", (attemptNumber) => {
-    console.log(`🔄 WebSocket reconnected to ${serverUrl} after ${attemptNumber} attempts`);
+    if (isDev) {
+      console.info(`WebSocket reconnected to ${serverUrl} after ${attemptNumber} attempts`);
+    }
   });
 
   socket.on("reconnect_error", (error) => {
@@ -58,7 +65,9 @@ export const disconnectSocket = (connection: WebSocketConnection | Socket): void
   // Find and remove from active sockets
   for (const [url, socket] of activeSockets.entries()) {
     if (socket === connection || (connection as any)._socket === socket) {
-      console.log(`🔌 Disconnecting socket for ${url}`);
+      if (isDev) {
+        console.info(`Disconnecting socket for ${url}`);
+      }
       socket.disconnect();
       activeSockets.delete(url);
       break;
@@ -88,9 +97,10 @@ const createSocketWrapper = (socket: Socket): WebSocketConnection => {
 
 // Cleanup function to disconnect all sockets
 export const disconnectAllSockets = (): void => {
-  console.log("🧹 Disconnecting all websockets...");
   for (const [url, socket] of activeSockets.entries()) {
-    console.log(`🔌 Disconnecting socket for ${url}`);
+    if (isDev) {
+      console.info(`Disconnecting socket for ${url}`);
+    }
     socket.disconnect();
   }
   activeSockets.clear();

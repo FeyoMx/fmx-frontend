@@ -4,10 +4,12 @@ import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock3, PauseCi
 import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
+import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -131,6 +133,12 @@ function BroadcastRecipientDetailPanel({
   }, [statusFilter, deferredRecipientQuery, broadcast.id]);
 
   useEffect(() => {
+    if (recipientData?.totalPages && page > recipientData.totalPages) {
+      setPage(Math.max(1, recipientData.totalPages));
+    }
+  }, [page, recipientData?.totalPages]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadRecipients = async () => {
@@ -237,7 +245,8 @@ function BroadcastRecipientDetailPanel({
               id="broadcast-recipient-status"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              disabled={isLoading && !recipientData}>
               {recipientStatusFilters.map((option) => (
                 <option key={option.value || "all"} value={option.value}>
                   {option.label}
@@ -255,6 +264,7 @@ function BroadcastRecipientDetailPanel({
                 onChange={(event) => setRecipientQuery(event.target.value)}
                 placeholder="Search by phone or contact ID"
                 className="pl-9"
+                disabled={isLoading && !recipientData}
               />
             </div>
           </div>
@@ -279,12 +289,8 @@ function BroadcastRecipientDetailPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Loading recipient rows and queue outcomes...
-                  </TableCell>
-                </TableRow>
+              {isLoading && !recipientData ? (
+                <SkeletonTableRows rows={5} columns={5} />
               ) : recipientData && recipientData.items.length > 0 ? (
                 recipientData.items.map((recipient) => (
                   <TableRow key={recipient.id} className="align-top">
@@ -362,11 +368,13 @@ function Broadcast() {
   const [selectedBroadcastLoading, setSelectedBroadcastLoading] = useState(false);
   const [selectedBroadcastError, setSelectedBroadcastError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [broadcastsError, setBroadcastsError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
   const [formData, setFormData] = useState<FormState>(initialFormState);
   const [validationState, setValidationState] = useState<ValidationState>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmBroadcastOpen, setConfirmBroadcastOpen] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const deferredHistorySearch = useDeferredValue(historySearch);
 
@@ -416,11 +424,18 @@ function Broadcast() {
   }, [selectedBroadcastId]);
 
   const fetchBroadcasts = async () => {
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
+    setBroadcastsError(null);
     try {
       setBroadcasts(await getBroadcastJobs());
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("broadcast.error.fetch") || "Failed to fetch broadcasts"));
+      const message = getApiErrorMessage(error, t("broadcast.error.fetch") || "Failed to fetch broadcasts");
+      setBroadcastsError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -548,11 +563,23 @@ function Broadcast() {
     setValidationState(null);
   };
 
-  const handleSendBroadcast = async () => {
+  const requestBroadcastConfirmation = () => {
+    if (submitting) {
+      return;
+    }
+
     const nextValidation = validateForm();
     setValidationState(nextValidation);
     if (nextValidation) {
       toast.error(nextValidation.title);
+      return;
+    }
+
+    setConfirmBroadcastOpen(true);
+  };
+
+  const handleSendBroadcast = async () => {
+    if (submitting) {
       return;
     }
 
@@ -566,13 +593,14 @@ function Broadcast() {
         max_attempts: formData.maxAttempts,
         scheduled_at: scheduleMode === "later" ? formData.scheduledTime : null,
       });
-      toast.success(t("broadcast.message.sent") || "Broadcast queued successfully");
+      toast.success("Broadcast job created. Inspect recipients to track queue outcomes.");
+      setConfirmBroadcastOpen(false);
       setShowForm(false);
       resetComposer();
       await fetchBroadcasts();
       setSelectedBroadcastId(created.id);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("broadcast.error.send") || "Failed to send broadcast"));
+      toast.error(getApiErrorMessage(error, "Failed to create broadcast queue job."));
     } finally {
       setSubmitting(false);
     }
@@ -587,12 +615,12 @@ function Broadcast() {
         description={tenant?.name}
         actions={
           <>
-            <Button onClick={() => void fetchBroadcasts()} variant="outline" size="icon">
-              <RefreshCw size={18} />
+            <Button onClick={() => void fetchBroadcasts()} variant="outline" size="icon" disabled={isLoading || submitting}>
+              <RefreshCw size={18} className={isLoading ? "animate-spin" : undefined} />
             </Button>
-            <Button onClick={() => setShowForm((current) => !current)}>
+            <Button onClick={() => setShowForm((current) => !current)} disabled={submitting}>
               <Send size={18} className="mr-2" />
-              {showForm ? "Hide composer" : t("broadcast.button.new") || "New Broadcast"}
+              {showForm ? "Hide job form" : "New broadcast job"}
             </Button>
           </>
         }
@@ -630,8 +658,8 @@ function Broadcast() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("broadcast.form.title") || "Create Broadcast"}</CardTitle>
-            <CardDescription>Queue a tenant-safe outbound job and keep the operator caveats explicit.</CardDescription>
+            <CardTitle>Create broadcast job</CardTitle>
+            <CardDescription>Create one queue-backed outbound job. Delivery still depends on instance runtime health.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {validationState ? (
@@ -650,7 +678,8 @@ function Broadcast() {
                     id="broadcast-instance"
                     value={formData.instanceId}
                     onChange={(event) => setFormData({ ...formData, instanceId: event.target.value })}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    disabled={submitting}>
                     <option value="">Select an instance</option>
                     {(instances ?? []).map((instance) => (
                       <option key={instance.id} value={instance.id}>
@@ -668,6 +697,7 @@ function Broadcast() {
                     onChange={(event) => setFormData({ ...formData, message: event.target.value })}
                     placeholder={t("broadcast.form.messagePlaceholder") || "Your message here..."}
                     rows={6}
+                    disabled={submitting}
                   />
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Queue history uses this content as the primary preview.</span>
@@ -683,7 +713,8 @@ function Broadcast() {
                     id="broadcast-schedule-mode"
                     value={scheduleMode}
                     onChange={(event) => setScheduleMode(event.target.value as "now" | "later")}
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm">
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    disabled={submitting}>
                     <option value="now">{t("broadcast.schedule.now") || "Now"}</option>
                     <option value="later">{t("broadcast.schedule.later") || "Later"}</option>
                   </select>
@@ -692,23 +723,23 @@ function Broadcast() {
                 {scheduleMode === "later" ? (
                   <div className="grid gap-2">
                     <Label htmlFor="broadcast-scheduled-time">{t("broadcast.form.scheduledTime") || "Scheduled Time"}</Label>
-                    <Input id="broadcast-scheduled-time" type="datetime-local" value={formData.scheduledTime} onChange={(event) => setFormData({ ...formData, scheduledTime: event.target.value })} />
+                    <Input id="broadcast-scheduled-time" type="datetime-local" value={formData.scheduledTime} onChange={(event) => setFormData({ ...formData, scheduledTime: event.target.value })} disabled={submitting} />
                   </div>
                 ) : (
                   <div className="grid gap-2">
                     <Label htmlFor="broadcast-delay">{t("broadcast.form.delay") || "Delay (seconds)"}</Label>
-                    <Input id="broadcast-delay" type="number" value={formData.delaySec} onChange={(event) => setFormData({ ...formData, delaySec: Number.parseInt(event.target.value, 10) || 0 })} min={0} />
+                    <Input id="broadcast-delay" type="number" value={formData.delaySec} onChange={(event) => setFormData({ ...formData, delaySec: Number.parseInt(event.target.value, 10) || 0 })} min={0} disabled={submitting} />
                   </div>
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="broadcast-rate">Rate per hour</Label>
-                    <Input id="broadcast-rate" type="number" value={formData.ratePerHour} onChange={(event) => setFormData({ ...formData, ratePerHour: Number.parseInt(event.target.value, 10) || 0 })} min={1} />
+                    <Input id="broadcast-rate" type="number" value={formData.ratePerHour} onChange={(event) => setFormData({ ...formData, ratePerHour: Number.parseInt(event.target.value, 10) || 0 })} min={1} disabled={submitting} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="broadcast-attempts">Max attempts</Label>
-                    <Input id="broadcast-attempts" type="number" value={formData.maxAttempts} onChange={(event) => setFormData({ ...formData, maxAttempts: Number.parseInt(event.target.value, 10) || 0 })} min={1} />
+                    <Input id="broadcast-attempts" type="number" value={formData.maxAttempts} onChange={(event) => setFormData({ ...formData, maxAttempts: Number.parseInt(event.target.value, 10) || 0 })} min={1} disabled={submitting} />
                   </div>
                 </div>
 
@@ -724,17 +755,48 @@ function Broadcast() {
                   setShowForm(false);
                   resetComposer();
                 }}
-                variant="outline">
+                variant="outline"
+                disabled={submitting}>
                 {t("common.cancel") || "Cancel"}
               </Button>
-              <Button onClick={() => void handleSendBroadcast()} disabled={submitting}>
+              <Button onClick={requestBroadcastConfirmation} disabled={submitting}>
                 <Send size={18} className="mr-2" />
-                {submitting ? "Queueing..." : t("broadcast.button.send") || "Queue Broadcast"}
+                {submitting ? "Creating job..." : "Create queue job"}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={confirmBroadcastOpen} onOpenChange={setConfirmBroadcastOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create this broadcast queue job?</DialogTitle>
+            <DialogDescription>
+              This will create one backend queue job for {instanceNameById(formData.instanceId)}. It is not a delivery guarantee; runtime health, rate limits, retries, and backend queue state still determine final outcomes.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 rounded-xl border bg-muted/20 p-4 text-sm">
+            <div>
+              <span className="font-medium">Schedule:</span> {scheduleMode === "later" ? formatOperatorTimestamp(formData.scheduledTime, "Scheduled time missing") : `Immediate, delay ${formData.delaySec || 0}s`}
+            </div>
+            <div>
+              <span className="font-medium">Rate:</span> {formData.ratePerHour}/hour · <span className="font-medium">Max attempts:</span> {formData.maxAttempts}
+            </div>
+            <div className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words">
+              <span className="font-medium">Message:</span> {truncateOperatorText(formData.message.trim(), 280)}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmBroadcastOpen(false)} disabled={submitting}>
+              Review again
+            </Button>
+            <Button type="button" onClick={() => void handleSendBroadcast()} disabled={submitting}>
+              {submitting ? "Creating job..." : "Confirm queue job"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -747,8 +809,15 @@ function Broadcast() {
         <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="Search broadcast message, instance, or status" className="pl-9" />
+            <Input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="Search broadcast message, instance, or status" className="pl-9" disabled={isLoading && broadcasts.length === 0} />
           </div>
+          {broadcastsError ? (
+            <OperatorErrorState
+              title="Broadcast history unavailable"
+              description={broadcastsError}
+              onRetry={() => void fetchBroadcasts()}
+            />
+          ) : null}
 
           {filteredBroadcasts.length === 0 && !isLoading ? (
             <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed text-center">
@@ -778,12 +847,8 @@ function Broadcast() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center">
-                          {t("common.loading") || "Loading..."}
-                        </TableCell>
-                      </TableRow>
+                    {isLoading && broadcasts.length === 0 ? (
+                      <SkeletonTableRows rows={6} columns={7} />
                     ) : (
                       visibleBroadcasts.visibleItems.map((broadcast) => {
                         const StatusIcon = getStatusIcon(broadcast.status);
@@ -839,7 +904,7 @@ function Broadcast() {
                   <div className="min-w-0 text-sm text-muted-foreground">
                     Showing {visibleBroadcasts.visibleCount} of {visibleBroadcasts.totalCount} filtered jobs to keep queue history responsive on larger datasets.
                   </div>
-                  <Button variant="outline" onClick={visibleBroadcasts.showMore}>
+                  <Button variant="outline" onClick={visibleBroadcasts.showMore} disabled={isLoading}>
                     Show 50 more
                   </Button>
                 </div>

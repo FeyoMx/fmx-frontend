@@ -4,6 +4,7 @@ import { AlertCircle, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
+import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ export function CRM() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContact, setNewContact] = useState({ name: "", email: "", phone: "", tags: [] as string[] });
+  const [contactsError, setContactsError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     void fetchContacts();
@@ -62,23 +65,35 @@ export function CRM() {
   }, [contacts]);
 
   const fetchContacts = async () => {
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
+    setContactsError(null);
     try {
       setContacts(await getContacts());
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("crm.error.fetchContacts") || "Failed to fetch contacts"));
+      const message = getApiErrorMessage(error, t("crm.error.fetchContacts") || "Failed to fetch contacts");
+      setContactsError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleAddContact = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     if (!newContact.name || !newContact.phone) {
       toast.error(t("crm.validation.requiredFields") || "Name and phone are required");
       return;
     }
 
     try {
+      setIsSubmitting(true);
       await createContact({
         name: newContact.name,
         email: newContact.email || undefined,
@@ -91,6 +106,8 @@ export function CRM() {
       void fetchContacts();
     } catch (error) {
       toast.error(getApiErrorMessage(error, t("crm.error.addContact") || "Failed to add contact"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -128,6 +145,13 @@ export function CRM() {
               Contacts can be listed and created from this UI. Delete and pipeline-stage management are not exposed by the current backend contract.
             </AlertDescription>
           </Alert>
+          {contactsError ? (
+            <OperatorErrorState
+              title="Contacts unavailable"
+              description={contactsError}
+              onRetry={() => void fetchContacts()}
+            />
+          ) : null}
 
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -140,7 +164,7 @@ export function CRM() {
               />
             </div>
             {selectedTag && (
-              <Button onClick={() => setSelectedTag(null)} variant="outline">
+              <Button onClick={() => setSelectedTag(null)} variant="outline" disabled={isLoading}>
                 Clear: {selectedTag}
               </Button>
             )}
@@ -170,12 +194,8 @@ export function CRM() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center">
-                      Loading contacts...
-                    </TableCell>
-                  </TableRow>
+                {isLoading && contacts.length === 0 ? (
+                  <SkeletonTableRows rows={6} columns={7} />
                 ) : filteredContacts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
@@ -216,7 +236,7 @@ export function CRM() {
               <div className="text-sm text-muted-foreground">
                 Showing {visibleContacts.visibleCount} of {visibleContacts.totalCount} filtered contacts to keep large datasets responsive.
               </div>
-              <Button variant="outline" onClick={visibleContacts.showMore}>
+              <Button variant="outline" onClick={visibleContacts.showMore} disabled={isLoading}>
                 Show 100 more
               </Button>
             </div>
@@ -231,16 +251,16 @@ export function CRM() {
             <DialogDescription>{t("crm.dialog.addContactDescription") || "Create a contact with the backend-supported name and phone fields."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Input type="text" placeholder="Name*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} />
-            <Input type="email" placeholder="Email" value={newContact.email} onChange={(event) => setNewContact({ ...newContact, email: event.target.value })} />
-            <Input type="tel" placeholder="Phone*" value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: event.target.value })} />
+            <Input type="text" placeholder="Name*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} disabled={isSubmitting} />
+            <Input type="email" placeholder="Email" value={newContact.email} onChange={(event) => setNewContact({ ...newContact, email: event.target.value })} disabled={isSubmitting} />
+            <Input type="tel" placeholder="Phone*" value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: event.target.value })} disabled={isSubmitting} />
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowAddContact(false)} variant="outline">
+            <Button onClick={() => setShowAddContact(false)} variant="outline" disabled={isSubmitting}>
               {t("common.cancel") || "Cancel"}
             </Button>
-            <Button onClick={handleAddContact} disabled={!newContact.name.trim() || !newContact.phone.trim()}>
-              {t("common.add") || "Add"}
+            <Button onClick={handleAddContact} disabled={!newContact.name.trim() || !newContact.phone.trim() || isSubmitting}>
+              {isSubmitting ? "Adding..." : t("common.add") || "Add"}
             </Button>
           </DialogFooter>
         </DialogContent>

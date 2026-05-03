@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-04-30.
+Updated on 2026-05-02.
 
 ## Scope
 
@@ -93,6 +93,7 @@ Frontend handling after this sync:
 ### Product-visible
 
 - Dashboard now uses a stronger operator-health summary, instance prioritization, clearer sparse-data empty states, and more explicit confidence labels for backend-limited counters.
+- Dashboard now keeps the shell stable through empty, partial, metrics-only, and instance-list error states with skeleton cards, retryable warnings, disabled refresh while fetching, and last-known metric visibility.
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
@@ -109,12 +110,16 @@ Frontend handling after this sync:
 - Broadcast now uses the real backend detail flow on `GET /broadcast/:id` plus paginated recipient inspection on `GET /broadcast/:id/recipients`.
 - Broadcast campaign inspection now exposes recipient totals, attempted, sent, failed, pending, and partial status when the backend returns them, along with filtered recipient rows, last error, attempt count, and attempt/result timestamps.
 - Broadcast recipient inspection now uses clearer summary labels, partial-summary warning copy, row alignment, and pagination/filter context while still avoiding unsupported delivery/read states.
+- Broadcast now handles empty queues, large campaigns, partial analytics, recipient endpoint errors, and shrinking backend totals with skeleton table rows, retryable warnings, disabled duplicate actions, and pagination clamping.
 - Contacts, chat, and broadcast now use incremental list rendering for larger datasets instead of eagerly painting every row/card at once.
 - Contacts and AI settings now expose clearer refresh/loading/disabled states for the backend-supported actions.
+- Contacts now preserves a stable table layout on cold load, exposes retryable fetch failures, prevents duplicate creates, disables dialog controls while submitting, and tolerates missing contact names/tags/phones more gracefully.
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Instance dashboard runtime history and bounded history recovery copy now wrap long backend details and explain disabled recovery states more plainly.
 - Chat list/detail/composer polish tightened responsive sizing, failed-send status rendering, media/audio attachment chips, and send-in-progress feedback.
+- Chat queries now keep previous thread/history data visible during slow refetches, chat-list errors are retryable, cold chat loads use skeleton cards, and failed text sends update the optimistic row instead of leaving stale queued duplicates.
 - Dense-data hardening now protects supported MVP surfaces from narrow-width overflow caused by long contact fields, phone numbers, chat JIDs, broadcast errors, message IDs, media placeholders, pagination copy, and runtime/backfill detail strings.
+- Shared loading behavior now avoids full-viewport nested spinners, reducing flicker and layout jumps in cards, dialogs, chat panes, runtime panels, and data tables.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 
@@ -136,6 +141,7 @@ Frontend handling after this sync:
   - `recipient_partial`
   - `recipient_analytics`
   - paginated `recipients` detail payloads
+- Instance, contact, broadcast job, and broadcast recipient adapters now provide defensive fallbacks for sparse or partially missing backend fields.
 - Build output now uses focused manual vendor chunks so the largest production dependencies no longer collapse into one `~762 kB` shared JavaScript bundle
 
 ## Remaining Gaps
@@ -160,6 +166,7 @@ Remaining frontend-only work is mostly presentational:
 - more operational actions on dashboard cards
 - deeper manual QA across real tenant dense-data scenarios and long chat/broadcast/contact lists
 - wider manual QA coverage for degraded bridge timing, including delayed QR/code publication after a reconnect or pair request
+- possible future virtualization if tenants grow from hundreds to many thousands of contacts, chat threads, or broadcast recipient rows
 - deeper chart-specific optimization if `recharts` continues to dominate future builds
 - tighter auditing of the new `vendor-misc` chunk if more cross-route dependencies accumulate there
 

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { OperatorErrorState, SkeletonCard } from "@/components/operator-state";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 import { useInstance } from "@/contexts/InstanceContext";
@@ -64,7 +64,7 @@ function ChatShell() {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
 
-  const { data: threadData, isLoading: threadsLoading, error: threadsError } = useChatThreads({
+  const { data: threadData, isLoading: threadsLoading, isFetching: threadsFetching, error: threadsError, refetch: refetchThreads } = useChatThreads({
     instanceId: instance?.id,
     search: deferredSearch,
   });
@@ -195,18 +195,30 @@ function ChatShell() {
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search surfaced chats"
                   className="pl-9"
+                  disabled={threadsLoading && !threadData}
                 />
               </div>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-              {threadsLoading ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <LoadingSpinner />
+              {threadsLoading && !threadData ? (
+                <div className="grid animate-pulse gap-3">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <SkeletonCard key={index} />
+                  ))}
                 </div>
               ) : threadsError ? (
-                <ChatEmptyState title="Chat list unavailable" description={getApiErrorMessage(threadsError, "Unable to load tenant-safe chats for this instance.")} />
+                <OperatorErrorState
+                  title="Chat list unavailable"
+                  description={getApiErrorMessage(threadsError, "Unable to load tenant-safe chats for this instance.")}
+                  onRetry={() => void refetchThreads()}
+                />
               ) : threads.length > 0 ? (
                 <>
+                  {threadsFetching ? (
+                    <div role="status" className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                      Refreshing chat list without clearing the current results.
+                    </div>
+                  ) : null}
                   {visibleThreads.visibleItems.map((thread) => {
                     const isActive = thread.remoteJid === remoteJid;
                     const hasUnread = (thread.unreadCount ?? 0) > 0;

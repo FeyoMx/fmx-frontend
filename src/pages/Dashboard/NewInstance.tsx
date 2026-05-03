@@ -13,6 +13,7 @@ import { FormInput, FormSelect } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
+import { getApiErrorMessage } from "@/lib/queries/errors";
 
 import { NewInstance as NewInstanceType } from "@/types/evolution.types";
 
@@ -33,6 +34,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
   const { t } = useTranslation();
   const { createInstance } = useManageInstance();
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const options = [
     {
       value: "WHATSAPP-BAILEYS",
@@ -62,7 +64,12 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
   const integrationSelected = form.watch("integration");
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       const instanceData: NewInstanceType = {
         name: data.name,
         instanceName: data.name,
@@ -75,14 +82,14 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
 
       await createInstance(instanceData);
 
-      toast.success(t("toast.instance.created"));
+      toast.success("Instance created. Open it from the dashboard to pair or reconnect.");
       setOpen(false);
       onReset();
       resetTable();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.error("Error:", error);
-      toast.error(`Error : ${error?.response?.data?.response?.message}`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Unable to create instance."));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -100,7 +107,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default" size="sm">
-          {t("instance.button.create")} <PlusIcon size="18" />
+          Create instance <PlusIcon size="18" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px]" onCloseAutoFocus={onReset}>
@@ -110,22 +117,22 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <FormInput required name="name" label={t("instance.form.name")}>
-              <Input />
+              <Input disabled={isSubmitting} />
             </FormInput>
-            <FormSelect name="integration" label={t("instance.form.integration.label")} options={options} />
+            <FormSelect name="integration" label={t("instance.form.integration.label")} options={options} disabled={isSubmitting} />
             <FormInput required name="token" label={t("instance.form.token")}>
-              <Input />
+              <Input disabled={isSubmitting} />
             </FormInput>
             <FormInput name="number" label={t("instance.form.number")}>
-              <Input type="tel" />
+              <Input type="tel" disabled={isSubmitting} />
             </FormInput>
             {integrationSelected === "WHATSAPP-BUSINESS" && (
               <FormInput required name="businessId" label={t("instance.form.businessId")}>
-                <Input />
+                <Input disabled={isSubmitting} />
               </FormInput>
             )}
             <DialogFooter>
-              <Button type="submit">{t("instance.button.save")}</Button>
+              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating..." : "Create instance"}</Button>
             </DialogFooter>
           </form>
         </FormProvider>

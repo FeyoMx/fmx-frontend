@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-04-30.
+Updated on 2026-05-02.
 
 ## Summary
 
@@ -27,6 +27,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - tenant-aware routing and instance scoping
 - shared backend error parsing for `401`, `403`, `404`, `429`, `501`, and generic validation/server failures
 - centralized instance bridge-unavailable interpretation for reconnect, pair, logout, runtime state/history, and history backfill
+- shared operator loading/error primitives for stable skeletons, retry copy, and nested loading panels that do not jump to full viewport height
+- defensive normalization for sparse instance, contact, broadcast job, and broadcast recipient payloads
 
 ### Main product surfaces
 
@@ -36,8 +38,10 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - status overview chart stays tied to real instance statuses
   - aggregate counters remain explicitly labeled as backend-limited or snapshot-only
   - clearer operator messaging about what is trustworthy now versus still sparse
+  - first-load skeleton cards, retryable instance/metric errors, disabled refresh while a refresh is already in flight, and last-known values kept visible when partial backend failures occur
 - `/manager/contacts`
   - consistent header, support caveat, loading/refresh button states, and cleaner empty/filter states
+  - retryable error state, skeleton table rows for cold loads, duplicate create prevention, disabled dialog controls during create, and safer rendering for partial contact fields/tags
 - `/manager/broadcast`
   - queue summary cards for queued, processing, completed, and failed jobs
   - clearer status badges, schedule copy, retry visibility, and queue-history readability
@@ -48,6 +52,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - recipient inspection now uses the real paginated recipient endpoint with status/query filters
   - recipient rows now surface attempt count, last error, and attempt/result timestamps when returned
   - recipient detail now separates queue/send outcomes from partial summary caveats more visibly
+  - cold-load skeleton rows, retryable queue-history failures, disabled refresh/create controls during in-flight work, stable recipient pagination when backend totals shrink, and safer partial job/recipient normalization
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
   - safer disabled/loading states while tenant and per-instance settings are refreshing or saving
@@ -88,6 +93,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
   - incremental thread rendering keeps larger chat lists responsive without pretending full virtualization is necessary yet
+  - search/history queries now keep previous data visible during slow refetches, cold chat loads use skeleton cards, chat-list failures are retryable, and optimistic sends update the same local row on failure instead of leaving duplicate queued ghosts
 
 ## What Is Only Partial
 
@@ -156,6 +162,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - heavy operator routes now lazy-load safely under the existing auth guards and layouts
 - contact, chat, and broadcast list rendering now favors incremental display over full eager rendering for large tenant datasets
 - dense contact, broadcast, chat, dashboard, and runtime-history views now prefer horizontal table scrolling plus wrapped identifiers instead of allowing narrow-width overflow
+- error/loading robustness pass added consistent skeletons, retryable warnings, duplicate-click guards, stable previous-data rendering during slow refetches, and safer handling for empty/partial backend payloads across dashboard, instance dashboard, chat, broadcast, and contacts
 - broadcast campaign monitoring now supports a practical operator workflow for larger campaigns: searchable job history, explicit inspect action, paginated recipient detail, and status filtering
 - Vite now splits shared frontend dependencies into focused vendor chunks so the remaining build output stays below the old single-chunk 762 kB warning threshold without changing supported product behavior
 
@@ -194,6 +201,7 @@ This keeps old bookmarks and upstream page surface references from breaking whil
 ## Build And Performance Notes
 
 - route-level lazy loading remains active for dashboard, broadcast, AI settings, chat, and instance dashboard
+- shared nested loading now uses bounded minimum-height containers instead of full-screen spinners inside cards/tables, reducing layout jumps during slow backend responses
 - shared dependency code is now split into focused vendor chunks:
   - `vendor-charts` for `recharts` and chart helpers
   - `vendor-react` for `react`, `react-dom`, and router runtime

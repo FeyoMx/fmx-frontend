@@ -18,18 +18,28 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 function Header({ instanceId }: { instanceId?: string }) {
   const { t } = useTranslation();
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, setTenant, setUser, setToken } = useTenant();
 
   const handleClose = async () => {
-    setLogoutConfirmation(false);
-    setToken(null);
-    setUser(null);
-    setTenant(null);
-    queryClient.clear();
-    await performLogout();
-    navigate("/manager/login", { replace: true });
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+    try {
+      setToken(null);
+      setUser(null);
+      setTenant(null);
+      queryClient.clear();
+      await performLogout();
+      setLogoutConfirmation(false);
+      navigate("/manager/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const navigateToDashboard = () => {
@@ -76,11 +86,11 @@ function Header({ instanceId }: { instanceId?: string }) {
             </DialogHeader>
             <DialogFooter>
               <div className="flex items-center gap-4">
-                <Button onClick={() => setLogoutConfirmation(false)} size="sm" variant="outline">
+                <Button onClick={() => setLogoutConfirmation(false)} size="sm" variant="outline" disabled={isLoggingOut}>
                   {t("common.cancel") || "Cancel"}
                 </Button>
-                <Button onClick={handleClose} variant="destructive">
-                  {t("header.logout.button") || "Logout"}
+                <Button onClick={handleClose} variant="destructive" disabled={isLoggingOut}>
+                  {isLoggingOut ? "Signing out..." : t("header.logout.button") || "Logout"}
                 </Button>
               </div>
             </DialogFooter>

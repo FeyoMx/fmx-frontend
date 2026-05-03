@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broadcast recipient analytics adapter/view model that stays dormant until backend analytics fields are returned
 - Broadcast campaign detail workflow backed by real backend summary and paginated recipient endpoints
 - Focused Vite vendor chunk splitting for shared frontend dependency groups
+- Shared operator loading/error state primitives for stable skeletons, bounded nested loading, and retryable backend-failure copy
+- Deployment guide covering production build command, `VITE_API_URL` setup, Vercel/static hosting notes, and preview smoke testing
+- RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
 - Updated package.json with proper metadata and repository information
@@ -87,6 +90,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat list now surfaces backend cache/staleness metadata with subtle operator copy while keeping stale chat results searchable and navigable
 - MVP operator polish tightened chat responsive layout, composer send states, broadcast recipient inspection, contacts/AI settings loading states, and bounded recovery wording without adding unsupported backend surfaces
 - Dense-data operator UI hardening for long contact fields, broadcast errors and identifiers, chat JIDs, message/media placeholders, pagination footers, and runtime/backfill feedback
+- Dashboard, contacts, chat, and broadcast now keep last-known/previous data visible during slow or failed refetches where possible instead of clearing the surface to a flickery loading state
+- Contacts and broadcast creation flows now disable form controls while submitting to prevent duplicate operator actions
+- Broadcast recipient pagination now clamps when backend totals shrink and keeps filters/search controls stable during slow detail refreshes
+- Chat optimistic send updates now reuse the same local row for queued/running/failed states, reducing duplicate queued ghosts when sends fail or settle slowly
+- Production API configuration now prefers `VITE_API_URL`, keeps `VITE_API_BASE_URL` only as a compatibility fallback, and uses same-origin `/api` instead of a hardcoded local backend default
+- Docker builds now accept Vite API URL build arguments so generated static bundles can target the intended backend origin
+- Operator-facing labels now make logout, new instance creation, unsupported-route exits, and broadcast job creation clearer during real usage validation
 
 ### Fixed
 - FormInput component invalid onCheckedChange props
@@ -112,6 +122,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat history now uses the registered `POST /instance/:id/messages/search` route directly with only backend-supported filters instead of probing an unregistered ID-style route first
 - Chat failed-send statuses now render as failures instead of using a generic sent/check indicator
 - Narrow-width overflow risks in supported MVP tables, chat panels, dashboard cards, broadcast recipient detail, and runtime history cards
+- Full-viewport loading spinner behavior inside nested panels that caused chat, runtime, dialog, and table sections to jump during slow backend responses
+- Partial backend payload crashes/blank identifiers for sparse instance, contact, broadcast job, and recipient rows
+- Duplicate refresh/create/send clicks on supported dashboard, contacts, broadcast, and chat actions
+- Dev-only console log noise in WebSocket and legacy chat/embed paths
+- Blank protected-route screen during auth hydration by showing an explicit session-check fallback
+- Brittle new-instance error toast when the backend returns an unexpected error shape
 
 ### Removed
 - Unused legacy `apiLegacy` client

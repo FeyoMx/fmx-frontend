@@ -150,7 +150,7 @@ This document tracks all modifications made to the Evolution Manager v2 frontend
 - **Docker**: Containerization support
 
 ### Environment Configuration
-- **Variables**: `VITE_API_BASE_URL`, `VITE_DEBUG`
+- **Variables**: `VITE_API_URL`, `VITE_API_BASE_URL`
 - **JWT Storage**: LocalStorage with secure handling
 - **Tenant Context**: Global tenant state management
 
