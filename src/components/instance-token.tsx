@@ -10,8 +10,8 @@ import { Button } from "./ui/button";
 export function InstanceToken({ token, className }: { token?: string | null; className?: string }) {
   const [visible, setVisible] = useState(false);
   const hasToken = Boolean(token);
-  const hiddenValue = hasToken ? token?.replace(/\w/g, "*") : "Not available from current backend";
-  const visibleValue = hasToken ? token : "Not available from current backend";
+  const hiddenValue = hasToken ? token?.replace(/\w/g, "*") : "No disponible en esta versión";
+  const visibleValue = hasToken ? token : "No disponible en esta versión";
 
   return (
     <div className={cn("flex items-center gap-3 truncate rounded-sm bg-primary/20 px-2 py-1", className)}>

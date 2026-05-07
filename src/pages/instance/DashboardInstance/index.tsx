@@ -347,7 +347,7 @@ function DashboardInstance() {
         action: "reconnect",
         status: "running",
         title: "Requesting reconnect",
-        detail: "Waiting for the backend to reopen the session and refresh runtime state.",
+        detail: "Esperando reapertura de sesión y actualización de runtime.",
         tone: "info",
       });
       setQRCode(null);
@@ -432,7 +432,7 @@ function DashboardInstance() {
         action: "pair",
         status: "running",
         title: "Requesting pairing code",
-        detail: "Waiting for the backend to generate a code for this phone number.",
+        detail: "Esperando código para este número.",
         tone: "info",
       });
       setQRCode(null);
@@ -526,7 +526,7 @@ function DashboardInstance() {
       } else {
         const detail =
           result.operatorMessage ||
-          `The backend did not accept the recovery request for ${chatJid}. The requested count (${parsedCount}) was not applied.`;
+          `No se pudo iniciar la recuperación para ${chatJid}. El conteo solicitado (${parsedCount}) no fue aplicado.`;
         setBackfillFeedback({
           status: "error",
           title: "History backfill not accepted",
@@ -629,7 +629,7 @@ function DashboardInstance() {
         if (messageSendAttemptRef.current === attemptId) {
           setMessageSendFeedback({
             ...lastFeedback,
-            detail: `${lastFeedback.detail ? `${lastFeedback.detail} ` : ""}Still waiting for final backend confirmation.`,
+            detail: `${lastFeedback.detail ? `${lastFeedback.detail} ` : ""}Aún esperamos confirmación final.`,
           });
         }
         return;
@@ -665,7 +665,7 @@ function DashboardInstance() {
 
   const formatStat = (value: number | null) => {
     if (value === null) {
-      return t("common.notAvailable") || "N/A";
+      return t("common.notAvailable") || "No disponible";
     }
     return numberFormatter.format(value);
   };
@@ -717,7 +717,7 @@ function DashboardInstance() {
     {
       label: "Connection status",
       value: formatRuntimeLabel(instance.connectionStatus),
-      detail: instance.updatedAt ? `Instance updated ${formatCompactTimestamp(instance.updatedAt)}` : "Waiting for backend update timestamp",
+      detail: instance.updatedAt ? `Última actualización ${formatCompactTimestamp(instance.updatedAt)}` : "Última actualización pendiente",
     },
     {
       label: "Runtime state",
@@ -744,7 +744,7 @@ function DashboardInstance() {
                 </div>
                 <h2 className="break-words text-2xl font-semibold tracking-tight">{instance.name}</h2>
                 <p className="max-w-2xl text-sm text-muted-foreground">
-                  Lifecycle actions, runtime observability, and bounded recovery tools are active here. Delivery and history completeness still depend on the bridge and current backend capture depth.
+                  Acciones de ciclo de vida, observabilidad y recuperación acotada están activas aquí. Entrega e historial completo requieren conexión activa y captura disponible.
                 </p>
               </div>
             </div>
@@ -806,7 +806,7 @@ function DashboardInstance() {
                     <DialogHeader>
                       <DialogTitle>Reconnect with QR</DialogTitle>
                       <DialogDescription>
-                        Scan this QR code with WhatsApp after requesting reconnect. The backend decides whether a live QR is available for the current session state.
+                        Escanea este QR con WhatsApp después de solicitar reconexión. El QR aparece cuando la sesión lo permite.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="flex items-center justify-center">
@@ -826,7 +826,7 @@ function DashboardInstance() {
                       ) : (
                         <Alert variant="warning">
                           <AlertTitle>No live QR returned</AlertTitle>
-                          <AlertDescription>The reconnect request finished, but the backend did not expose a QR for the current session state.</AlertDescription>
+                          <AlertDescription>La solicitud terminó, pero no hay QR disponible para el estado actual de la sesión.</AlertDescription>
                         </Alert>
                       )}
                     </div>
@@ -863,7 +863,7 @@ function DashboardInstance() {
                           ) : (
                             <Alert variant="warning">
                               <AlertTitle>No pairing code returned</AlertTitle>
-                              <AlertDescription>The request finished, but the backend did not return a pairing code for this session state.</AlertDescription>
+                              <AlertDescription>La solicitud terminó, pero no hay código de vinculación disponible para el estado actual.</AlertDescription>
                             </Alert>
                           )}
                         </DialogDescription>
@@ -895,7 +895,7 @@ function DashboardInstance() {
             <DialogHeader>
               <DialogTitle>Log out this instance?</DialogTitle>
               <DialogDescription>
-                This asks the backend to end the WhatsApp session for {instance.name}. Queue-backed sends and chats may stop until the instance is paired or reconnected again.
+                Esto cerrará la sesión de WhatsApp para {instance.name}. Envíos por cola y chats pueden detenerse hasta volver a vincular o reconectar.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -918,14 +918,14 @@ function DashboardInstance() {
               <AlertTitle>{instance.connectionStatus === "open" ? "Instance is ready for supported operator work" : "Connection work is still required"}</AlertTitle>
               <AlertDescription>
                 {instance.connectionStatus === "open"
-                  ? "Chat, broadcast, and direct-send flows can use this instance, subject to backend runtime health and queue conditions."
+                  ? "Chat, broadcast y envío directo pueden usar esta instancia si la conexión y la cola se mantienen saludables."
                   : "Reconnect, QR scan, or pairing may still be required before queue-backed sends and chat operations can complete."}
               </AlertDescription>
             </Alert>
             <Alert variant="info">
               <AlertTitle>History and delivery are runtime-dependent</AlertTitle>
               <AlertDescription>
-                Runtime state, lifecycle history, bounded backfill, and async text delivery all reflect the backend truth currently available. Missing timestamps or sparse history are shown honestly instead of being inferred.
+                Runtime, historial de ciclo de vida, recuperación acotada y envío asíncrono reflejan la información disponible. Fechas faltantes o historial parcial se muestran sin inferencias.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -1014,7 +1014,7 @@ function DashboardInstance() {
             ) : !runtimeError ? (
               <Alert variant="warning">
                 <AlertTitle>No runtime status returned</AlertTitle>
-                <AlertDescription>The backend runtime endpoint is active, but it did not return a current state for this instance yet.</AlertDescription>
+                <AlertDescription>Runtime está disponible, pero todavía no hay estado actual para esta instancia.</AlertDescription>
               </Alert>
             ) : null}
             {lifecycleFeedback && lifecycleFeedback.status !== "idle" && (
@@ -1077,7 +1077,7 @@ function DashboardInstance() {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                The backend needs a stored anchor for this chat JID and a live bridge session. If this instance is not open, the request stays disabled; if the bridge cannot return data, the backend will fail the request honestly.
+                La recuperación requiere un JID con historial guardado y una sesión activa. Si la instancia no está abierta, la solicitud permanece deshabilitada.
               </p>
             </div>
             {backfillFeedback && backfillFeedback.status !== "idle" && (
@@ -1123,7 +1123,7 @@ function DashboardInstance() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                This instance action uses the current backend route for direct text sending. For full thread context, use the supported chat list and conversation routes.
+                Esta acción envía texto directo desde la instancia. Para contexto completo usa Chat y sus conversaciones.
               </p>
               <div className="grid gap-2">
                 <Label htmlFor="instance-send-number">Recipient number</Label>
@@ -1141,7 +1141,7 @@ function DashboardInstance() {
                   id="instance-send-message"
                   value={messageText}
                   onChange={(event) => setMessageText(event.target.value)}
-                  placeholder="Write the text you want to send"
+                  placeholder="Escribe el texto que quieres enviar"
                   disabled={instance.connectionStatus !== "open" || isSendingText}
                 />
               </div>
@@ -1164,9 +1164,9 @@ function DashboardInstance() {
                 </Alert>
               )}
               <Alert variant="info">
-                <AlertTitle>Direct send stays explicit about backend confirmation</AlertTitle>
+                <AlertTitle>Envío directo con confirmación disponible</AlertTitle>
                 <AlertDescription>
-                  A queued or sent state here means the backend accepted the job or handed it to the provider. Final delivery/read confirmation still depends on the async status endpoint continuing to report progress.
+                  Un estado en cola o enviado significa que el trabajo fue aceptado o entregado al proveedor. Entrega y lectura final dependen de nuevos estados asíncronos.
                 </AlertDescription>
               </Alert>
               {instance.connectionStatus !== "open" && (

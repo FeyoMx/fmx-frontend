@@ -98,7 +98,7 @@ function getRecipientStatusBadgeVariant(status: string): "default" | "secondary"
 
 function BroadcastRecipientSummary({ analytics }: { analytics: BroadcastRecipientAnalyticsView }) {
   if (!analytics.analyticsAvailable) {
-    return <span className="text-xs text-muted-foreground">Recipient analytics not yet reported by backend</span>;
+    return <span className="text-xs text-muted-foreground">Detalle de destinatarios pendiente</span>;
   }
 
   return (
@@ -108,7 +108,7 @@ function BroadcastRecipientSummary({ analytics }: { analytics: BroadcastRecipien
       <div>Sent: {analytics.sent ?? "-"}</div>
       <div>Failed: {analytics.failed ?? "-"}</div>
       <div>Pending: {analytics.pending ?? "-"}</div>
-      <div className={analytics.partial ? "text-amber-700" : undefined}>{analytics.partial ? "Partial summary" : "Complete summary"}</div>
+      <div className={analytics.partial ? "text-amber-700" : undefined}>{analytics.partial ? "Historial parcial" : "Resumen completo"}</div>
     </div>
   );
 }
@@ -201,10 +201,10 @@ function BroadcastRecipientDetailPanel({
           {[
             { label: "Recipients", value: summary.total, detail: "Rows in campaign scope", tone: "text-foreground" },
             { label: "Attempted", value: summary.attempted, detail: "Queue attempts started", tone: "text-sky-600" },
-            { label: "Sent", value: summary.sent, detail: "Backend send outcome", tone: "text-emerald-600" },
-            { label: "Failed", value: summary.failed, detail: "Backend failed outcome", tone: "text-rose-600" },
+            { label: "Sent", value: summary.sent, detail: "Envíos aceptados", tone: "text-emerald-600" },
+            { label: "Failed", value: summary.failed, detail: "Envíos fallidos", tone: "text-rose-600" },
             { label: "Pending", value: summary.pending, detail: "Still waiting", tone: "text-amber-600" },
-            { label: "Scope", value: summary.partial ? "Partial" : "Complete", detail: "Backend summary marker", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
+            { label: "Scope", value: summary.partial ? "Parcial" : "Completo", detail: "Alcance del resumen", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border p-4">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
@@ -216,17 +216,17 @@ function BroadcastRecipientDetailPanel({
 
         <Alert variant="info">
           <RadioTower className="h-4 w-4" />
-          <AlertTitle>Recipient detail tracks send attempts and queue outcomes.</AlertTitle>
+          <AlertTitle>Detalle de destinatarios por intentos y resultado.</AlertTitle>
           <AlertDescription>
-            This panel shows attempt and queue-result data returned by the backend. It does not claim WhatsApp delivery or read receipts unless those states are explicitly exposed in the API, which they are not today.
+            Este panel muestra intentos y resultados de cola. No muestra entregas ni lecturas de WhatsApp cuando esos estados no están disponibles.
           </AlertDescription>
         </Alert>
 
         {summary.partial ? (
           <Alert variant="warning">
-            <AlertTitle>Recipient analytics are marked partial</AlertTitle>
+            <AlertTitle>Historial parcial</AlertTitle>
             <AlertDescription>
-              Treat these counts as the backend's current campaign snapshot. Filtering and paging still work, but the summary may not include every final queue outcome yet.
+              Usa estos conteos como snapshot actual de la campaña. Filtros y paginación siguen disponibles, pero el resumen puede no incluir todos los resultados finales.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -262,7 +262,7 @@ function BroadcastRecipientDetailPanel({
                 id="broadcast-recipient-search"
                 value={recipientQuery}
                 onChange={(event) => setRecipientQuery(event.target.value)}
-                placeholder="Search by phone or contact ID"
+                placeholder="Buscar por teléfono o contacto"
                 className="pl-9"
                 disabled={isLoading && !recipientData}
               />
@@ -335,10 +335,10 @@ function BroadcastRecipientDetailPanel({
         {recipientData ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
             <div className="min-w-0 break-words text-sm text-muted-foreground">
-              Page {recipientData.page} of {Math.max(1, recipientData.totalPages || 1)} - {recipientData.total} recipient row{recipientData.total === 1 ? "" : "s"}
-              {statusFilter ? ` - status: ${formatOperatorStatusLabel(statusFilter)}` : " - all statuses"}
-              {deferredRecipientQuery ? ` - search: ${deferredRecipientQuery}` : ""}
-              {recipientData.partial ? " - partial summary" : ""}
+              Página {recipientData.page} de {Math.max(1, recipientData.totalPages || 1)} - {recipientData.total} destinatario{recipientData.total === 1 ? "" : "s"}
+              {statusFilter ? ` - estado: ${formatOperatorStatusLabel(statusFilter)}` : " - todos los estados"}
+              {deferredRecipientQuery ? ` - búsqueda: ${deferredRecipientQuery}` : ""}
+              {recipientData.partial ? " - historial parcial" : ""}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1 || isLoading}>
@@ -630,7 +630,7 @@ function Broadcast() {
         <RadioTower className="h-4 w-4" />
         <AlertTitle>Broadcast queueing is supported; delivery still depends on runtime health.</AlertTitle>
         <AlertDescription>
-          Jobs can be created and reviewed here, but actual dispatch still depends on the selected instance being connected and the backend queue/runtime pipeline remaining healthy. Recipient analytics below represent send attempts and queue outcomes, not WhatsApp delivery/read receipts.
+          Puedes crear y revisar trabajos aquí. El envío real requiere una instancia conectada y cola saludable. El detalle de destinatarios representa intentos y resultados de cola, no lecturas de WhatsApp.
         </AlertDescription>
       </Alert>
 
@@ -641,7 +641,7 @@ function Broadcast() {
           { label: "Completed", value: queueSummary.completed, icon: CheckCircle2, tone: "text-emerald-600" },
           { label: "Completed w/ failures", value: queueSummary.completedWithFailures, icon: AlertTriangle, tone: "text-amber-600" },
           { label: "Failed", value: queueSummary.failed, icon: XCircle, tone: "text-rose-600" },
-          { label: "Analytics-ready", value: queueSummary.analyticsReady, icon: Users, tone: "text-violet-600" },
+          { label: "Con detalle", value: queueSummary.analyticsReady, icon: Users, tone: "text-violet-600" },
         ].map((item) => (
           <Card key={item.label}>
             <CardContent className="flex items-center justify-between p-5">
@@ -659,7 +659,7 @@ function Broadcast() {
         <Card>
           <CardHeader>
             <CardTitle>Create broadcast job</CardTitle>
-            <CardDescription>Create one queue-backed outbound job. Delivery still depends on instance runtime health.</CardDescription>
+            <CardDescription>Crea un trabajo de salida por cola. El envío requiere conexión activa de la instancia.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {validationState ? (
@@ -695,7 +695,7 @@ function Broadcast() {
                     id="broadcast-message"
                     value={formData.message}
                     onChange={(event) => setFormData({ ...formData, message: event.target.value })}
-                    placeholder={t("broadcast.form.messagePlaceholder") || "Your message here..."}
+                    placeholder={t("broadcast.form.messagePlaceholder") || "Escribe el mensaje"}
                     rows={6}
                     disabled={submitting}
                   />
@@ -744,7 +744,7 @@ function Broadcast() {
                 </div>
 
                 <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  This page creates queue jobs, not guaranteed deliveries. Recipient detail below will only show real attempt/outcome data returned by the backend; it will not invent delivery or read receipts.
+                  Esta pantalla crea trabajos de cola, no entregas garantizadas. El detalle mostrará solo intentos y resultados disponibles.
                 </div>
               </div>
             </div>
@@ -773,7 +773,7 @@ function Broadcast() {
           <DialogHeader>
             <DialogTitle>Create this broadcast queue job?</DialogTitle>
             <DialogDescription>
-              This will create one backend queue job for {instanceNameById(formData.instanceId)}. It is not a delivery guarantee; runtime health, rate limits, retries, and backend queue state still determine final outcomes.
+              Esto creará un trabajo de cola para {instanceNameById(formData.instanceId)}. No garantiza entrega; conexión, límites, reintentos y estado de cola determinan el resultado.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 rounded-xl border bg-muted/20 p-4 text-sm">
@@ -809,7 +809,7 @@ function Broadcast() {
         <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="Search broadcast message, instance, or status" className="pl-9" disabled={isLoading && broadcasts.length === 0} />
+            <Input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="Buscar mensaje, instancia o estado" className="pl-9" disabled={isLoading && broadcasts.length === 0} />
           </div>
           {broadcastsError ? (
             <OperatorErrorState
@@ -826,8 +826,8 @@ function Broadcast() {
                 <h3 className="text-lg font-semibold">{historySearch.trim() ? "No jobs match this search" : "No broadcast jobs yet"}</h3>
                 <p className="max-w-xl text-sm text-muted-foreground">
                   {historySearch.trim()
-                    ? "Try a different message, instance, or status term. This page only shows tenant-safe queue jobs returned by the backend."
-                    : "Queue history will appear here after the first job is created. Until backend delivery analytics exist, this surface stays focused on honest job state, schedule, and retry visibility."}
+                    ? "Prueba otro mensaje, instancia o estado. Esta pantalla muestra trabajos de cola disponibles para el tenant."
+                    : "El historial aparecerá después de crear el primer trabajo. La pantalla se enfoca en estado, programación y reintentos disponibles."}
                 </p>
               </div>
             </div>

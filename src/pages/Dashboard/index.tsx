@@ -59,14 +59,14 @@ const dashboardMetricsMeta = [
     key: "totalMessages",
     label: "Messages",
     description: "Aggregate message counter from dashboard metrics.",
-    caveat: "Backend-limited",
+    caveat: "Historial parcial",
     icon: MessageSquare,
   },
   {
     key: "totalContacts",
     label: "Contacts",
     description: "Helpful as a rough snapshot only.",
-    caveat: "Backend-limited",
+    caveat: "Historial parcial",
     icon: Users,
   },
   {
@@ -117,7 +117,7 @@ function getInstanceHealthCopy(bucket: HealthBucket): { label: string; detail: s
     default:
       return {
         label: "Observed",
-        detail: "Reported by backend, but outside the main lifecycle buckets.",
+        detail: "Estado observado fuera de las categorías principales.",
         badge: "secondary",
       };
   }
@@ -301,7 +301,7 @@ function Dashboard() {
                 <div>
                   <CardTitle className="text-3xl tracking-tight">{t("dashboard.welcome") || "Welcome back"}</CardTitle>
                   <CardDescription className="mt-2 max-w-2xl text-sm leading-6">
-                    {tenant?.name || "Current tenant"} is using the tenant-safe MVP surface. Instance health, queue visibility, chat list/detail, and runtime actions are live; aggregate analytics still stay intentionally conservative.
+                    {tenant?.name || "Tenant actual"} usa las superficies disponibles del MVP. Salud de instancias, cola, chat, contactos, broadcasts y acciones de runtime están activas; las métricas agregadas se muestran con cautela.
                   </CardDescription>
                 </div>
               </div>
@@ -359,7 +359,7 @@ function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Operator guidance</CardTitle>
-            <CardDescription>Clearer messaging for sparse data and runtime-dependent work.</CardDescription>
+            <CardDescription>Señales operativas para trabajo dependiente de conexión activa.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant={operationalSummary.alertVariant}>
@@ -371,7 +371,7 @@ function Dashboard() {
               <RadioTower className="h-4 w-4" />
               <AlertTitle>Analytics are intentionally conservative</AlertTitle>
               <AlertDescription>
-                Instance health and status distribution are the trustworthy operator signals today. Message, contact, and broadcast totals can stay sparse until backend aggregation grows beyond the current snapshot routes.
+                La salud de instancias y la distribución de estados son las señales más confiables hoy. Mensajes, contactos y broadcasts pueden mostrarse como historial parcial.
               </AlertDescription>
             </Alert>
             {instancesError ? (
@@ -495,7 +495,7 @@ function Dashboard() {
                 <h3 className="text-lg font-semibold">{instances?.length ? "No instances match this filter" : "No instances yet"}</h3>
                 <p className="max-w-xl text-sm text-muted-foreground">
                   {instances?.length
-                    ? "Try a different search or status filter. The dashboard stays focused on supported operator surfaces only, so hidden legacy routes will not appear here."
+                    ? "Prueba otra búsqueda o filtro de estado. El panel muestra solo flujos disponibles para operación diaria."
                     : "Create the first instance to start pairing, runtime monitoring, chats, broadcasts, and outbound send workflows."}
                 </p>
               </div>
@@ -558,7 +558,7 @@ function Dashboard() {
                           Contacts
                         </div>
                         <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.contacts === null ? (t("common.notAvailable") || "N/A") : new Intl.NumberFormat("pt-BR").format(instance.stats.contacts)}
+                          {instance.stats.contacts === null ? (t("common.notAvailable") || "No disponible") : new Intl.NumberFormat("pt-BR").format(instance.stats.contacts)}
                         </div>
                       </div>
                       <div className="rounded-xl border p-3">
@@ -567,7 +567,7 @@ function Dashboard() {
                           Messages
                         </div>
                         <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.messages === null ? (t("common.notAvailable") || "N/A") : new Intl.NumberFormat("pt-BR").format(instance.stats.messages)}
+                          {instance.stats.messages === null ? (t("common.notAvailable") || "No disponible") : new Intl.NumberFormat("pt-BR").format(instance.stats.messages)}
                         </div>
                       </div>
                     </div>
@@ -580,7 +580,7 @@ function Dashboard() {
                             ? "Pairing or reconnect work is still in progress. Delivery-dependent actions may remain blocked until the runtime settles."
                             : bucket === "disconnected"
                               ? "Operator actions that depend on runtime connectivity should wait until this instance is brought back online."
-                              : "This instance is surfaced honestly, but the backend status does not map cleanly into the main operator lifecycle buckets yet.",
+                              : "Esta instancia está visible, pero su estado no entra en las categorías principales de ciclo de vida.",
                       )}
                     </div>
                   </CardContent>

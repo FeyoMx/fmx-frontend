@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const jwtToken = getAuthToken();
 
   if (isLoading) {
-    return <RouteFallback title="Checking session" description="Confirming your operator session before opening the workspace." />;
+    return <RouteFallback title="Verificando sesión" description="Confirmando tu sesión de operador." />;
   }
 
   // Check if JWT token exists and is valid

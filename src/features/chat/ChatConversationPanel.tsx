@@ -99,9 +99,9 @@ function ChatConversationPanel({
           </div>
           <Alert variant="info">
             <History className="h-4 w-4" />
-            <AlertTitle>History stays honest about what the backend has actually stored.</AlertTitle>
+            <AlertTitle>Historial parcial cuando la instancia no tiene todo guardado.</AlertTitle>
             <AlertDescription>
-              Persisted history is live for this chat. Older sessions are not backfilled automatically, and inbound or media records can still be partial when runtime capture was incomplete.
+              El historial guardado está disponible para este chat. Conversaciones antiguas o archivos de media pueden quedar incompletos si no fueron capturados por la instancia.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -109,7 +109,7 @@ function ChatConversationPanel({
           <ChatCapabilityStatus capabilities={capabilities} />
 
           {historyLoading ? (
-            <ChatEmptyState title="Loading conversation" description="Fetching persisted message history for this chat." />
+            <ChatEmptyState title="Cargando conversación" description="Consultando historial guardado de este chat." />
           ) : historyError ? (
             <Alert variant="warning">
               <MessagesSquare className="h-4 w-4" />

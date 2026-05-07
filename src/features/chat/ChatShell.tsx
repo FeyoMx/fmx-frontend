@@ -137,7 +137,7 @@ function ChatShell() {
       return `Showing stored chat-list data while the live bridge refreshes.${source}${refreshedAt}`;
     }
 
-    return `Showing cached chat-list data from the backend.${source}${refreshedAt}`;
+    return `Mostrando conversaciones guardadas.${source}${refreshedAt}`;
   }, [chatListMetadata]);
 
   const visibleThreads = useIncrementalList(threads, {
@@ -164,7 +164,7 @@ function ChatShell() {
               <div className="space-y-2">
                 <CardTitle>Chats</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Browse tenant-safe conversations and open the persisted thread for any surfaced remote JID. Older sessions may stay partial until runtime capture or a successful backfill request exists.
+                  Revisa conversaciones disponibles y abre el historial guardado de cada JID. Algunas conversaciones antiguas pueden aparecer como historial parcial.
                 </p>
                 {chatListStatusCopy ? (
                   <div role="status" className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
@@ -193,7 +193,7 @@ function ChatShell() {
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search surfaced chats"
+                  placeholder="Buscar chats disponibles"
                   className="pl-9"
                   disabled={threadsLoading && !threadData}
                 />
@@ -284,8 +284,8 @@ function ChatShell() {
                   title={search.trim() ? "No chats match this search" : "No chats surfaced yet"}
                   description={
                     search.trim()
-                      ? "Try a different number, name, or remote JID fragment. Only tenant-safe conversations returned by the backend appear here."
-                      : "The backend chat list route is active, but no tenant-safe conversations were returned for this instance yet."
+                      ? "Prueba otro número, nombre o fragmento de JID. Solo aparecen conversaciones disponibles para esta instancia."
+                      : "No hay conversaciones disponibles para esta instancia todavía."
                   }
                 />
               )}
@@ -300,7 +300,7 @@ function ChatShell() {
             {!instance?.id ? (
               <Card className="h-full">
                 <CardContent className="flex h-full items-center justify-center">
-                  <ChatEmptyState title="Instance not available" description="Load an instance before using the chat shell." />
+                  <ChatEmptyState title="Instancia no disponible" description="Carga una instancia antes de usar chat." />
                 </CardContent>
               </Card>
             ) : (

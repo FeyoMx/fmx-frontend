@@ -135,7 +135,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <ImageIcon className="h-4 w-4 shrink-0" />
-            Image metadata is partial and no preview URL was provided.
+            Imagen recibida con historial parcial. No hay vista previa disponible.
           </div>
         )}
         {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
@@ -151,7 +151,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <Video className="h-4 w-4 shrink-0" />
-            Video metadata is partial and no playable URL was provided.
+            Video recibido con historial parcial. No hay reproducción disponible.
           </div>
         )}
         {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
@@ -169,7 +169,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
             <Mic className="h-4 w-4 shrink-0" />
-            Audio metadata is partial and no playable URL was provided.
+            Audio recibido con historial parcial. No hay reproducción disponible.
           </div>
         )}
         {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
@@ -293,7 +293,7 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
               <div className="mt-2 flex items-center justify-between gap-3 text-[10px] opacity-70">
                 <span title={formatTimestamp(message.timestamp)}>{formatBubbleTime(message.timestamp)}</span>
                 <span className="inline-flex items-center gap-2">
-                  {message.isPartial && <span>Partial metadata</span>}
+                  {message.isPartial && <span>Historial parcial</span>}
                   {message.status && entry.groupedWithPrevious && <StatusMeta status={message.status} />}
                 </span>
               </div>

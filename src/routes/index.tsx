@@ -140,8 +140,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="OpenAI integration is gated"
-            description="The backend registers tenant-safe OpenAI routes but they currently return structured 501 partial responses, so the legacy CRUD surface remains intentionally unavailable."
+            title="Integración OpenAI en proceso"
+            description="La configuración general de IA está disponible en Ajustes de IA. Este editor por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -153,8 +153,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="OpenAI resource editor is gated"
-            description="The current backend does not provide tenant-ready OpenAI resource CRUD yet, so this deep link stays on the shared unsupported placeholder."
+            title="Editor OpenAI no disponible"
+            description="Este acceso se conserva para compatibilidad, pero la gestión de recursos OpenAI por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -196,8 +196,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="SQS connector not available yet"
-            description="The current backend exposes tenant-safe SQS routes only as explicit 501 partial placeholders, so this page remains gated instead of pretending the connector works."
+            title="Conector SQS en proceso"
+            description="SQS no está disponible para operación diaria en esta versión. Usa Webhook, WebSocket, RabbitMQ o Proxy cuando estén activos para tu instancia."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -209,8 +209,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Chatwoot integration is gated"
-            description="Chatwoot configuration is still backend-partial in the SaaS layer, so this route now resolves to an honest placeholder rather than bouncing users away silently."
+            title="Chatwoot en proceso"
+            description="La integración de Chatwoot no está disponible en esta versión. Este enlace queda seguro para accesos antiguos."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -222,8 +222,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Typebot integration is gated"
-            description="The current backend still returns 501 partial responses for tenant-safe Typebot management, so this route remains intentionally unavailable."
+            title="Typebot en proceso"
+            description="La gestión de Typebot por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -235,8 +235,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Typebot resource editor is gated"
-            description="This deep link is preserved for parity with upstream page surface, but tenant-safe Typebot resource CRUD is not backend-ready yet."
+            title="Editor Typebot no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos Typebot no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -248,8 +248,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Dify integration is gated"
-            description="Dify management remains a backend-partial surface today, so the frontend keeps a guarded placeholder instead of reviving unsupported legacy CRUD."
+            title="Dify en proceso"
+            description="La gestión de Dify por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -261,8 +261,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Dify resource editor is gated"
-            description="This route is preserved for compatibility, but tenant-safe Dify resource management is not implemented in the current backend."
+            title="Editor Dify no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos Dify no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -274,8 +274,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="N8N integration is gated"
-            description="The backend still exposes N8N as an explicit partial surface, so the frontend keeps this route on a shared unsupported state."
+            title="N8N en proceso"
+            description="La gestión de N8N por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -287,8 +287,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="N8N resource editor is gated"
-            description="Tenant-safe N8N resource CRUD is not backend-complete yet, so this page remains a guarded placeholder."
+            title="Editor N8N no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos N8N no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -300,8 +300,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="EvoAI integration is gated"
-            description="EvoAI still depends on backend-partial integration routes, so this page stays disabled rather than reviving unsupported legacy behavior."
+            title="EvoAI en proceso"
+            description="La gestión de EvoAI por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -313,8 +313,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="EvoAI resource editor is gated"
-            description="This deep link is preserved, but the SaaS backend does not yet support tenant-safe EvoAI resource management."
+            title="Editor EvoAI no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos EvoAI no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -326,8 +326,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Evolution Bot integration is gated"
-            description="The current backend still reports Evolution Bot management as partial, so the frontend keeps an honest unsupported state here."
+            title="Evolution Bot en proceso"
+            description="La gestión de Evolution Bot por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -339,8 +339,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Evolution Bot resource editor is gated"
-            description="Tenant-safe CRUD for Evolution Bot resources is not backend-ready, so this route remains a placeholder."
+            title="Editor Evolution Bot no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos Evolution Bot no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -352,8 +352,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Flowise integration is gated"
-            description="Flowise management is still served as a backend-partial surface, so this page is intentionally gated in the SaaS frontend."
+            title="Flowise en proceso"
+            description="La gestión de Flowise por instancia no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -365,8 +365,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <InstanceLayout>
           <InstancePlaceholderRoute
-            title="Flowise resource editor is gated"
-            description="This deep link now resolves to a guarded placeholder because tenant-safe Flowise resource CRUD is not implemented yet."
+            title="Editor Flowise no disponible"
+            description="Este acceso directo se conserva, pero la edición de recursos Flowise no está disponible en esta versión."
           />
         </InstanceLayout>
       </ProtectedRoute>
@@ -388,8 +388,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <MainLayout>
           <InstancePlaceholderRoute
-            title="Legacy embed chat is gated"
-            description="The supported MVP operator flow now uses the tenant-safe chat list and conversation routes under each instance. This older embed chat surface still depends on legacy token and query-param contracts, so it remains intentionally unavailable."
+            title="Chat embebido anterior no disponible"
+            description="Para conversaciones usa Chat dentro de cada instancia. Este acceso anterior queda cerrado para evitar flujos fuera del MVP."
           />
         </MainLayout>
       </ProtectedRoute>
@@ -401,8 +401,8 @@ const router = createBrowserRouter([
       <ProtectedRoute>
         <MainLayout>
           <InstancePlaceholderRoute
-            title="Legacy embed chat deep link is gated"
-            description="This legacy messages deep link now resolves to an honest placeholder. Use the tenant-safe instance chat routes instead of the old embed chat contract."
+            title="Enlace de mensajes anterior no disponible"
+            description="Abre Chat desde el panel de una instancia para usar el flujo de conversaciones disponible."
           />
         </MainLayout>
       </ProtectedRoute>

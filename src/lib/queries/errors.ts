@@ -8,7 +8,7 @@ type ErrorPayload = {
   };
 };
 
-export const NOT_IMPLEMENTED_MESSAGE = "This feature is not available in the current backend yet";
+export const NOT_IMPLEMENTED_MESSAGE = "No disponible en esta versión";
 
 export const isApiStatus = (error: unknown, status: number): boolean => {
   if (!isAxiosError(error)) {

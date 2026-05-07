@@ -140,9 +140,9 @@ export function CRM() {
         <CardContent className="space-y-4">
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Current backend support</AlertTitle>
+            <AlertTitle>Disponible en esta versión</AlertTitle>
             <AlertDescription>
-              Contacts can be listed and created from this UI. Delete and pipeline-stage management are not exposed by the current backend contract.
+              Contactos permite listar y crear registros. Eliminar contactos y administrar etapas no está disponible en esta versión.
             </AlertDescription>
           </Alert>
           {contactsError ? (
@@ -220,8 +220,8 @@ export function CRM() {
                       <TableCell className="max-w-[140px] break-words">{contact.pipelineStage || "-"}</TableCell>
                       <TableCell className="min-w-[120px]">{formatCompactTimestamp(contact.updatedAt || contact.createdAt, "-")}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" disabled title="Delete is not supported by the current backend">
-                          Not available
+                        <Button variant="ghost" size="sm" disabled title="No disponible en esta versión">
+                          No disponible
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -247,8 +247,8 @@ export function CRM() {
       <Dialog open={showAddContact} onOpenChange={setShowAddContact}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("crm.dialog.addContact") || "Add New Contact"}</DialogTitle>
-            <DialogDescription>{t("crm.dialog.addContactDescription") || "Create a contact with the backend-supported name and phone fields."}</DialogDescription>
+            <DialogTitle>{t("crm.dialog.addContact") || "Agregar contacto"}</DialogTitle>
+            <DialogDescription>{t("crm.dialog.addContactDescription") || "Crea un contacto con nombre y teléfono."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input type="text" placeholder="Name*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} disabled={isSubmitting} />

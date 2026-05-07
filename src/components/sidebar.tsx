@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChevronDown, CircleHelp, Cog, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import { ChevronDown, CircleHelp, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -25,28 +25,28 @@ function Sidebar() {
             id: "dashboard",
             title: t("sidebar.dashboard"),
             icon: LayoutDashboard,
-            highlight: "Supported",
+            highlight: "Disponible",
             path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"),
           },
           {
             id: "contacts",
             title: t("sidebar.contacts"),
             icon: ShieldCheck,
-            highlight: "Supported",
+            highlight: "Disponible",
             path: "/manager/contacts",
           },
           {
             id: "broadcast",
             title: t("sidebar.broadcast"),
             icon: IterationCcw,
-            highlight: "Queue view",
+            highlight: "Disponible",
             path: "/manager/broadcast",
           },
           {
             id: "aiSettings",
             title: t("sidebar.aiSettings"),
             icon: Sparkles,
-            highlight: "Tenant defaults",
+            highlight: "Disponible",
             path: "/manager/ai-settings",
           },
         ],
@@ -99,15 +99,8 @@ function Sidebar() {
         ],
       },
       {
-        section: "Reference",
+        section: "Recursos",
         items: [
-          {
-            id: "apiKeys",
-            title: t("sidebar.apiKeys"),
-            icon: Cog,
-            highlight: "Info only",
-            path: "/manager/api-keys",
-          },
           {
             id: "documentation",
             title: t("sidebar.documentation"),

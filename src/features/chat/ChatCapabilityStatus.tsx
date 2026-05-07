@@ -6,27 +6,27 @@ import { ChatCapabilities, ChatCapabilityState } from "@/lib/queries/chat/types"
 
 const capabilityMeta: Record<ChatCapabilityState, { label: string; icon: typeof CheckCircle2; className: string }> = {
   available: {
-    label: "Available",
+    label: "Disponible",
     icon: CheckCircle2,
     className: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
   pending_backend: {
-    label: "Waiting on backend",
+    label: "En proceso",
     icon: Clock3,
     className: "border-amber-200 bg-amber-50 text-amber-700",
   },
   checking: {
-    label: "Checking",
+    label: "Verificando",
     icon: LoaderCircle,
     className: "border-slate-200 bg-slate-50 text-slate-700",
   },
   unavailable: {
-    label: "Unavailable",
+    label: "No disponible",
     icon: XCircle,
     className: "border-zinc-200 bg-zinc-50 text-zinc-700",
   },
   error: {
-    label: "Error",
+    label: "Revisar",
     icon: AlertCircle,
     className: "border-rose-200 bg-rose-50 text-rose-700",
   },
@@ -46,11 +46,11 @@ function CapabilityBadge({ state }: { state: ChatCapabilityState }) {
 
 function ChatCapabilityStatus({ capabilities }: { capabilities: ChatCapabilities }) {
   const rows = [
-    { label: "Chat list", state: capabilities.chatList },
-    { label: "Message history", state: capabilities.messageHistory },
-    { label: "Text send", state: capabilities.textSend },
-    { label: "Media send", state: capabilities.mediaSend },
-    { label: "Audio send", state: capabilities.audioSend },
+    { label: "Lista de chats", state: capabilities.chatList },
+    { label: "Historial", state: capabilities.messageHistory },
+    { label: "Texto", state: capabilities.textSend },
+    { label: "Media", state: capabilities.mediaSend },
+    { label: "Audio", state: capabilities.audioSend },
   ];
 
   return (

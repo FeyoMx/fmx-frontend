@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-05-02.
+Updated on 2026-05-07.
 
 ## Summary
 
@@ -58,8 +58,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - safer disabled/loading states while tenant and per-instance settings are refreshing or saving
   - now safe to lazy-load without changing route behavior or auth handling
 - `/manager/api-keys`
-  - informational by design
-  - explicitly marked as an informational-only surface
+  - informational by design and hidden from primary navigation
+  - explicitly marked as Próximamente / No disponible en esta versión
 
 ### Instance operations
 
@@ -156,6 +156,9 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - dense-data hardening pass added safer wrapping/truncation for long contact fields, phone numbers, JIDs, broadcast errors, message IDs, chat headers, media placeholders, pagination footers, and runtime/backfill feedback
 - runtime, history, and chat surfaces now read as one coherent operator workflow instead of separate feature islands
 - unsupported legacy surfaces remain de-emphasized and out of primary navigation
+- API Keys is no longer exposed in the sidebar; the route remains safe for bookmarks and is labeled as Próximamente
+- guarded integration routes now use short operator copy such as En proceso, No disponible en esta versión, and Volver al panel instead of raw backend/501/legacy explanations
+- supported Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, and AI Settings surfaces now use clearer Spanish or neutral operator copy for partial history, active connection requirements, and unavailable actions
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 - instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly

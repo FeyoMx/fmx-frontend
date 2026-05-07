@@ -36,7 +36,7 @@ function OperatorErrorState({
 
 function OperatorLoadingBlock({
   title = "Loading",
-  description = "Keeping the layout steady while the backend responds.",
+  description = "Cargando información disponible.",
   className,
 }: {
   title?: string;

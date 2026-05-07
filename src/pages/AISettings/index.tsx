@@ -109,7 +109,7 @@ export function AISettings() {
         <Sparkles className="h-4 w-4" />
         <AlertTitle>Tenant AI controls are active</AlertTitle>
         <AlertDescription>
-          Use this page for tenant defaults and per-instance enablement. Legacy bot and integration CRUD flows remain intentionally outside the primary MVP operator path.
+          Usa esta pantalla para valores predeterminados del tenant y activación por instancia. Los editores avanzados de bots no están disponibles en esta versión.
         </AlertDescription>
       </Alert>
 
@@ -155,7 +155,7 @@ export function AISettings() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">System prompt</label>
-                <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Optional system prompt" disabled={isSaving} />
+                  <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Prompt del sistema opcional" disabled={isSaving} />
               </div>
 
               <div className="flex justify-end">
@@ -188,7 +188,7 @@ export function AISettings() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      Loading AI settings...
+                      Cargando ajustes de IA...
                     </TableCell>
                   </TableRow>
                 ) : instanceSettings.length === 0 ? (
@@ -202,7 +202,7 @@ export function AISettings() {
                     <TableRow key={instance.instanceId}>
                       <TableCell className="font-medium">{instance.instanceName}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{instance.model || "Tenant default"}</Badge>
+                        <Badge variant="outline">{instance.model || "Predeterminado del tenant"}</Badge>
                       </TableCell>
                       <TableCell>
                         <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} disabled={isSaving || isLoading} />

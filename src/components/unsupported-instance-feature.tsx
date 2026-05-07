@@ -21,15 +21,15 @@ type UnsupportedInstanceFeatureProps = {
 
 function UnsupportedInstanceFeature({
   description,
-  title = "Not available yet",
+  title = "No disponible en esta versión",
 }: UnsupportedInstanceFeatureProps) {
   const { instanceId } = useParams<{ instanceId: string }>();
   const location = useLocation();
   const featureName = formatFeatureName(location.pathname);
   const safePath = instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager";
-  const primaryCta = instanceId ? "Go to instance dashboard" : "Go to manager home";
+  const primaryCta = instanceId ? "Volver al panel de la instancia" : "Volver al panel principal";
   const resolvedDescription =
-    description ?? `${featureName} still depends on backend support that is not available in the current API yet.`;
+    description ?? `${featureName} no está disponible para operación diaria en esta versión.`;
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-10">
@@ -42,7 +42,7 @@ function UnsupportedInstanceFeature({
           <p className="text-sm text-muted-foreground">
             {description
               ? NOT_IMPLEMENTED_MESSAGE
-              : "This route is intentionally kept as a guarded placeholder so old bookmarks and deep links do not fail with a broken page."}
+              : "Conservamos este acceso directo para que marcadores antiguos terminen en una pantalla segura."}
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
@@ -50,7 +50,7 @@ function UnsupportedInstanceFeature({
             </Button>
             {instanceId ? (
               <Button asChild variant="outline">
-                <Link to="/manager">Go to manager home</Link>
+                <Link to="/manager">Panel principal</Link>
               </Button>
             ) : null}
           </div>

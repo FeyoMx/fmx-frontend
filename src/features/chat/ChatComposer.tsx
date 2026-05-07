@@ -163,7 +163,7 @@ function ChatComposer({
       setFeedback({
         status: "queued",
         title: "Queued for send",
-        detail: "Waiting for backend confirmation and provider handoff.",
+        detail: "Esperando confirmación de envío.",
       });
 
       const response = await sendText({
@@ -193,7 +193,7 @@ function ChatComposer({
             setFeedback({
               status: "error",
               title: "Send failed",
-              detail: status.error || "The backend rejected the send request.",
+              detail: status.error || "La solicitud de envío fue rechazada.",
             });
             return;
           }
@@ -261,7 +261,7 @@ function ChatComposer({
             setFeedback({
               status: "sending",
               title: "Sending",
-              detail: "Backend is processing the send request.",
+              detail: "El envío está en proceso.",
             });
             continue;
           }
@@ -270,7 +270,7 @@ function ChatComposer({
         setFeedback({
           status: "provider_sent",
           title: "Tracking still in progress",
-          detail: "The send request is still settling. The thread will refresh again as backend delivery state becomes available.",
+          detail: "El envío sigue en proceso. La conversación se actualizará cuando haya nuevo estado.",
         });
         setText("");
         void invalidateHistory();
@@ -352,7 +352,7 @@ function ChatComposer({
           raw: result,
         }),
       );
-      setFeedback(buildSendResultFeedback(result, "Media accepted by backend"));
+      setFeedback(buildSendResultFeedback(result, "Media aceptada para envío"));
       setMediaFile(null);
       setCaption("");
       void invalidateHistory();
@@ -402,7 +402,7 @@ function ChatComposer({
           raw: result,
         }),
       );
-      setFeedback(buildSendResultFeedback(result, "Audio accepted by backend"));
+      setFeedback(buildSendResultFeedback(result, "Audio aceptado para envío"));
       setAudioFile(null);
       void invalidateHistory();
     } catch (error) {
@@ -438,9 +438,9 @@ function ChatComposer({
 
       <Alert variant="info">
         <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Send feedback reflects backend truth as it arrives.</AlertTitle>
+        <AlertTitle>Estado de envío según la información disponible.</AlertTitle>
         <AlertDescription>
-          Text sends can move through queued, sending, provider-sent, delivered, and read states. Media and audio sends are accepted here, but history preview can stay partial until the backend republishes richer metadata.
+          Los textos pueden pasar por cola, envío, entregado y leído. Media y audio se aceptan aquí; la vista en historial puede quedar parcial hasta que la instancia reporte más detalle.
         </AlertDescription>
       </Alert>
 
@@ -458,7 +458,7 @@ function ChatComposer({
         </TabsList>
 
         <TabsContent value="text" className="space-y-3">
-          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Write a message for this conversation" className="min-h-24" disabled={isSending} />
+          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Escribe un mensaje para esta conversación" className="min-h-24" disabled={isSending} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-muted-foreground">{text.trim().length} character{text.trim().length === 1 ? "" : "s"} ready to send.</div>
             <Button onClick={handleTextSend} disabled={!text.trim() || isSending} className="gap-2">
@@ -484,7 +484,7 @@ function ChatComposer({
               </Button>
             </div>
           )}
-          <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="Optional caption" disabled={isSending} />
+          <Textarea value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="Texto opcional" disabled={isSending} />
           <div className="flex justify-end">
             <Button onClick={handleMediaSend} disabled={!mediaFile || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

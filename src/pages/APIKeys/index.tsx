@@ -15,14 +15,14 @@ export function APIKeys() {
   const { tenant } = useTenant();
 
   const handleRefresh = () => {
-    toast.info("The current backend supports tenant API key authentication, but it does not expose API key management endpoints.");
+    toast.info("Gestión de llaves API: próximamente.");
   };
 
   return (
     <div className="space-y-4 p-4">
       <OperatorPageHeader
         title={t("apiKeys.title") || "API Keys"}
-        description={tenant?.name}
+        description={tenant?.name ? `${tenant.name} - Próximamente` : "Próximamente"}
         actions={
           <Button onClick={handleRefresh} variant="outline" size="icon">
             <RefreshCw size={20} />
@@ -34,23 +34,22 @@ export function APIKeys() {
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle>{t("apiKeys.list.title") || "API Keys"}</CardTitle>
-            <Badge variant="outline">Informational</Badge>
+            <Badge variant="outline">Próximamente</Badge>
           </div>
-          <CardDescription>Authentication support is active, but key management is still backend-gated.</CardDescription>
+          <CardDescription>Esta pantalla queda disponible solo como referencia. La creación y rotación de llaves no está disponible en esta versión.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert variant="warning">
             <KeyRound className="h-4 w-4" />
-            <AlertTitle>API key management is not exposed</AlertTitle>
+            <AlertTitle>No disponible en esta versión</AlertTitle>
             <AlertDescription>
-              The current backend accepts tenant API keys for authentication, but it does not expose `/apikey` management routes. This page stays informational until the backend adds that contract.
+              Las sesiones de operador funcionan con inicio de sesión. La administración de llaves API se habilitará cuando el producto la exponga de forma completa.
             </AlertDescription>
           </Alert>
 
           <div className="rounded border p-4 text-sm text-muted-foreground">
-            <p>Supported today: `Authorization: Bearer &lt;access_token&gt;` for user sessions.</p>
-            <p>Supported today: `X-API-Key` or `apikey` for tenant API key authentication when you already have a key.</p>
-            <p>Not supported today: listing, creating, rotating, or revoking API keys from this SaaS frontend.</p>
+            <p>Disponible: inicio de sesión y sesión de operador.</p>
+            <p>En proceso: listar, crear, rotar o revocar llaves API desde FMX.</p>
           </div>
         </CardContent>
       </Card>

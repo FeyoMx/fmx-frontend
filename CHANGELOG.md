@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
+- Hid API Keys del sidebar normal y lo mantuvo como ruta informativa marcada Próximamente / No disponible en esta versión.
+- Reescribió placeholders guardados de integraciones no disponibles con copy corto de producto, sin exponer `501`, legacy routes ni detalles técnicos al operador.
+- Pulió copy de Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings y estados compartidos para usar etiquetas operativas como Disponible, En proceso, Historial parcial y Última actualización.
 - Updated package.json with proper metadata and repository information
 - Improved project structure for open source development
 - Migrated from API key to JWT-based authentication system

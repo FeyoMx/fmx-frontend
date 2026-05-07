@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-05-02.
+Updated on 2026-05-07.
 
 ## Scope
 
@@ -57,6 +57,7 @@ Frontend handling after this sync:
 - `/manager/broadcast`
 - `/manager/ai-settings`
 - `/manager/api-keys`
+  - informational-only and hidden from normal sidebar navigation
 - `/manager/instance/:instanceId/dashboard`
 - `/manager/instance/:instanceId/settings`
 - `/manager/instance/:instanceId/webhook`
@@ -122,6 +123,8 @@ Frontend handling after this sync:
 - Shared loading behavior now avoids full-viewport nested spinners, reducing flicker and layout jumps in cards, dialogs, chat panes, runtime panels, and data tables.
 - Supported MVP pages now share more consistent operator-facing labels, page framing, badge usage, and honest empty-state language.
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
+- Placeholder audit pass removed API Keys from the sidebar, rewrote guarded integration placeholders with short production copy, and replaced raw backend/501/legacy wording on normal operator paths with labels such as Disponible, En proceso, No disponible en esta versión, Requiere conexión activa, Historial parcial, and Última actualización.
+- Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, API Keys, UnsupportedInstanceFeature, Sidebar, and session/header-adjacent loading states were reviewed for user-visible placeholder or unsupported copy.
 
 ### API / adapter alignment
 
