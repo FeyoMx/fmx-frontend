@@ -7,6 +7,7 @@ import QRCode from "react-qr-code";
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
 import { OperatorActionBar, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
+import { PilotFeedbackCard } from "@/components/pilot-feedback-card";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -742,7 +743,7 @@ function DashboardInstance() {
                 </div>
                 <h2 className="break-words text-2xl font-semibold tracking-tight">{instance.name}</h2>
                 <p className="max-w-2xl text-sm text-muted-foreground">
-                  Acciones de ciclo de vida, observabilidad y recuperación acotada están activas aquí. Entrega e historial completo requieren conexión activa y captura disponible.
+                  Si esta es tu primera conexión, usa Reconectar para obtener QR o Pair with code cuando haya número configurado. Chat y broadcast funcionan mejor cuando la instancia aparece como Disponible.
                 </p>
               </div>
             </div>
@@ -786,17 +787,17 @@ function DashboardInstance() {
                 <div className="min-w-0 space-y-1">
                   <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
                   <AlertDescription>
-                    Start with QR reconnect. Pair with code is available when this instance has a phone number configured.
+                    Primero solicita reconexión y escanea el QR con WhatsApp. Usa código de vinculación solo cuando la instancia tenga número configurado.
                   </AlertDescription>
                 </div>
 
                 <Dialog open={reconnectDialogOpen} onOpenChange={(open) => void (open ? setReconnectDialogOpen(true) : closeQRCodePopup())}>
                   <Button variant="warning" className="w-full sm:w-auto" disabled={isLifecycleRunning} onClick={() => void handleReconnect(instance.id)}>
-                    {activeLifecycleAction === "reconnect" ? "Requesting reconnect..." : "Reconnect with QR"}
+                    {activeLifecycleAction === "reconnect" ? "Solicitando reconexión..." : "Reconectar con QR"}
                   </Button>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Reconnect with QR</DialogTitle>
+                      <DialogTitle>Reconectar con QR</DialogTitle>
                       <DialogDescription>
                         Escanea este QR con WhatsApp después de solicitar reconexión. El QR aparece cuando la sesión lo permite.
                       </DialogDescription>
@@ -817,7 +818,7 @@ function DashboardInstance() {
                         )
                       ) : (
                         <Alert variant="warning">
-                          <AlertTitle>No live QR returned</AlertTitle>
+                          <AlertTitle>QR no disponible</AlertTitle>
                           <AlertDescription>La solicitud terminó, pero no hay QR disponible para el estado actual de la sesión.</AlertDescription>
                         </Alert>
                       )}
@@ -828,11 +829,11 @@ function DashboardInstance() {
                 {instance.number && (
                   <Dialog open={pairDialogOpen} onOpenChange={(open) => void (open ? setPairDialogOpen(true) : closeQRCodePopup())}>
                     <Button type="button" className="connect-code-button w-full sm:w-auto" disabled={isLifecycleRunning} onClick={() => void handlePairingCode(instance.id)}>
-                      {activeLifecycleAction === "pair" ? "Requesting code..." : "Pair with code"}
+                      {activeLifecycleAction === "pair" ? "Solicitando código..." : "Vincular con código"}
                     </Button>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Pair with code</DialogTitle>
+                        <DialogTitle>Vincular con código</DialogTitle>
                         <DialogDescription>
                           {showPairDialogLoading ? (
                             <div className="flex justify-center py-3">
@@ -846,7 +847,7 @@ function DashboardInstance() {
                           ) : pairingCode ? (
                             <div className="py-3">
                               <p className="text-center">
-                                <strong>Pair with code</strong>
+                                <strong>Código de vinculación</strong>
                               </p>
                               <p className="pairing-code text-center">
                                 {pairingCode.substring(0, 4)}-{pairingCode.substring(4, 8)}
@@ -854,7 +855,7 @@ function DashboardInstance() {
                             </div>
                           ) : (
                             <Alert variant="warning">
-                              <AlertTitle>No pairing code returned</AlertTitle>
+                              <AlertTitle>Código no disponible</AlertTitle>
                               <AlertDescription>La solicitud terminó, pero no hay código de vinculación disponible para el estado actual.</AlertDescription>
                             </Alert>
                           )}
@@ -868,7 +869,7 @@ function DashboardInstance() {
           </CardContent>
           <CardFooter className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
             <div className="text-xs text-muted-foreground">
-              Created {formatOperatorTimestamp(instance.createdAt)}{instance.updatedAt ? ` · Updated ${formatOperatorTimestamp(instance.updatedAt)}` : ""}
+              Creada {formatOperatorTimestamp(instance.createdAt)}{instance.updatedAt ? ` · Última actualización ${formatOperatorTimestamp(instance.updatedAt)}` : ""}
             </div>
             <OperatorActionBar className="sm:justify-end">
               <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning || isRefreshingLifecycle}>
@@ -887,17 +888,17 @@ function DashboardInstance() {
         <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Log out this instance?</DialogTitle>
+              <DialogTitle>¿Cerrar sesión de esta instancia?</DialogTitle>
               <DialogDescription>
-                Esto cerrará la sesión de WhatsApp para {instance.name}. Envíos por cola y chats pueden detenerse hasta volver a vincular o reconectar.
+                Esto cierra la sesión de WhatsApp para {instance.name}. Los chats, envíos directos y broadcasts pueden quedar detenidos hasta reconectar o volver a vincular.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setLogoutDialogOpen(false)} disabled={activeLifecycleAction === "logout"}>
-                Keep connected
+                Mantener conectada
               </Button>
               <Button type="button" variant="destructive" onClick={() => void handleLogout(instance.id)} disabled={activeLifecycleAction === "logout"}>
-                {activeLifecycleAction === "logout" ? "Logging out..." : "Confirm logout"}
+                {activeLifecycleAction === "logout" ? "Cerrando sesión..." : "Confirmar cierre"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -917,11 +918,12 @@ function DashboardInstance() {
               </AlertDescription>
             </Alert>
             <Alert variant="info">
-              <AlertTitle>History and delivery are runtime-dependent</AlertTitle>
+              <AlertTitle>Historial y entrega dependen del runtime</AlertTitle>
               <AlertDescription>
-                Runtime, historial de ciclo de vida, recuperación acotada y envío asíncrono reflejan la información disponible. Fechas faltantes o historial parcial se muestran sin inferencias.
+                Historial parcial significa que solo se muestra lo guardado por la instancia. Si faltan eventos antiguos o media, usa recuperación acotada para un JID específico.
               </AlertDescription>
             </Alert>
+            <PilotFeedbackCard compact />
           </CardContent>
         </Card>
       </section>
@@ -960,12 +962,12 @@ function DashboardInstance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity size="20" />
-              Runtime status
+              Estado de runtime
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              This panel reflects the durable runtime endpoint. It is the best current operator view, but final truth can still lag when the bridge is temporarily unavailable.
+              Este panel ayuda a decidir si conviene usar chat, enviar mensajes o esperar reconexión. Si el bridge está degradado, prioriza recuperar conexión antes de campañas.
             </p>
             {runtimeError ? (
               <Alert variant={isBridgeUnavailableError(runtimeError) ? "warning" : "destructive"}>
@@ -980,16 +982,16 @@ function DashboardInstance() {
             ) : runtimeState ? (
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-xl border bg-background/80 p-4">
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">Current runtime state</div>
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Estado actual</div>
                   <OperatorStatusBadge variant={getRuntimeBadgeVariant(runtimeState.state)}>{formatRuntimeLabel(runtimeState.state)}</OperatorStatusBadge>
                   <div className="mt-2 text-xs text-muted-foreground">{formatOperatorTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
                 <div className="rounded-xl border bg-background/80 p-4">
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">Last observed status</div>
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Último estado observado</div>
                   <OperatorStatusBadge variant={getRuntimeBadgeVariant(runtimeState.lastObservedStatus || "unknown")}>{formatRuntimeLabel(runtimeState.lastObservedStatus)}</OperatorStatusBadge>
                 </div>
                 <div className="rounded-xl border bg-background/80 p-4">
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">Bridge signal</div>
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Señal del bridge</div>
                   {runtimeState.bridgeHealthy === undefined ? (
                     <OperatorStatusBadge variant="outline">No reportado</OperatorStatusBadge>
                   ) : runtimeState.bridgeHealthy ? (
@@ -999,7 +1001,7 @@ function DashboardInstance() {
                   )}
                 </div>
                 <div className="rounded-xl border bg-background/80 p-4 md:col-span-3">
-                  <div className="mb-2 text-xs font-medium text-muted-foreground">Last updated</div>
+                  <div className="mb-2 text-xs font-medium text-muted-foreground">Última actualización</div>
                   <div className="text-sm">{formatOptionalTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
               </div>
@@ -1022,17 +1024,17 @@ function DashboardInstance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock3 size="20" />
-              Runtime history
+              Historial de runtime
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Recent lifecycle events help explain why an instance is connected, disconnected, pairing, or recovering. Event completeness still depends on bridge availability.
+              Los eventos recientes explican reconexión, vinculación o fallos. La lista puede ser parcial si el runtime no reportó todo.
             </p>
             <div className="rounded-xl border bg-background/80 p-4">
-              <div className="mb-2 text-sm font-medium">Bounded history recovery</div>
+              <div className="mb-2 text-sm font-medium">Recuperación acotada de historial</div>
               <p className="mb-4 text-sm text-muted-foreground">
-                Request a bounded history backfill for one WhatsApp chat JID. This is a recovery tool, not a guaranteed full replay, and it only works when the live bridge can return a sync blob.
+                Úsala cuando un chat existe pero no ves historial guardado suficiente. La solicitud intenta recuperar un rango para un JID; no garantiza replay completo.
               </p>
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
                 <div className="grid gap-2">
@@ -1046,7 +1048,7 @@ function DashboardInstance() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="history-backfill-count">Count</Label>
+                  <Label htmlFor="history-backfill-count">Cantidad</Label>
                   <Input
                     id="history-backfill-count"
                     type="number"
@@ -1064,7 +1066,7 @@ function DashboardInstance() {
                     className="w-full"
                     onClick={handleHistoryBackfill}
                     disabled={isBackfillRunning || instance.connectionStatus !== "open"}>
-                    {isBackfillRunning ? "Requesting..." : "Request bounded backfill"}
+                    {isBackfillRunning ? "Solicitando..." : "Solicitar recuperación"}
                   </Button>
                 </div>
               </div>

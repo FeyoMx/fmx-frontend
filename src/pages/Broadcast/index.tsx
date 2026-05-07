@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { OperatorPageHeader } from "@/components/operator-page-header";
 import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
 import { OperatorEmptyState, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
+import { PilotFeedbackCard } from "@/components/pilot-feedback-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -663,9 +664,10 @@ function Broadcast() {
         <RadioTower className="h-4 w-4" />
         <AlertTitle>La cola de broadcast está disponible; el envío depende del runtime.</AlertTitle>
         <AlertDescription>
-          Puedes crear y revisar trabajos aquí. El envío real requiere una instancia conectada y cola saludable. El detalle de destinatarios representa intentos y resultados de cola, no lecturas de WhatsApp.
+          Usa Broadcast para campañas o mensajes a varios destinatarios. El progreso de destinatarios muestra intentos de cola, enviados, fallidos y pendientes; no representa lecturas de WhatsApp.
         </AlertDescription>
       </Alert>
+      <PilotFeedbackCard compact />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         {[
@@ -767,7 +769,7 @@ function Broadcast() {
                 </div>
 
                 <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                  Esta pantalla crea trabajos de cola, no entregas garantizadas. El detalle mostrará solo intentos y resultados disponibles.
+                  Antes de crear un broadcast, confirma que la instancia esté Disponible y que el texto sea el correcto. El trabajo queda en cola y no puede prometer entrega final.
                 </div>
               </div>
             </div>
@@ -869,7 +871,7 @@ function Broadcast() {
                       ? "No hay trabajos fallidos o completados con fallos en este momento."
                       : historyFilter === "completed"
                         ? "Todavía no hay trabajos completados con este filtro."
-                        : "El historial aparecerá después de crear el primer trabajo. La pantalla se enfoca en estado, programación y reintentos disponibles."
+                        : "Crea tu primer broadcast cuando necesites enviar el mismo mensaje a varios destinatarios. Para conversaciones individuales y seguimiento manual, usa Chat."
               }
             />
           ) : (

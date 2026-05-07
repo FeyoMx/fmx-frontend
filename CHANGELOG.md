@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Pilot onboarding guidance for first-use Dashboard, Instance Dashboard, Chat, Broadcast, and Contacts states.
+- Lightweight pilot feedback capture via `VITE_PILOT_FEEDBACK_URL` with a mailto fallback, requiring no backend changes.
 - Operator productivity controls for the production MVP: Dashboard attention filters, Chat unread/recent filters, and Broadcast active/attention/completed filters.
 - Direct Dashboard instance actions for opening the instance panel or chat without routing through secondary controls.
 - Shared operator surface primitives for stat tiles, empty states, status badges, action bars, and mobile-friendly full-width actions.
@@ -53,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
+- Clarified safety copy for instance logout, broadcast job creation, and bounded history recovery.
+- Improved operator help copy around partial history, chat versus broadcast usage, and broadcast recipient progress semantics.
 - Improved daily operator flow hierarchy across Dashboard, Chat, and Broadcast so attention, disconnected, unread, failed, and pending states are faster to find.
 - Broadcast recipient summaries now include lightweight attempt-progress visibility when backend totals are available.
 - Polished visual consistency across Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, Login, and supported connector/settings pages without adding new features.

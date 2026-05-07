@@ -330,7 +330,7 @@ function ChatShell() {
                         ? "No hay conversaciones sin leer en este momento."
                         : threadFilter === "recent"
                           ? "Todavía no hay conversaciones con actividad reciente guardada."
-                          : "No hay conversaciones disponibles para esta instancia todavía."
+                          : "Cuando la instancia reciba o envíe mensajes, las conversaciones aparecerán aquí para atención manual del operador."
                   }
                 />
               )}

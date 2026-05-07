@@ -37,6 +37,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - instance list now prioritizes items needing attention and uses stronger empty/filter states
   - quick filters for all, attention, available, and disconnected instances reduce daily triage clicks
   - instance cards now expose direct Panel and Chat actions while keeping destructive deletion secondary
+  - first-use empty state now guides pilot users to create an instance, open the instance panel, and connect with QR
+  - pilot feedback card is visible without backend support and can use `VITE_PILOT_FEEDBACK_URL` or the default mailto fallback
   - status overview chart stays tied to real instance statuses
   - aggregate counters remain explicitly labeled as backend-limited or snapshot-only
   - clearer operator messaging about what is trustworthy now versus still sparse
@@ -44,11 +46,13 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/contacts`
   - consistent header, support caveat, loading/refresh button states, and cleaner empty/filter states
   - retryable error state, skeleton table rows for cold loads, duplicate create prevention, disabled dialog controls during create, and safer rendering for partial contact fields/tags
+  - no-contact state now explains the first pilot action and offers a direct add-contact button
 - `/manager/broadcast`
   - queue summary cards for queued, processing, completed, and failed jobs
   - clearer status badges, schedule copy, retry visibility, and queue-history readability
   - quick queue filters for active, attention, and completed jobs help operators focus on current work
   - recipient summaries now show lightweight attempt progress when backend totals are available
+  - first-use copy explains when to use Broadcast versus Chat and clarifies that recipient progress means queue attempts/results, not WhatsApp reads
   - inline validation feedback plus explicit runtime-dependency messaging
   - recipient analytics UI contract prepared so totals, sent, failed, pending, and progress can surface as soon as the backend returns them
   - honest placeholder copy when analytics are not yet reported
@@ -79,6 +83,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - guarded history backfill recovery action for chat JIDs with stored anchors
   - clear accepted-versus-failed backfill feedback that treats requested count as request scope only
   - bounded backfill form now uses clearer disabled-state copy when the instance is not open
+  - pairing/reconnect guidance now explains the first-use sequence before QR or code pairing
+  - logout and bounded history recovery copy now state operational impact before the user confirms
   - text-only outbound send flow
   - async status polling against `status_endpoint`
 - `/manager/instance/:instanceId/settings`
@@ -95,6 +101,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - stronger unread/preview emphasis when the backend exposes them
   - quick filters for unread and recent conversations make long daily chat sessions easier to scan
   - chat threads are ordered by unread activity first, then latest saved activity
+  - no-history and no-thread states now explain when to use Chat, when to use Broadcast, and how partial history can be recovered
   - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
   - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
@@ -167,6 +174,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - supported Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, and AI Settings surfaces now use clearer Spanish or neutral operator copy for partial history, active connection requirements, and unavailable actions
 - final visual consistency pass standardized card radius/padding, page header behavior, stat tiles, empty states, and status badges across the supported MVP surface
 - operator productivity pass added quick triage filters, direct Dashboard-to-chat/panel actions, unread/recent chat filtering, and broadcast attention filters without changing backend contracts
+- pilot onboarding pass added first-use guidance, safety copy for important actions, and a lightweight feedback capture surface without backend changes
 - login now uses a branded production card with inline error/loading feedback instead of the previous minimal fork-style shell
 - supported connector/settings pages now share the same card-based form framing, event-list density, mobile action stacking, and long-event wrapping
 - chat and broadcast detail panels now use stronger selected states, clearer dense-row hierarchy, and safer wrapping for long JIDs, phone numbers, message previews, and errors

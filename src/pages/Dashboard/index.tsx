@@ -9,6 +9,7 @@ import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
 import { OperatorErrorState, SkeletonCard } from "@/components/operator-state";
 import { OperatorEmptyState, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
+import { PilotFeedbackCard } from "@/components/pilot-feedback-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -385,9 +386,10 @@ function Dashboard() {
               <RadioTower className="h-4 w-4" />
               <AlertTitle>Métricas conservadoras</AlertTitle>
               <AlertDescription>
-                La salud de instancias y la distribución de estados son las señales más confiables hoy. Mensajes, contactos y broadcasts pueden mostrarse como historial parcial.
+                Historial parcial significa que el sistema muestra lo guardado hasta ahora, sin inventar mensajes, contactos o entregas que el runtime no haya reportado.
               </AlertDescription>
             </Alert>
+            <PilotFeedbackCard compact />
             {instancesError ? (
               <OperatorErrorState
                 title="Lista de instancias no disponible"
@@ -522,8 +524,9 @@ function Dashboard() {
             description={
               instances?.length
                 ? "Prueba otra búsqueda o filtro de estado. El panel muestra solo flujos disponibles para operación diaria."
-                : "Crea la primera instancia para iniciar vinculación, monitoreo de runtime, chats, broadcasts y envíos salientes."
+                : "Empieza creando una instancia. Después abre su panel, solicita reconexión si hace falta y escanea el QR desde WhatsApp para habilitar chats, broadcasts y envíos."
             }
+            action={!instances?.length ? <NewInstance resetTable={resetTable} /> : undefined}
           />
         ) : (
           <main className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

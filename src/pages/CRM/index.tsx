@@ -1,11 +1,12 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, Plus, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, Plus, RefreshCw, Search, Users } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
 import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
-import { OperatorStatusBadge } from "@/components/operator-surface";
+import { OperatorEmptyState, OperatorStatusBadge } from "@/components/operator-surface";
+import { PilotFeedbackCard } from "@/components/pilot-feedback-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,9 +144,10 @@ export function CRM() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Disponible en esta versión</AlertTitle>
             <AlertDescription>
-              Contactos permite listar y crear registros. Eliminar contactos y administrar etapas no está disponible en esta versión.
+              Contactos permite listar y crear registros para uso operativo. Úsalos como base de consulta y segmentación ligera antes de campañas.
             </AlertDescription>
           </Alert>
+          <PilotFeedbackCard compact />
           {contactsError ? (
             <OperatorErrorState
               title="Contacts unavailable"
@@ -200,9 +202,24 @@ export function CRM() {
                 ) : filteredContacts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
-                      <div className="py-6">
-                        {searchQuery.trim() || selectedTag ? "No hay contactos con estos filtros." : t("crm.noContacts") || "No hay contactos todavía"}
-                      </div>
+                      <OperatorEmptyState
+                        icon={Users}
+                        className="border-0 shadow-none"
+                        title={searchQuery.trim() || selectedTag ? "No hay contactos con estos filtros" : t("crm.noContacts") || "No hay contactos todavía"}
+                        description={
+                          searchQuery.trim() || selectedTag
+                            ? "Prueba otro nombre, teléfono, correo o etiqueta."
+                            : "Agrega el primer contacto con nombre y teléfono. Después podrás buscarlo, etiquetarlo desde backend cuando esté disponible y usarlo como referencia operativa."
+                        }
+                        action={
+                          !searchQuery.trim() && !selectedTag ? (
+                            <Button onClick={() => setShowAddContact(true)} disabled={isLoading}>
+                              <Plus size={18} className="mr-2" />
+                              Agregar contacto
+                            </Button>
+                          ) : undefined
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -238,7 +255,7 @@ export function CRM() {
                 Showing {visibleContacts.visibleCount} of {visibleContacts.totalCount} filtered contacts to keep large datasets responsive.
               </div>
               <Button variant="outline" onClick={visibleContacts.showMore} disabled={isLoading}>
-                Show 100 more
+                Mostrar 100 más
               </Button>
             </div>
           ) : null}

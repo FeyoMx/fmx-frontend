@@ -68,7 +68,7 @@ function ChatConversationPanel({
           <OperatorEmptyState
             icon={MessagesSquare}
             title="Elige una conversación"
-            description="Selecciona un chat de la lista para cargar el historial guardado de ese JID."
+            description="Usa chat para conversaciones uno a uno donde necesitas revisar contexto y responder manualmente. Para mensajes masivos o programados, usa Broadcast."
           />
         </CardContent>
       </Card>
@@ -120,11 +120,11 @@ function ChatConversationPanel({
           ) : mergedMessages.length > 0 ? (
             <ChatMessageList messages={mergedMessages} />
           ) : (
-            <OperatorEmptyState
-              icon={MessagesSquare}
-              title="Sin historial guardado"
-              description="Esta conversación está disponible, pero todavía no hay mensajes guardados para este JID. Envía un mensaje o espera nuevos eventos capturados por la instancia."
-            />
+          <OperatorEmptyState
+            icon={MessagesSquare}
+            title="Sin historial guardado"
+            description="Esta conversación está disponible, pero todavía no hay mensajes guardados para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
+          />
           )}
         </CardContent>
       </Card>
