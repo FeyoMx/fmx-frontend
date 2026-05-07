@@ -21,6 +21,8 @@ import { useMediaQuery } from "@/utils/useMediaQuery";
 import { ChatConversationPanel } from "./ChatConversationPanel";
 import { ChatEmptyState } from "./ChatEmptyState";
 
+type ThreadFilter = "all" | "unread" | "recent";
+
 const previewLabel = (thread: ChatThread): string => {
   if (thread.previewText) {
     return thread.previewText;
@@ -28,15 +30,15 @@ const previewLabel = (thread: ChatThread): string => {
 
   switch (thread.previewType) {
     case "image":
-      return "Image message";
+      return "Mensaje con imagen";
     case "video":
-      return "Video message";
+      return "Mensaje con video";
     case "audio":
-      return "Audio message";
+      return "Mensaje de audio";
     case "document":
-      return "Document message";
+      return "Documento adjunto";
     default:
-      return "No preview available yet";
+      return "Sin vista previa todavía";
   }
 };
 
@@ -62,6 +64,7 @@ function ChatShell() {
   const { instance } = useInstance();
   const { remoteJid } = useParams<{ remoteJid: string }>();
   const [search, setSearch] = useState("");
+  const [threadFilter, setThreadFilter] = useState<ThreadFilter>("all");
   const deferredSearch = useDeferredValue(search);
 
   const { data: threadData, isLoading: threadsLoading, isFetching: threadsFetching, error: threadsError, refetch: refetchThreads } = useChatThreads({
@@ -140,7 +143,40 @@ function ChatShell() {
     return `Mostrando conversaciones guardadas.${source}${refreshedAt}`;
   }, [chatListMetadata]);
 
-  const visibleThreads = useIncrementalList(threads, {
+  const filteredThreads = useMemo(() => {
+    return [...threads]
+      .filter((thread) => {
+        if (threadFilter === "unread") {
+          return (thread.unreadCount ?? 0) > 0;
+        }
+        if (threadFilter === "recent") {
+          return !!thread.lastMessageAt;
+        }
+        return true;
+      })
+      .sort((left, right) => {
+        const unreadDiff = (right.unreadCount ?? 0) - (left.unreadCount ?? 0);
+        if (unreadDiff !== 0) {
+          return unreadDiff;
+        }
+
+        const leftTime = left.lastMessageAt ? new Date(left.lastMessageAt).getTime() : 0;
+        const rightTime = right.lastMessageAt ? new Date(right.lastMessageAt).getTime() : 0;
+        if (rightTime !== leftTime) {
+          return rightTime - leftTime;
+        }
+
+        return (left.pushName || left.remoteJid).localeCompare(right.pushName || right.remoteJid);
+      });
+  }, [threadFilter, threads]);
+
+  const threadFilters: Array<{ value: ThreadFilter; label: string; count: number }> = [
+    { value: "all", label: "Todos", count: threadSummary.total },
+    { value: "unread", label: "Sin leer", count: threadSummary.unreadThreads },
+    { value: "recent", label: "Recientes", count: threadSummary.withPreview },
+  ];
+
+  const visibleThreads = useIncrementalList(filteredThreads, {
     initialCount: 75,
     step: 75,
   });
@@ -175,7 +211,7 @@ function ChatShell() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <OperatorStatTile label="Chats" value={threadSummary.total} detail="Disponibles" className="p-3" />
-                <OperatorStatTile label="Con actividad" value={threadSummary.unreadThreads} detail="Sin leer" className="p-3" />
+                <OperatorStatTile label="Atención" value={threadSummary.unreadThreads} detail="Chats sin leer" className="p-3" />
                 <OperatorStatTile label="Mensajes" value={threadSummary.unreadMessages} detail="Sin leer" className="p-3" />
               </div>
 
@@ -189,6 +225,20 @@ function ChatShell() {
                   disabled={threadsLoading && !threadData}
                 />
               </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {threadFilters.map((filter) => (
+                  <Button
+                    key={filter.value}
+                    type="button"
+                    variant={threadFilter === filter.value ? "secondary" : "outline"}
+                    size="sm"
+                    className="shrink-0 gap-2"
+                    onClick={() => setThreadFilter(filter.value)}>
+                    {filter.label}
+                    <span className="rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">{filter.count}</span>
+                  </Button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
               {threadsLoading && !threadData ? (
@@ -199,15 +249,15 @@ function ChatShell() {
                 </div>
               ) : threadsError ? (
                 <OperatorErrorState
-                  title="Chat list unavailable"
-                  description={getApiErrorMessage(threadsError, "Unable to load tenant-safe chats for this instance.")}
+                  title="Lista de chats no disponible"
+                  description={getApiErrorMessage(threadsError, "No se pudieron cargar los chats de esta instancia.")}
                   onRetry={() => void refetchThreads()}
                 />
-              ) : threads.length > 0 ? (
+              ) : filteredThreads.length > 0 ? (
                 <>
                   {threadsFetching ? (
                     <div role="status" className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-                      Refreshing chat list without clearing the current results.
+                      Actualizando chats sin borrar los resultados actuales.
                     </div>
                   ) : null}
                   {visibleThreads.visibleItems.map((thread) => {
@@ -262,21 +312,25 @@ function ChatShell() {
                   {visibleThreads.hasMore ? (
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
                       <div className="text-xs text-muted-foreground">
-                        Showing {visibleThreads.visibleCount} of {visibleThreads.totalCount} surfaced threads to keep large chat lists responsive.
+                        Mostrando {visibleThreads.visibleCount} de {visibleThreads.totalCount} chats para mantener la lista ágil.
                       </div>
                       <Button variant="outline" onClick={visibleThreads.showMore}>
-                        Show 75 more
+                        Mostrar 75 más
                       </Button>
                     </div>
                   ) : null}
                 </>
               ) : (
                 <ChatEmptyState
-                  title={search.trim() ? "No chats match this search" : "No chats surfaced yet"}
+                  title={search.trim() || threadFilter !== "all" ? "No hay chats con este filtro" : "Aún no hay chats visibles"}
                   description={
                     search.trim()
                       ? "Prueba otro número, nombre o fragmento de JID. Solo aparecen conversaciones disponibles para esta instancia."
-                      : "No hay conversaciones disponibles para esta instancia todavía."
+                      : threadFilter === "unread"
+                        ? "No hay conversaciones sin leer en este momento."
+                        : threadFilter === "recent"
+                          ? "Todavía no hay conversaciones con actividad reciente guardada."
+                          : "No hay conversaciones disponibles para esta instancia todavía."
                   }
                 />
               )}

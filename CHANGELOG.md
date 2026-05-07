@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Operator productivity controls for the production MVP: Dashboard attention filters, Chat unread/recent filters, and Broadcast active/attention/completed filters.
+- Direct Dashboard instance actions for opening the instance panel or chat without routing through secondary controls.
 - Shared operator surface primitives for stat tiles, empty states, status badges, action bars, and mobile-friendly full-width actions.
 - Open source preparation with comprehensive documentation
 - GitHub issue templates and PR templates
@@ -51,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
+- Improved daily operator flow hierarchy across Dashboard, Chat, and Broadcast so attention, disconnected, unread, failed, and pending states are faster to find.
+- Broadcast recipient summaries now include lightweight attempt-progress visibility when backend totals are available.
 - Polished visual consistency across Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, Login, and supported connector/settings pages without adding new features.
 - Standardized card radius, card padding, page-header action wrapping, status badges, empty states, dense table/list spacing, and long identifier wrapping across the production MVP surface.
 - Improved the login screen with branded production framing, inline error feedback, and clearer loading state.

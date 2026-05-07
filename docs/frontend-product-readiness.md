@@ -35,6 +35,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager`
   - upgraded operator dashboard hero with clearer healthy / needs-attention / disconnected summaries
   - instance list now prioritizes items needing attention and uses stronger empty/filter states
+  - quick filters for all, attention, available, and disconnected instances reduce daily triage clicks
+  - instance cards now expose direct Panel and Chat actions while keeping destructive deletion secondary
   - status overview chart stays tied to real instance statuses
   - aggregate counters remain explicitly labeled as backend-limited or snapshot-only
   - clearer operator messaging about what is trustworthy now versus still sparse
@@ -45,6 +47,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/broadcast`
   - queue summary cards for queued, processing, completed, and failed jobs
   - clearer status badges, schedule copy, retry visibility, and queue-history readability
+  - quick queue filters for active, attention, and completed jobs help operators focus on current work
+  - recipient summaries now show lightweight attempt progress when backend totals are available
   - inline validation feedback plus explicit runtime-dependency messaging
   - recipient analytics UI contract prepared so totals, sent, failed, pending, and progress can surface as soon as the backend returns them
   - honest placeholder copy when analytics are not yet reported
@@ -89,6 +93,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - grouped conversation timeline with clearer timestamps, delivery indicators, and scroll-to-latest behavior
   - faster-feeling thread filtering via deferred search updates
   - stronger unread/preview emphasis when the backend exposes them
+  - quick filters for unread and recent conversations make long daily chat sessions easier to scan
+  - chat threads are ordered by unread activity first, then latest saved activity
   - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
   - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
@@ -160,6 +166,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - guarded integration routes now use short operator copy such as En proceso, No disponible en esta versión, and Volver al panel instead of raw backend/501/legacy explanations
 - supported Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, and AI Settings surfaces now use clearer Spanish or neutral operator copy for partial history, active connection requirements, and unavailable actions
 - final visual consistency pass standardized card radius/padding, page header behavior, stat tiles, empty states, and status badges across the supported MVP surface
+- operator productivity pass added quick triage filters, direct Dashboard-to-chat/panel actions, unread/recent chat filtering, and broadcast attention filters without changing backend contracts
 - login now uses a branded production card with inline error/loading feedback instead of the previous minimal fork-style shell
 - supported connector/settings pages now share the same card-based form framing, event-list density, mobile action stacking, and long-event wrapping
 - chat and broadcast detail panels now use stronger selected states, clearer dense-row hierarchy, and safer wrapping for long JIDs, phone numbers, message previews, and errors
