@@ -2,7 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
@@ -31,22 +30,21 @@ const FormSchema = z.object({
 });
 
 function NewInstance({ resetTable }: { resetTable: () => void }) {
-  const { t } = useTranslation();
   const { createInstance } = useManageInstance();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const options = [
     {
       value: "WHATSAPP-BAILEYS",
-      label: t("instance.form.integration.baileys"),
+      label: "Baileys",
     },
     {
       value: "WHATSAPP-BUSINESS",
-      label: t("instance.form.integration.whatsapp"),
+      label: "WhatsApp Cloud API",
     },
     {
       value: "EVOLUTION",
-      label: t("instance.form.integration.evolution"),
+      label: "Evolution",
     },
   ];
 
@@ -87,7 +85,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
       onReset();
       resetTable();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to create instance."));
+      toast.error(getApiErrorMessage(error, "No se pudo crear la instancia."));
     } finally {
       setIsSubmitting(false);
     }
@@ -112,22 +110,22 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px]" onCloseAutoFocus={onReset}>
         <DialogHeader>
-          <DialogTitle>{t("instance.modal.title")}</DialogTitle>
+          <DialogTitle>Nueva instancia</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-            <FormInput required name="name" label={t("instance.form.name")}>
+            <FormInput required name="name" label="Nombre">
               <Input disabled={isSubmitting} />
             </FormInput>
-            <FormSelect name="integration" label={t("instance.form.integration.label")} options={options} disabled={isSubmitting} />
-            <FormInput required name="token" label={t("instance.form.token")}>
+            <FormSelect name="integration" label="Canal" options={options} disabled={isSubmitting} />
+            <FormInput required name="token" label="Token">
               <Input disabled={isSubmitting} />
             </FormInput>
-            <FormInput name="number" label={t("instance.form.number")}>
+            <FormInput name="number" label="Número">
               <Input type="tel" disabled={isSubmitting} />
             </FormInput>
             {integrationSelected === "WHATSAPP-BUSINESS" && (
-              <FormInput required name="businessId" label={t("instance.form.businessId")}>
+              <FormInput required name="businessId" label="Business ID">
                 <Input disabled={isSubmitting} />
               </FormInput>
             )}

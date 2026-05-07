@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChevronDown, CircleHelp, FileQuestion, IterationCcw, LayoutDashboard, LifeBuoy, MessageCircle, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import { useContext, useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { InstanceContext } from "@/contexts/InstanceContext";
@@ -12,39 +11,38 @@ import { Button } from "./ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
 function Sidebar() {
-  const { t } = useTranslation();
   const instanceContext = useContext(InstanceContext);
   const instance = instanceContext?.instance ?? null;
 
   const menus = useMemo(
     () => [
       {
-        section: "Primary",
+        section: "Principal",
         items: [
           {
             id: "dashboard",
-            title: t("sidebar.dashboard"),
+            title: "Panel",
             icon: LayoutDashboard,
             highlight: "Disponible",
             path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/dashboard` : "/manager"),
           },
           {
             id: "contacts",
-            title: t("sidebar.contacts"),
+            title: "Contactos",
             icon: ShieldCheck,
             highlight: "Disponible",
             path: "/manager/contacts",
           },
           {
             id: "broadcast",
-            title: t("sidebar.broadcast"),
+            title: "Broadcasts",
             icon: IterationCcw,
             highlight: "Disponible",
             path: "/manager/broadcast",
           },
           {
             id: "aiSettings",
-            title: t("sidebar.aiSettings"),
+            title: "IA",
             icon: Sparkles,
             highlight: "Disponible",
             path: "/manager/ai-settings",
@@ -52,46 +50,46 @@ function Sidebar() {
         ],
       },
       {
-        section: "Instance",
+        section: "Instancia",
         items: [
           {
-            title: "Conversations",
+            title: "Conversaciones",
             icon: MessageCircle,
             children: [
               {
                 id: "chats",
-                title: t("sidebar.chats"),
+                title: "Chats",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/chat` : undefined),
               },
             ],
           },
           {
-            title: "Runtime & setup",
+            title: "Runtime y ajustes",
             icon: Wrench,
             children: [
               {
                 id: "settings",
-                title: t("sidebar.settings"),
+                title: "Comportamiento",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/settings` : undefined),
               },
               {
                 id: "proxy",
-                title: t("sidebar.proxy"),
+                title: "Proxy",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/proxy` : undefined),
               },
               {
                 id: "webhook",
-                title: t("sidebar.webhook"),
+                title: "Webhook",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/webhook` : undefined),
               },
               {
                 id: "websocket",
-                title: t("sidebar.websocket"),
+                title: "WebSocket",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/websocket` : undefined),
               },
               {
                 id: "rabbitmq",
-                title: t("sidebar.rabbitmq"),
+                title: "RabbitMQ",
                 path: ({ instanceId }: { instanceId?: string }) => (instanceId ? `/manager/instance/${instanceId}/rabbitmq` : undefined),
               },
             ],
@@ -103,32 +101,32 @@ function Sidebar() {
         items: [
           {
             id: "documentation",
-            title: t("sidebar.documentation"),
+            title: "Documentación",
             icon: FileQuestion,
             link: "https://doc.evolution-api.com",
           },
           {
             id: "postman",
-            title: t("sidebar.postman"),
+            title: "Postman",
             icon: CircleHelp,
             link: "https://evolution-api.com/postman",
           },
           {
             id: "discord",
-            title: t("sidebar.discord"),
+            title: "Discord",
             icon: MessageCircle,
             link: "https://evolution-api.com/discord",
           },
           {
             id: "support-premium",
-            title: t("sidebar.supportPremium"),
+            title: "Soporte",
             icon: LifeBuoy,
             link: "https://evolution-api.com/suporte-pro",
           },
         ],
       },
     ],
-    [t],
+    [],
   );
 
   const navigate = useNavigate();
@@ -174,7 +172,7 @@ function Sidebar() {
     <div className="flex h-full w-full flex-col border-r border-border bg-background">
       <div className="border-b border-border px-4 py-4">
         <div className="text-sm font-bold text-primary">FMX Evolution</div>
-        <div className="text-xs text-muted-foreground">Operator workspace</div>
+        <div className="text-xs text-muted-foreground">Espacio de operación</div>
       </div>
 
       <div className="flex h-full flex-col gap-5 px-3 py-4">
@@ -206,7 +204,7 @@ function Sidebar() {
                                   !child.resolvedPath && "cursor-not-allowed opacity-50",
                                 )}>
                                 <span>{child.title}</span>
-                                {!child.resolvedPath ? <Badge variant="outline">Select instance</Badge> : null}
+                                {!child.resolvedPath ? <Badge variant="outline">Elige instancia</Badge> : null}
                               </button>
                             </li>
                           ))}

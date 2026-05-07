@@ -54,7 +54,7 @@ const fileToBase64 = async (file: File): Promise<string> =>
 const buildSendResultFeedback = (result: ChatSendResult, fallbackTitle: string): ComposerFeedback => ({
   status: "success",
   title: fallbackTitle,
-  detail: result.message_id ? `Message ID: ${result.message_id}` : result.message || undefined,
+  detail: result.message_id ? `ID de mensaje: ${result.message_id}` : result.message || undefined,
 });
 
 const formatFileSize = (bytes: number): string => {

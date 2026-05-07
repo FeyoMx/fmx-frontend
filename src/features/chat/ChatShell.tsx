@@ -83,7 +83,7 @@ function ChatShell() {
     return {
       id: remoteJid,
       remoteJid,
-      pushName: remoteJid.split("@")[0] || "Unknown contact",
+      pushName: remoteJid.split("@")[0] || "Contacto pendiente",
       profilePicUrl: "",
       labels: [],
     };

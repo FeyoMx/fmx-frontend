@@ -5,22 +5,22 @@ import { ChatHistoryMessage } from "@/lib/queries/chat/types";
 
 const formatTimestamp = (value: string): string => {
   if (!value) {
-    return "Pending timestamp";
+    return "Fecha pendiente";
   }
 
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? "Pending timestamp" : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? "Fecha pendiente" : parsed.toLocaleString("es-MX");
 };
 
 const formatBubbleTime = (value: string): string => {
   if (!value) {
-    return "Pending";
+    return "Pendiente";
   }
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime())
-    ? "Pending"
-    : parsed.toLocaleTimeString([], {
+    ? "Pendiente"
+    : parsed.toLocaleTimeString("es-MX", {
         hour: "numeric",
         minute: "2-digit",
       });
@@ -29,7 +29,7 @@ const formatBubbleTime = (value: string): string => {
 const formatDayDivider = (value: string): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return "Unknown day";
+    return "Fecha pendiente";
   }
 
   const today = new Date();
@@ -37,14 +37,14 @@ const formatDayDivider = (value: string): string => {
   yesterday.setDate(today.getDate() - 1);
 
   if (parsed.toDateString() === today.toDateString()) {
-    return "Today";
+    return "Hoy";
   }
 
   if (parsed.toDateString() === yesterday.toDateString()) {
-    return "Yesterday";
+    return "Ayer";
   }
 
-  return parsed.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+  return parsed.toLocaleDateString("es-MX", { month: "short", day: "numeric", year: "numeric" });
 };
 
 const dayKey = (value: string): string => {
@@ -55,16 +55,16 @@ const dayKey = (value: string): string => {
 const statusLabel = (status?: string): string | null => {
   switch (status) {
     case "read":
-      return "Read";
+      return "Leído";
     case "delivered":
-      return "Delivered";
+      return "Entregado";
     case "sent":
-      return "Sent";
+      return "Enviado";
     case "queued":
     case "running":
-      return "Sending";
+      return "Enviando";
     case "failed":
-      return "Failed";
+      return "Fallido";
     default:
       return status ? status.replace(/_/g, " ") : null;
   }
@@ -130,7 +130,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
       <div className="space-y-2">
         {message.mediaUrl ? (
           <a href={message.mediaUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border bg-background/60">
-            <img src={message.mediaUrl} alt={message.caption || message.fileName || "Image message"} className="max-h-72 w-full object-cover" loading="lazy" />
+            <img src={message.mediaUrl} alt={message.caption || message.fileName || "Mensaje con imagen"} className="max-h-72 w-full object-cover" loading="lazy" />
           </a>
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
@@ -183,13 +183,13 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border bg-background/60 px-3 py-3">
           <FileText className="h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="truncate font-medium">{message.fileName || "Document"}</div>
+            <div className="truncate font-medium">{message.fileName || "Documento"}</div>
             {message.mimeType && <div className="truncate text-xs opacity-70">{message.mimeType}</div>}
           </div>
           {message.mediaUrl && (
             <a href={message.mediaUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs underline">
               <Play className="h-3 w-3" />
-              Open
+              Abrir
             </a>
           )}
         </div>
@@ -198,7 +198,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
     );
   }
 
-  return <div className="whitespace-pre-wrap break-words">{message.text || `Stored ${message.messageType || "unknown"} message has no previewable text.`}</div>;
+  return <div className="whitespace-pre-wrap break-words">{message.text || `Mensaje ${message.messageType || "sin tipo"} guardado sin texto visible.`}</div>;
 }
 
 type MessageGroup = {

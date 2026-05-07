@@ -1,5 +1,4 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock3, PauseCircle, RadioTower, RefreshCw, Search, Send, TimerReset, Users, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -374,7 +373,6 @@ function BroadcastRecipientDetailPanel({
 }
 
 function Broadcast() {
-  const { t } = useTranslation();
   const { tenant } = useTenant();
   const { data: instances } = useFetchInstances();
 
@@ -424,7 +422,7 @@ function Broadcast() {
         }
       } catch (error) {
         if (!cancelled) {
-          setSelectedBroadcastError(getApiErrorMessage(error, "Unable to load campaign detail."));
+          setSelectedBroadcastError(getApiErrorMessage(error, "No se pudo cargar el detalle de campaña."));
         }
       } finally {
         if (!cancelled) {
@@ -450,7 +448,7 @@ function Broadcast() {
     try {
       setBroadcasts(await getBroadcastJobs());
     } catch (error) {
-      const message = getApiErrorMessage(error, t("broadcast.error.fetch") || "No se pudo cargar el historial de broadcasts");
+      const message = getApiErrorMessage(error, "No se pudo cargar el historial de broadcasts");
       setBroadcastsError(message);
       toast.error(message);
     } finally {
@@ -645,7 +643,7 @@ function Broadcast() {
   return (
     <div className="space-y-6 p-4">
       <OperatorPageHeader
-        title={t("broadcast.title") || "Broadcast"}
+        title="Broadcasts"
         description={tenant?.name}
         actions={
           <>
@@ -715,12 +713,12 @@ function Broadcast() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="broadcast-message">{t("broadcast.form.message") || "Mensaje"}</Label>
+                  <Label htmlFor="broadcast-message">Mensaje</Label>
                   <Textarea
                     id="broadcast-message"
                     value={formData.message}
                     onChange={(event) => setFormData({ ...formData, message: event.target.value })}
-                    placeholder={t("broadcast.form.messagePlaceholder") || "Escribe el mensaje"}
+                    placeholder="Escribe el mensaje"
                     rows={6}
                     disabled={submitting}
                   />
@@ -733,26 +731,26 @@ function Broadcast() {
 
               <div className="space-y-5">
                 <div className="grid gap-2">
-                  <Label htmlFor="broadcast-schedule-mode">{t("broadcast.form.schedule") || "Programación"}</Label>
+                  <Label htmlFor="broadcast-schedule-mode">Programación</Label>
                   <select
                     id="broadcast-schedule-mode"
                     value={scheduleMode}
                     onChange={(event) => setScheduleMode(event.target.value as "now" | "later")}
                     className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                     disabled={submitting}>
-                    <option value="now">{t("broadcast.schedule.now") || "Ahora"}</option>
-                    <option value="later">{t("broadcast.schedule.later") || "Más tarde"}</option>
+                    <option value="now">Ahora</option>
+                    <option value="later">Más tarde</option>
                   </select>
                 </div>
 
                 {scheduleMode === "later" ? (
                   <div className="grid gap-2">
-                    <Label htmlFor="broadcast-scheduled-time">{t("broadcast.form.scheduledTime") || "Horario programado"}</Label>
+                    <Label htmlFor="broadcast-scheduled-time">Horario programado</Label>
                     <Input id="broadcast-scheduled-time" type="datetime-local" value={formData.scheduledTime} onChange={(event) => setFormData({ ...formData, scheduledTime: event.target.value })} disabled={submitting} />
                   </div>
                 ) : (
                   <div className="grid gap-2">
-                    <Label htmlFor="broadcast-delay">{t("broadcast.form.delay") || "Retraso (segundos)"}</Label>
+                    <Label htmlFor="broadcast-delay">Retraso (segundos)</Label>
                     <Input id="broadcast-delay" type="number" value={formData.delaySec} onChange={(event) => setFormData({ ...formData, delaySec: Number.parseInt(event.target.value, 10) || 0 })} min={0} disabled={submitting} />
                   </div>
                 )}
@@ -782,7 +780,7 @@ function Broadcast() {
                 }}
                 variant="outline"
                 disabled={submitting}>
-                {t("common.cancel") || "Cancelar"}
+                Cancelar
               </Button>
               <Button onClick={requestBroadcastConfirmation} disabled={submitting}>
                 <Send size={18} className="mr-2" />
@@ -825,7 +823,7 @@ function Broadcast() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("broadcast.history") || "Historial de broadcasts"}</CardTitle>
+          <CardTitle>Historial de broadcasts</CardTitle>
           <CardDescription>
             {filteredBroadcasts.length} trabajo{filteredBroadcasts.length === 1 ? "" : "s"} visible{filteredBroadcasts.length === 1 ? "" : "s"} con los filtros actuales.
             {visibleBroadcasts.hasMore ? ` Mostrando primeros ${visibleBroadcasts.visibleCount}.` : ""}

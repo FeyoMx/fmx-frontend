@@ -21,8 +21,8 @@ i18n.use(initReactI18next).init({
       translation: frFR,
     },
   },
-  lng: localStorage.getItem("i18nextLng") || "en-US",
-  fallbackLng: "en-US",
+  lng: localStorage.getItem("i18nextLng") || "es-ES",
+  fallbackLng: "es-ES",
   interpolation: {
     escapeValue: false,
   },

@@ -1,5 +1,4 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { AlertCircle, Plus, RefreshCw, Search, Users } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -23,7 +22,6 @@ import { formatCompactTimestamp } from "@/lib/operator-format";
 import { useIncrementalList } from "@/lib/use-incremental-list";
 
 export function CRM() {
-  const { t } = useTranslation();
   const { tenant } = useTenant();
   const [contacts, setContacts] = useState<ContactView[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +74,7 @@ export function CRM() {
     try {
       setContacts(await getContacts());
     } catch (error) {
-      const message = getApiErrorMessage(error, t("crm.error.fetchContacts") || "Failed to fetch contacts");
+      const message = getApiErrorMessage(error, "No se pudieron cargar los contactos");
       setContactsError(message);
       toast.error(message);
     } finally {
@@ -90,7 +88,7 @@ export function CRM() {
     }
 
     if (!newContact.name || !newContact.phone) {
-      toast.error(t("crm.validation.requiredFields") || "Name and phone are required");
+      toast.error("Nombre y teléfono son requeridos");
       return;
     }
 
@@ -102,12 +100,12 @@ export function CRM() {
         phone: newContact.phone,
         tags: newContact.tags,
       });
-      toast.success(t("crm.message.contactAdded") || "Contact added successfully");
+      toast.success("Contacto agregado");
       setShowAddContact(false);
       setNewContact({ name: "", email: "", phone: "", tags: [] });
       void fetchContacts();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("crm.error.addContact") || "Failed to add contact"));
+      toast.error(getApiErrorMessage(error, "No se pudo agregar el contacto"));
     } finally {
       setIsSubmitting(false);
     }
@@ -116,16 +114,16 @@ export function CRM() {
   return (
     <div className="space-y-4 p-4">
       <OperatorPageHeader
-        title={t("crm.title") || "CRM"}
+        title="Contactos"
         description={tenant?.name}
         actions={
           <>
-            <Button onClick={() => void fetchContacts()} variant="outline" size="icon" disabled={isLoading} title="Refresh contacts">
+            <Button onClick={() => void fetchContacts()} variant="outline" size="icon" disabled={isLoading} title="Actualizar contactos">
               <RefreshCw size={20} className={isLoading ? "animate-spin" : undefined} />
             </Button>
             <Button onClick={() => setShowAddContact(true)} disabled={isLoading}>
               <Plus size={20} className="mr-2" />
-              {t("crm.button.addContact") || "Add Contact"}
+              Agregar contacto
             </Button>
           </>
         }
@@ -133,10 +131,10 @@ export function CRM() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("crm.contacts") || "Contacts"}</CardTitle>
+          <CardTitle>Contactos</CardTitle>
           <CardDescription>
-            {filteredContacts.length} surfaced contact{filteredContacts.length === 1 ? "" : "s"}
-            {visibleContacts.hasMore ? ` · showing first ${visibleContacts.visibleCount}` : ""}
+            {filteredContacts.length} contacto{filteredContacts.length === 1 ? "" : "s"} visible{filteredContacts.length === 1 ? "" : "s"}
+            {visibleContacts.hasMore ? ` · mostrando primeros ${visibleContacts.visibleCount}` : ""}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -150,7 +148,7 @@ export function CRM() {
           <PilotFeedbackCard compact />
           {contactsError ? (
             <OperatorErrorState
-              title="Contacts unavailable"
+              title="Contactos no disponibles"
               description={contactsError}
               onRetry={() => void fetchContacts()}
             />
@@ -160,7 +158,7 @@ export function CRM() {
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
               <Input
-                placeholder={t("crm.search") || "Search contacts..."}
+                placeholder="Buscar contactos..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="pl-8"
@@ -168,7 +166,7 @@ export function CRM() {
             </div>
             {selectedTag && (
               <Button onClick={() => setSelectedTag(null)} variant="outline" disabled={isLoading}>
-                Clear: {selectedTag}
+                Limpiar: {selectedTag}
               </Button>
             )}
           </div>
@@ -187,13 +185,13 @@ export function CRM() {
             <Table className="min-w-[760px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("crm.table.name") || "Name"}</TableHead>
-                  <TableHead>{t("crm.table.email") || "Email"}</TableHead>
-                  <TableHead>{t("crm.table.phone") || "Phone"}</TableHead>
-                  <TableHead>{t("crm.table.tags") || "Tags"}</TableHead>
-                  <TableHead>{t("crm.table.stage") || "Stage"}</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead>{t("crm.table.actions") || "Actions"}</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Etiquetas</TableHead>
+                  <TableHead>Etapa</TableHead>
+                  <TableHead>Actualizado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -205,7 +203,7 @@ export function CRM() {
                       <OperatorEmptyState
                         icon={Users}
                         className="border-0 shadow-none"
-                        title={searchQuery.trim() || selectedTag ? "No hay contactos con estos filtros" : t("crm.noContacts") || "No hay contactos todavía"}
+                        title={searchQuery.trim() || selectedTag ? "No hay contactos con estos filtros" : "No hay contactos todavía"}
                         description={
                           searchQuery.trim() || selectedTag
                             ? "Prueba otro nombre, teléfono, correo o etiqueta."
@@ -252,7 +250,7 @@ export function CRM() {
           {visibleContacts.hasMore ? (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3">
               <div className="text-sm text-muted-foreground">
-                Showing {visibleContacts.visibleCount} of {visibleContacts.totalCount} filtered contacts to keep large datasets responsive.
+                Mostrando {visibleContacts.visibleCount} de {visibleContacts.totalCount} contactos filtrados para mantener la lista ágil.
               </div>
               <Button variant="outline" onClick={visibleContacts.showMore} disabled={isLoading}>
                 Mostrar 100 más
@@ -265,8 +263,8 @@ export function CRM() {
       <Dialog open={showAddContact} onOpenChange={setShowAddContact}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("crm.dialog.addContact") || "Agregar contacto"}</DialogTitle>
-            <DialogDescription>{t("crm.dialog.addContactDescription") || "Crea un contacto con nombre y teléfono."}</DialogDescription>
+            <DialogTitle>Agregar contacto</DialogTitle>
+            <DialogDescription>Crea un contacto con nombre y teléfono.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input type="text" placeholder="Nombre*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} disabled={isSubmitting} />
@@ -275,10 +273,10 @@ export function CRM() {
           </div>
           <DialogFooter>
             <Button onClick={() => setShowAddContact(false)} variant="outline" disabled={isSubmitting}>
-              {t("common.cancel") || "Cancel"}
+              Cancelar
             </Button>
             <Button onClick={handleAddContact} disabled={!newContact.name.trim() || !newContact.phone.trim() || isSubmitting}>
-              {isSubmitting ? "Adding..." : t("common.add") || "Add"}
+              {isSubmitting ? "Agregando..." : "Agregar"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -26,7 +26,7 @@ import { isBridgeUnavailableError } from "@/lib/queries/instance/bridgeAvailabil
 import { useInstanceRuntime, useInstanceRuntimeHistory } from "@/lib/queries/instance/runtime";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
-import { formatCompactTimestamp, formatOperatorTimestamp } from "@/lib/operator-format";
+import { formatCompactTimestamp, formatOperatorTimestamp, formatUnknown } from "@/lib/operator-format";
 import { InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 import { toast } from "react-toastify";
 import { FetchInstanceRuntimeHistoryResponse } from "@/lib/queries/instance/types";
@@ -66,7 +66,7 @@ function formatStatusTimestamp(label: string, value?: string): string | undefine
     return undefined;
   }
 
-  return `${label}: ${parsedDate.toLocaleString()}`;
+  return `${label}: ${parsedDate.toLocaleString("es-MX")}`;
 }
 
 function notifyLifecycleFailure(detail: string, bridgeUnavailable: boolean) {
@@ -82,7 +82,7 @@ function getMessageSendFeedback(payload: MessageSendStatusPayload): MessageSendF
   if (payload.status === "failed") {
     return {
       status: "error",
-      title: "Send failed",
+      title: "Envío fallido",
       detail: payload.error || payload.message,
     };
   }
@@ -90,47 +90,47 @@ function getMessageSendFeedback(payload: MessageSendStatusPayload): MessageSendF
   if (payload.delivery_status === "read") {
     return {
       status: "read",
-      title: "Read",
-      detail: formatStatusTimestamp("Read at", payload.read_at) || "The recipient has opened the message.",
+      title: "Leído",
+      detail: formatStatusTimestamp("Leído", payload.read_at) || "El destinatario abrió el mensaje.",
     };
   }
 
   if (payload.delivery_status === "delivered" || payload.delivery_confirmed) {
     return {
       status: "delivered",
-      title: "Delivered",
-      detail: formatStatusTimestamp("Delivered at", payload.delivered_at) || "Delivery was confirmed by the provider.",
+      title: "Entregado",
+      detail: formatStatusTimestamp("Entregado", payload.delivered_at) || "Entrega confirmada por el proveedor.",
     };
   }
 
   if (payload.delivery_status === "sent") {
     return {
       status: "provider_sent",
-      title: "Sent to provider",
-      detail: "Still waiting for delivery confirmation.",
+      title: "Enviado al proveedor",
+      detail: "Esperando confirmación de entrega.",
     };
   }
 
   if (payload.status === "running") {
     return {
       status: "sending",
-      title: "Sending",
-      detail: "Processing outbound message.",
+      title: "Enviando",
+      detail: "Procesando mensaje saliente.",
     };
   }
 
   if (payload.status === "queued" || payload.queued === true || payload.accepted_only === true || payload.delivery_status === "queued") {
     return {
       status: "queued",
-      title: "Queued",
-      detail: "Waiting to be sent.",
+      title: "En cola",
+      detail: "Esperando envío.",
     };
   }
 
   return {
     status: "queued",
-    title: "Queued",
-    detail: "Waiting to be sent.",
+    title: "En cola",
+    detail: "Esperando envío.",
   };
 }
 
@@ -185,21 +185,33 @@ function getRuntimeBadgeVariant(state: string): "default" | "secondary" | "warni
 
 function formatRuntimeLabel(value?: string): string {
   if (!value) {
-    return "Unknown";
+    return "No disponible";
   }
 
-  return value
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+  const labels: Record<string, string> = {
+    open: "Disponible",
+    connected: "Conectada",
+    paired: "Vinculada",
+    connecting: "Conectando",
+    pairing_started: "Vinculación iniciada",
+    reconnect_requested: "Reconexión solicitada",
+    disconnected: "Sin conexión",
+    logout: "Sesión cerrada",
+    close: "Cerrada",
+    closed: "Cerrada",
+    status_observed: "Estado observado",
+  };
+
+  return labels[value] ?? value.replace(/_/g, " ");
 }
 
 function formatOptionalTimestamp(value?: string): string {
   if (!value) {
-    return "Not observed yet";
+    return "Sin reporte todavía";
   }
 
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? "Not observed yet" : parsed.toLocaleString();
+  return Number.isNaN(parsed.getTime()) ? "Sin reporte todavía" : parsed.toLocaleString("es-MX");
 }
 
 function runtimeEventIcon(event: string) {
@@ -241,7 +253,7 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
                     <OperatorStatusBadge variant={getRuntimeBadgeVariant(event.status)}>{formatRuntimeLabel(event.status)}</OperatorStatusBadge>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Not observed yet")}</div>
+                <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Sin reporte todavía")}</div>
               </div>
               {event.detail && <div className="break-words text-sm leading-6 text-muted-foreground">{event.detail}</div>}
               <div className="text-xs text-muted-foreground">Observed: {formatOptionalTimestamp(event.timestamp)}</div>
@@ -254,7 +266,7 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
 }
 
 function DashboardInstance() {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const numberFormatter = new Intl.NumberFormat(i18n.language);
   const [qrCode, setQRCode] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState("");
@@ -330,9 +342,9 @@ function DashboardInstance() {
     setIsRefreshingLifecycle(true);
     try {
       await refreshInstanceLifecycleData();
-      toast.success("Instance status refreshed.");
+      toast.success("Estado de instancia actualizado.");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to refresh instance status."));
+      toast.error(getApiErrorMessage(error, "No se pudo actualizar el estado de la instancia."));
     } finally {
       setIsRefreshingLifecycle(false);
     }
@@ -345,7 +357,7 @@ function DashboardInstance() {
       setLifecycleFeedback({
         action: "reconnect",
         status: "running",
-        title: "Requesting reconnect",
+        title: "Solicitando reconexión",
         detail: "Esperando reapertura de sesión y actualización de runtime.",
         tone: "info",
       });
@@ -353,22 +365,22 @@ function DashboardInstance() {
       setPairingCode("");
       await reconnect(instanceId);
       await refreshInstanceLifecycleData();
-      toast.success("Reconnect requested. Watch this page for QR and runtime updates.");
+      toast.success("Reconexión solicitada. Revisa QR y runtime en este panel.");
       setLifecycleFeedback({
         action: "reconnect",
         status: "success",
-        title: "Reconnect requested",
-        detail: "Runtime status, QR availability, and lifecycle history were refreshed. A live QR may still be unavailable for the current session state.",
+        title: "Reconexión solicitada",
+        detail: "Estado de runtime, QR e historial de ciclo de vida fueron actualizados. El QR puede seguir pendiente según el estado de la sesión.",
         tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
-      const detail = getApiErrorMessage(error, "Failed to request reconnect.");
+      const detail = getApiErrorMessage(error, "No se pudo solicitar reconexión.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
         action: "reconnect",
         status: "error",
-        title: bridgeUnavailable ? "Reconnect unavailable" : "Reconnect failed",
+        title: bridgeUnavailable ? "Reconexión no disponible" : "Reconexión fallida",
         detail,
         tone: bridgeUnavailable ? "warning" : "destructive",
       });
@@ -384,8 +396,8 @@ function DashboardInstance() {
       setLifecycleFeedback({
         action: "logout",
         status: "running",
-        title: "Logging out instance",
-        detail: "Waiting for logout to complete and for runtime state to refresh.",
+        title: "Cerrando sesión",
+        detail: "Esperando cierre de sesión y actualización de runtime.",
         tone: "info",
       });
       setQRCode(null);
@@ -393,22 +405,22 @@ function DashboardInstance() {
       await logout(instanceId);
       await refreshInstanceLifecycleData();
       setLogoutDialogOpen(false);
-      toast.success("Instance logout requested. Runtime status was refreshed.");
+      toast.success("Cierre de sesión solicitado. Runtime actualizado.");
       setLifecycleFeedback({
         action: "logout",
         status: "success",
-        title: "Logout completed",
-        detail: "Runtime status and lifecycle history were refreshed after the logout request.",
+        title: "Sesión cerrada",
+        detail: "Estado de runtime e historial de ciclo de vida actualizados después del cierre.",
         tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
-      const detail = getApiErrorMessage(error, "Failed to log out the instance.");
+      const detail = getApiErrorMessage(error, "No se pudo cerrar sesión de la instancia.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
         action: "logout",
         status: "error",
-        title: bridgeUnavailable ? "Logout unavailable" : "Logout failed",
+        title: bridgeUnavailable ? "Cierre no disponible" : "Cierre fallido",
         detail,
         tone: bridgeUnavailable ? "warning" : "destructive",
       });
@@ -420,7 +432,7 @@ function DashboardInstance() {
 
   const handlePairingCode = async (instanceId: string) => {
     if (!instance?.number) {
-      toast.error("A phone number is required before requesting a pairing code.");
+      toast.error("Se requiere un número antes de solicitar código de vinculación.");
       return;
     }
 
@@ -430,7 +442,7 @@ function DashboardInstance() {
       setLifecycleFeedback({
         action: "pair",
         status: "running",
-        title: "Requesting pairing code",
+        title: "Solicitando código",
         detail: "Esperando código para este número.",
         tone: "info",
       });
@@ -443,22 +455,22 @@ function DashboardInstance() {
 
       setPairingCode(data.pairingCode || data.code || "");
       await refreshInstanceLifecycleData();
-      toast.success("Pairing code requested. Use the code shown in the dialog if one is returned.");
+      toast.success("Código solicitado. Usa el código del diálogo si está disponible.");
       setLifecycleFeedback({
         action: "pair",
         status: "success",
-        title: "Pairing code ready",
-        detail: "Use the code below in WhatsApp if one was returned. Runtime status and lifecycle history were refreshed.",
+        title: "Código listo",
+        detail: "Usa el código en WhatsApp si fue devuelto. Runtime e historial de ciclo de vida fueron actualizados.",
         tone: "success",
       });
     } catch (error) {
       console.error("Error:", error);
-      const detail = getApiErrorMessage(error, "Failed to request a pairing code.");
+      const detail = getApiErrorMessage(error, "No se pudo solicitar código de vinculación.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
         action: "pair",
         status: "error",
-        title: bridgeUnavailable ? "Pairing unavailable" : "Pairing request failed",
+        title: bridgeUnavailable ? "Vinculación no disponible" : "Solicitud de vinculación fallida",
         detail,
         tone: bridgeUnavailable ? "warning" : "destructive",
       });
@@ -485,12 +497,12 @@ function DashboardInstance() {
     const parsedCount = Number.parseInt(backfillCount, 10);
 
     if (!chatJid) {
-      toast.error("Chat JID is required to request history backfill.");
+      toast.error("Se requiere Chat JID para solicitar recuperación de historial.");
       return;
     }
 
     if (!Number.isFinite(parsedCount) || parsedCount <= 0) {
-      toast.error("Backfill count must be greater than 0.");
+      toast.error("La cantidad de recuperación debe ser mayor que 0.");
       return;
     }
 
@@ -498,8 +510,8 @@ function DashboardInstance() {
       setIsBackfillRunning(true);
       setBackfillFeedback({
         status: "running",
-        title: "Requesting history backfill",
-        detail: "This asks the live bridge for a bounded history sync. It does not guarantee a full replay.",
+        title: "Solicitando recuperación",
+        detail: "Esto solicita una sincronización acotada al bridge activo. No garantiza replay completo.",
         tone: "info",
       });
 
@@ -514,11 +526,11 @@ function DashboardInstance() {
       await refreshInstanceLifecycleData();
       if (result.accepted) {
         const acceptedDetail = result.operatorMessage
-          ? `${result.operatorMessage} Requested count (${parsedCount}) is request scope only, not the number of rows imported.`
-          : `The bridge accepted a bounded recovery request for ${chatJid}. The requested count (${parsedCount}) is only the requested scope, not the number of rows imported.`;
+          ? `${result.operatorMessage} La cantidad solicitada (${parsedCount}) es solo alcance de solicitud, no número de filas importadas.`
+          : `El bridge aceptó recuperación acotada para ${chatJid}. La cantidad solicitada (${parsedCount}) solo define alcance, no filas importadas.`;
         setBackfillFeedback({
           status: "success",
-          title: "History backfill requested",
+          title: "Recuperación solicitada",
           detail: acceptedDetail,
           tone: "success",
         });
@@ -528,7 +540,7 @@ function DashboardInstance() {
           `No se pudo iniciar la recuperación para ${chatJid}. El conteo solicitado (${parsedCount}) no fue aplicado.`;
         setBackfillFeedback({
           status: "error",
-          title: "History backfill not accepted",
+          title: "Recuperación no aceptada",
           detail,
           tone: "warning",
         });
@@ -536,11 +548,11 @@ function DashboardInstance() {
       }
     } catch (error) {
       console.error("Error:", error);
-      const detail = getApiErrorMessage(error, "Unable to request history backfill.");
+      const detail = getApiErrorMessage(error, "No se pudo solicitar recuperación de historial.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setBackfillFeedback({
         status: "error",
-        title: bridgeUnavailable ? "History backfill unavailable" : "History backfill failed",
+        title: bridgeUnavailable ? "Recuperación no disponible" : "Recuperación fallida",
         detail,
         tone: bridgeUnavailable ? "warning" : "destructive",
       });
@@ -560,12 +572,12 @@ function DashboardInstance() {
     const parsedDelay = Number.parseInt(messageDelay, 10);
 
     if (!number || !text) {
-      toast.error("Recipient number and message are required.");
+      toast.error("Número destinatario y mensaje son requeridos.");
       return;
     }
 
     if (!Number.isFinite(parsedDelay) || parsedDelay < 0) {
-      toast.error("Delay must be 0 or greater.");
+      toast.error("El retraso debe ser 0 o mayor.");
       return;
     }
 
@@ -616,7 +628,7 @@ function DashboardInstance() {
           setMessageSendFeedback(lastFeedback);
 
           if (jobStatus.status === "failed") {
-            toast.error(jobStatus.error || "Send failed");
+            toast.error(jobStatus.error || "Envío fallido");
             return;
           }
 
@@ -645,10 +657,10 @@ function DashboardInstance() {
       }
       setMessageSendFeedback({
         status: "error",
-        title: "Send failed",
-        detail: getApiErrorMessage(error, "Unable to send the message."),
+        title: "Envío fallido",
+        detail: getApiErrorMessage(error, "No se pudo enviar el mensaje."),
       });
-      toast.error(getApiErrorMessage(error, "Unable to send the message."));
+      toast.error(getApiErrorMessage(error, "No se pudo enviar el mensaje."));
     } finally {
       setIsSendingText(false);
     }
@@ -664,7 +676,7 @@ function DashboardInstance() {
 
   const formatStat = (value: number | null) => {
     if (value === null) {
-      return t("common.notAvailable") || "No disponible";
+      return formatUnknown(null);
     }
     return numberFormatter.format(value);
   };
@@ -714,19 +726,19 @@ function DashboardInstance() {
 
   const runtimeSnapshot = [
     {
-      label: "Connection status",
+      label: "Estado de conexión",
       value: formatRuntimeLabel(instance.connectionStatus),
       detail: instance.updatedAt ? `Última actualización ${formatCompactTimestamp(instance.updatedAt)}` : "Última actualización pendiente",
     },
     {
-      label: "Runtime state",
+      label: "Estado runtime",
       value: runtimeState ? formatRuntimeLabel(runtimeState.state) : runtimeLoading ? "Cargando" : "No reportado",
-      detail: runtimeState?.lastUpdatedAt ? `Runtime updated ${formatCompactTimestamp(runtimeState.lastUpdatedAt)}` : "Runtime endpoint has not returned a timestamp yet",
+      detail: runtimeState?.lastUpdatedAt ? `Actualizado ${formatCompactTimestamp(runtimeState.lastUpdatedAt)}` : "Runtime sin timestamp reportado",
     },
     {
-      label: "Bridge signal",
+      label: "Señal bridge",
       value: runtimeState?.bridgeHealthy === undefined ? "No reportado" : runtimeState.bridgeHealthy ? "Saludable" : "Degradado",
-      detail: runtimeState?.lastObservedStatus ? `Last observed ${formatRuntimeLabel(runtimeState.lastObservedStatus)}` : "No last observed runtime status returned yet",
+      detail: runtimeState?.lastObservedStatus ? `Último observado ${formatRuntimeLabel(runtimeState.lastObservedStatus)}` : "Sin último estado observado",
     },
   ];
 
@@ -758,7 +770,7 @@ function DashboardInstance() {
 
             {instance.connectionStatus !== "open" && displayQRCode && (
               <div className="flex w-full flex-col items-center gap-4 rounded-xl border bg-background/80 p-4">
-                <h3 className="text-lg font-semibold">{t("instance.dashboard.qr.title") || "QR Code for Connection"}</h3>
+                <h3 className="text-lg font-semibold">QR para conexión</h3>
                 <div className="flex max-w-full items-center justify-center overflow-hidden rounded-xl bg-muted/20 p-3">
                   {isQRImage ? (
                     <img src={displayQRCode} alt="QR Code" className="max-w-64 max-h-64" />
@@ -768,7 +780,7 @@ function DashboardInstance() {
                 </div>
                 {pairingCode && (
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">{t("instance.dashboard.pairingCode.title") || "Or use pairing code:"}</p>
+                    <p className="text-sm text-muted-foreground">O usa código de vinculación:</p>
                     <p className="text-lg font-mono font-bold">
                       {pairingCode.substring(0, 4)}-{pairingCode.substring(4, 8)}
                     </p>
@@ -777,7 +789,7 @@ function DashboardInstance() {
                 {(instanceStatus?.status === "connecting" || instanceStatus?.status === "qrcode" || instance?.connectionStatus === "connecting" || instance?.connectionStatus === "qrcode") && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <LoadingSpinner size={16} />
-                    <span>{t("instance.dashboard.connecting") || "Connecting..."}</span>
+                    <span>Conectando...</span>
                   </div>
                 )}
               </div>
@@ -785,7 +797,7 @@ function DashboardInstance() {
             {instance.connectionStatus !== "open" && (
               <Alert variant="warning" className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                  <AlertTitle className="text-lg font-bold tracking-wide">{t("instance.dashboard.alert")}</AlertTitle>
+                  <AlertTitle className="text-lg font-bold tracking-wide">Conexión requerida</AlertTitle>
                   <AlertDescription>
                     Primero solicita reconexión y escanea el QR con WhatsApp. Usa código de vinculación solo cuando la instancia tenga número configurado.
                   </AlertDescription>
@@ -910,7 +922,7 @@ function DashboardInstance() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant={instance.connectionStatus === "open" ? "success" : "warning"}>
-              <AlertTitle>{instance.connectionStatus === "open" ? "Instance is ready for supported operator work" : "Connection work is still required"}</AlertTitle>
+              <AlertTitle>{instance.connectionStatus === "open" ? "Instancia lista para operación" : "Conexión pendiente"}</AlertTitle>
               <AlertDescription>
                 {instance.connectionStatus === "open"
                   ? "Chat, broadcast y envío directo pueden usar esta instancia si la conexión y la cola se mantienen saludables."
@@ -933,7 +945,7 @@ function DashboardInstance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CircleUser size="20" />
-              {t("instance.dashboard.contacts")}
+              Contactos
             </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{formatStat(stats.contacts)}</CardContent>
@@ -942,7 +954,7 @@ function DashboardInstance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UsersRound size="20" />
-              {t("instance.dashboard.chats")}
+              Chats
             </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{formatStat(stats.chats)}</CardContent>
@@ -951,7 +963,7 @@ function DashboardInstance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageCircle size="20" />
-              {t("instance.dashboard.messages")}
+              Mensajes
             </CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-semibold">{formatStat(stats.messages)}</CardContent>
@@ -971,8 +983,8 @@ function DashboardInstance() {
             </p>
             {runtimeError ? (
               <Alert variant={isBridgeUnavailableError(runtimeError) ? "warning" : "destructive"}>
-                <AlertTitle>{isBridgeUnavailableError(runtimeError) ? "Runtime status temporarily unavailable" : "Runtime status unavailable"}</AlertTitle>
-                <AlertDescription>{getApiErrorMessage(runtimeError, "Unable to load runtime state.")}</AlertDescription>
+                <AlertTitle>{isBridgeUnavailableError(runtimeError) ? "Estado de runtime temporalmente no disponible" : "Estado de runtime no disponible"}</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeError, "No se pudo cargar el estado de runtime.")}</AlertDescription>
               </Alert>
             ) : null}
             {runtimeLoading && !runtimeState ? (
@@ -1082,8 +1094,8 @@ function DashboardInstance() {
             )}
             {runtimeHistoryError ? (
               <Alert variant={isBridgeUnavailableError(runtimeHistoryError) ? "warning" : "destructive"}>
-                <AlertTitle>{isBridgeUnavailableError(runtimeHistoryError) ? "Runtime history temporarily unavailable" : "Runtime history unavailable"}</AlertTitle>
-                <AlertDescription>{getApiErrorMessage(runtimeHistoryError, "Unable to load runtime history.")}</AlertDescription>
+                <AlertTitle>{isBridgeUnavailableError(runtimeHistoryError) ? "Historial de runtime temporalmente no disponible" : "Historial de runtime no disponible"}</AlertTitle>
+                <AlertDescription>{getApiErrorMessage(runtimeHistoryError, "No se pudo cargar el historial de runtime.")}</AlertDescription>
               </Alert>
             ) : null}
             {runtimeHistoryLoading && !runtimeHistory ? (
@@ -1093,8 +1105,8 @@ function DashboardInstance() {
             ) : runtimeHistory && runtimeHistory.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span>Showing the 10 most recent lifecycle events.</span>
-                  <span>Newest event: {formatCompactTimestamp(runtimeHistory[0]?.timestamp, "Not observed yet")}</span>
+                  <span>Mostrando los 10 eventos de ciclo de vida más recientes.</span>
+                  <span>Evento más reciente: {formatCompactTimestamp(runtimeHistory[0]?.timestamp, "Sin reporte todavía")}</span>
                 </div>
                 <RuntimeHistoryList events={runtimeHistory.slice(0, 10)} />
               </div>

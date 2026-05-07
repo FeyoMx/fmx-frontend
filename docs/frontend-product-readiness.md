@@ -175,6 +175,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - final visual consistency pass standardized card radius/padding, page header behavior, stat tiles, empty states, and status badges across the supported MVP surface
 - operator productivity pass added quick triage filters, direct Dashboard-to-chat/panel actions, unread/recent chat filtering, and broadcast attention filters without changing backend contracts
 - pilot onboarding pass added first-use guidance, safety copy for important actions, and a lightweight feedback capture surface without backend changes
+- visible fallback copy pass replaced raw i18n keys, English profile/JID/date fallbacks, and generic status labels with Spanish operator copy across Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, Sidebar, and Header
 - login now uses a branded production card with inline error/loading feedback instead of the previous minimal fork-style shell
 - supported connector/settings pages now share the same card-based form framing, event-list density, mobile action stacking, and long-event wrapping
 - chat and broadcast detail panels now use stronger selected states, clearer dense-row hierarchy, and safer wrapping for long JIDs, phone numbers, message previews, and errors

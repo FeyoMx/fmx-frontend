@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
+- Replaced visible raw fallback/i18n copy such as profile/JID placeholders, relative timestamps, unavailable stats, and generic English labels with Spanish operator wording.
 - Clarified safety copy for instance logout, broadcast job creation, and bounded history recovery.
 - Improved operator help copy around partial history, chat versus broadcast usage, and broadcast recipient progress semantics.
 - Improved daily operator flow hierarchy across Dashboard, Chat, and Broadcast so attention, disconnected, unread, failed, and pending states are faster to find.

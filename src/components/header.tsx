@@ -1,7 +1,6 @@
 import { DoorOpen } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useFetchInstance } from "@/lib/queries/instance/fetchInstance";
@@ -16,7 +15,6 @@ import { Button } from "./ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 function Header({ instanceId }: { instanceId?: string }) {
-  const { t } = useTranslation();
   const [logoutConfirmation, setLogoutConfirmation] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -81,16 +79,16 @@ function Header({ instanceId }: { instanceId?: string }) {
           <DialogContent>
             <DialogClose />
             <DialogHeader>
-              <DialogTitle>{t("header.logout.button") || "Logout"}</DialogTitle>
-              <DialogDescription>{t("header.logout.confirm") || "Are you sure you want to logout?"}</DialogDescription>
+              <DialogTitle>Cerrar sesión</DialogTitle>
+              <DialogDescription>¿Quieres cerrar tu sesión de operador en este navegador?</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <div className="flex items-center gap-4">
                 <Button onClick={() => setLogoutConfirmation(false)} size="sm" variant="outline" disabled={isLoggingOut}>
-                  {t("common.cancel") || "Cancel"}
+                  Cancelar
                 </Button>
                 <Button onClick={handleClose} variant="destructive" disabled={isLoggingOut}>
-                  {isLoggingOut ? "Signing out..." : t("header.logout.button") || "Logout"}
+                  {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
                 </Button>
               </div>
             </DialogFooter>

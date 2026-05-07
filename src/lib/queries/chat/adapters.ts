@@ -198,7 +198,7 @@ const normalizeChatThreadArray = (payload: unknown): ChatThreadsResponse => {
     return {
       id: readString(record.id) || readString(record.remoteJid) || `chat-${index}`,
       remoteJid: readString(record.remoteJid),
-      pushName: readString(record.pushName) || readString(record.remoteJid).split("@")[0] || "Unknown contact",
+      pushName: readString(record.pushName) || readString(record.remoteJid).split("@")[0] || "Contacto pendiente",
       profilePicUrl: readString(record.profilePicUrl),
       labels: Array.isArray(record.labels) ? record.labels.filter((value): value is string => typeof value === "string") : [],
       previewText: extractMessageText(lastMessage?.message) || readString(record.lastMessageText) || undefined,

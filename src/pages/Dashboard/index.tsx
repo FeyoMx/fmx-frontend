@@ -1,6 +1,5 @@
 import { Activity, AlertTriangle, CheckCircle2, ChevronsUpDown, CircleUser, Cog, MessageCircle, MessageSquare, RadioTower, RefreshCw, ShieldAlert, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "recharts";
@@ -26,7 +25,7 @@ import { getDashboardMetrics } from "@/lib/queries/dashboard/getMetrics";
 import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
-import { formatCompactTimestamp, formatRelativeTime, truncateOperatorText } from "@/lib/operator-format";
+import { formatCompactTimestamp, formatOwnerJid, formatProfileName, formatRelativeTime, formatUnknown, truncateOperatorText } from "@/lib/operator-format";
 import { Instance } from "@/types/evolution.types";
 
 import { NewInstance } from "./NewInstance";
@@ -127,7 +126,6 @@ function getInstanceHealthCopy(bucket: HealthBucket): { label: string; detail: s
 }
 
 function Dashboard() {
-  const { t } = useTranslation();
   const { tenant } = useTenant();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalInstances: 0,
@@ -298,10 +296,10 @@ function Dashboard() {
   }, [instances, statusBreakdown]);
 
   const instanceStatus = [
-    { value: "all", label: t("status.all") },
-    { value: "close", label: t("status.closed") },
-    { value: "connecting", label: t("status.connecting") },
-    { value: "open", label: t("status.open") },
+    { value: "all", label: "Todos" },
+    { value: "close", label: "Desconectadas" },
+    { value: "connecting", label: "Conectando" },
+    { value: "open", label: "Disponibles" },
   ];
 
   const quickFilters: Array<{ value: DashboardQuickFilter; label: string; count: number }> = [
@@ -323,7 +321,7 @@ function Dashboard() {
                   Operator dashboard
                 </Badge>
                 <div>
-                  <CardTitle className="text-3xl tracking-tight">{t("dashboard.welcome") || "Welcome back"}</CardTitle>
+                  <CardTitle className="text-3xl tracking-tight">Panel operativo</CardTitle>
                   <CardDescription className="mt-2 max-w-2xl text-sm leading-6">
                     {tenant?.name || "Tenant actual"} usa las superficies disponibles del MVP. Salud de instancias, cola, chat, contactos, broadcasts y acciones de runtime están activas; las métricas agregadas se muestran con cautela.
                   </CardDescription>
@@ -464,17 +462,17 @@ function Dashboard() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">{t("dashboard.title")}</h2>
+            <h2 className="text-lg font-semibold">Instancias</h2>
             <p className="text-sm text-muted-foreground">La lista prioriza instancias que requieren atención.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="w-full min-w-[240px] flex-1 md:w-auto">
-              <Input placeholder={t("dashboard.search")} value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
+              <Input placeholder="Buscar instancia" value={nameSearch} onChange={(event) => setNameSearch(event.target.value)} />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" className="gap-2">
-                  {t("dashboard.status")}
+                  Estado
                   <ChevronsUpDown size={15} />
                 </Button>
               </DropdownMenuTrigger>
@@ -549,7 +547,7 @@ function Dashboard() {
                           <OperatorStatusBadge variant={health.badge}>{health.label}</OperatorStatusBadge>
                         </div>
                       </div>
-                      <TooltipWrapper content={t("dashboard.settings")} side="top">
+                      <TooltipWrapper content="Configuración" side="top">
                         <Button asChild variant="ghost" size="icon">
                           <Link to={`/manager/instance/${instance.id}/settings`}>
                             <Cog className="h-4 w-4" />
@@ -568,12 +566,12 @@ function Dashboard() {
                         <AvatarFallback>{(instance.profileName || instance.name).slice(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1 space-y-1">
-                        <div className="truncate font-medium">{instance.profileName || "Profile not reported yet"}</div>
+                        <div className="truncate font-medium">{formatProfileName(instance.profileName)}</div>
                         <div className="truncate text-xs text-muted-foreground">
-                          {instance.ownerJid ? instance.ownerJid.split("@")[0] : "Owner JID not surfaced"}
+                          {formatOwnerJid(instance.ownerJid)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Updated {formatRelativeTime(instance.updatedAt || instance.createdAt, "Not observed yet")}
+                          Actualizado {formatRelativeTime(instance.updatedAt || instance.createdAt)}
                         </div>
                       </div>
                     </div>
@@ -582,19 +580,19 @@ function Dashboard() {
                       <div className="rounded-xl border p-3">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <CircleUser className="h-3.5 w-3.5" />
-                          Contacts
+                          Contactos
                         </div>
                         <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.contacts === null ? (t("common.notAvailable") || "No disponible") : new Intl.NumberFormat("pt-BR").format(instance.stats.contacts)}
+                          {instance.stats.contacts === null ? formatUnknown(null) : new Intl.NumberFormat("es-MX").format(instance.stats.contacts)}
                         </div>
                       </div>
                       <div className="rounded-xl border p-3">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <MessageCircle className="h-3.5 w-3.5" />
-                          Messages
+                          Mensajes
                         </div>
                         <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.messages === null ? (t("common.notAvailable") || "No disponible") : new Intl.NumberFormat("pt-BR").format(instance.stats.messages)}
+                          {instance.stats.messages === null ? formatUnknown(null) : new Intl.NumberFormat("es-MX").format(instance.stats.messages)}
                         </div>
                       </div>
                     </div>
@@ -621,7 +619,7 @@ function Dashboard() {
                         <Link to={`/manager/instance/${instance.id}/chat`}>Chat</Link>
                       </Button>
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirmation({ id: instance.id, name: instance.name })} disabled={deleting.includes(instance.name)}>
-                        {deleting.includes(instance.name) ? <span>{t("button.deleting")}</span> : <span>{t("button.delete")}</span>}
+                        {deleting.includes(instance.name) ? <span>Eliminando...</span> : <span>Eliminar</span>}
                       </Button>
                     </div>
                   </CardFooter>
@@ -636,15 +634,15 @@ function Dashboard() {
         <Dialog onOpenChange={() => setDeleteConfirmation(null)} open>
           <DialogContent>
             <DialogClose />
-            <DialogHeader>{t("modal.delete.title")}</DialogHeader>
-            <p>{t("modal.delete.message", { instanceName: deleteConfirmation.name })}</p>
+            <DialogHeader>Eliminar instancia</DialogHeader>
+            <p>Estás eliminando la instancia {deleteConfirmation.name}. Esta acción no se puede deshacer.</p>
             <DialogFooter>
               <div className="flex items-center gap-4">
                 <Button onClick={() => setDeleteConfirmation(null)} size="sm" variant="outline">
-                  {t("button.cancel")}
+                  Cancelar
                 </Button>
                 <Button onClick={() => void handleDelete(deleteConfirmation)} variant="destructive">
-                  {t("button.delete")}
+                  Eliminar
                 </Button>
               </div>
             </DialogFooter>
