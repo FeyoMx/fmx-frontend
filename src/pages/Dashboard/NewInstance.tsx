@@ -82,7 +82,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
 
       await createInstance(instanceData);
 
-      toast.success("Instance created. Open it from the dashboard to pair or reconnect.");
+      toast.success("Instancia creada. Ábrela desde el panel para vincular o reconectar.");
       setOpen(false);
       onReset();
       resetTable();
@@ -107,7 +107,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default" size="sm">
-          Create instance <PlusIcon size="18" />
+          Crear instancia <PlusIcon size="18" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[650px]" onCloseAutoFocus={onReset}>
@@ -132,7 +132,7 @@ function NewInstance({ resetTable }: { resetTable: () => void }) {
               </FormInput>
             )}
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating..." : "Create instance"}</Button>
+              <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>{isSubmitting ? "Creando..." : "Crear instancia"}</Button>
             </DialogFooter>
           </form>
         </FormProvider>

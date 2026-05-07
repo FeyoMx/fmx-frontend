@@ -3,11 +3,11 @@ import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { OperatorErrorState, SkeletonCard } from "@/components/operator-state";
+import { OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 import { useInstance } from "@/contexts/InstanceContext";
@@ -130,11 +130,11 @@ function ChatShell() {
       return null;
     }
 
-    const source = chatListMetadata.source ? ` Source: ${chatListMetadata.source}.` : "";
-    const refreshedAt = chatListMetadata.refreshedAt ? ` Refreshed ${formatCompactTimestamp(chatListMetadata.refreshedAt)}.` : "";
+    const source = chatListMetadata.source ? ` Origen: ${chatListMetadata.source}.` : "";
+    const refreshedAt = chatListMetadata.refreshedAt ? ` Actualizado ${formatCompactTimestamp(chatListMetadata.refreshedAt)}.` : "";
 
     if (chatListMetadata.stale) {
-      return `Showing stored chat-list data while the live bridge refreshes.${source}${refreshedAt}`;
+      return `Mostrando conversaciones guardadas mientras se actualiza la conexión.${source}${refreshedAt}`;
     }
 
     return `Mostrando conversaciones guardadas.${source}${refreshedAt}`;
@@ -156,14 +156,14 @@ function ChatShell() {
   };
 
   return (
-    <div className="h-[calc(100vh-160px)] overflow-hidden">
+    <div className="h-[calc(100vh-160px)] min-h-[680px] overflow-hidden lg:min-h-0">
       <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full">
         <ResizablePanel defaultSize={32} minSize={25}>
-          <Card className="flex h-full flex-col rounded-r-none border-r-0">
+          <Card className="flex h-full flex-col lg:rounded-r-none lg:border-r-0">
             <CardHeader className="space-y-4 border-b">
               <div className="space-y-2">
                 <CardTitle>Chats</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm leading-6 text-muted-foreground">
                   Revisa conversaciones disponibles y abre el historial guardado de cada JID. Algunas conversaciones antiguas pueden aparecer como historial parcial.
                 </p>
                 {chatListStatusCopy ? (
@@ -174,18 +174,9 @@ function ChatShell() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border p-3">
-                  <div className="text-xs text-muted-foreground">Visible threads</div>
-                  <div className="mt-2 text-2xl font-semibold">{threadSummary.total}</div>
-                </div>
-                <div className="rounded-xl border p-3">
-                  <div className="text-xs text-muted-foreground">Unread threads</div>
-                  <div className="mt-2 text-2xl font-semibold">{threadSummary.unreadThreads}</div>
-                </div>
-                <div className="rounded-xl border p-3">
-                  <div className="text-xs text-muted-foreground">Unread messages</div>
-                  <div className="mt-2 text-2xl font-semibold">{threadSummary.unreadMessages}</div>
-                </div>
+                <OperatorStatTile label="Chats" value={threadSummary.total} detail="Disponibles" className="p-3" />
+                <OperatorStatTile label="Con actividad" value={threadSummary.unreadThreads} detail="Sin leer" className="p-3" />
+                <OperatorStatTile label="Mensajes" value={threadSummary.unreadMessages} detail="Sin leer" className="p-3" />
               </div>
 
               <div className="relative">
@@ -229,7 +220,7 @@ function ChatShell() {
                         variant="ghost"
                         className={`h-auto justify-start gap-3 whitespace-normal rounded-xl border px-3 py-3 text-left transition-colors ${
                           isActive
-                            ? "border-primary/30 bg-primary/10 shadow-sm"
+                            ? "border-primary/40 bg-primary/10 shadow-sm ring-1 ring-primary/20"
                             : hasUnread
                               ? "border-amber-200/70 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50"
                               : "border-transparent hover:border-border hover:bg-muted/70"
@@ -261,8 +252,8 @@ function ChatShell() {
                             ) : null}
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                            <Badge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Unread activity" : "Seen"}</Badge>
-                            <span className="min-w-0 break-words">{thread.lastMessageAt ? `Last message ${formatRelativeTime(thread.lastMessageAt)}` : "Waiting for first persisted message"}</span>
+                            <OperatorStatusBadge variant={hasUnread ? "warning" : "outline"}>{hasUnread ? "Actividad nueva" : "Visto"}</OperatorStatusBadge>
+                            <span className="min-w-0 break-words">{thread.lastMessageAt ? `Último mensaje ${formatRelativeTime(thread.lastMessageAt)}` : "Esperando primer mensaje guardado"}</span>
                           </div>
                         </div>
                       </Button>
@@ -296,7 +287,7 @@ function ChatShell() {
         <ResizableHandle withHandle />
 
         <ResizablePanel defaultSize={68}>
-          <div className="h-full overflow-y-auto pl-4">
+          <div className="h-full overflow-y-auto pt-4 lg:pl-4 lg:pt-0">
             {!instance?.id ? (
               <Card className="h-full">
                 <CardContent className="flex h-full items-center justify-center">

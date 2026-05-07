@@ -6,9 +6,9 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormInput, FormSwitch } from "@/components/ui/form";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
 import { useInstance } from "@/contexts/InstanceContext";
@@ -123,14 +123,15 @@ function Settings() {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-          <div>
-            <h3 className="mb-1 text-lg font-medium">{t("settings.title")}</h3>
-            <Separator className="my-4" />
-            <div className="mx-4 space-y-2 divide-y">
-              <div className="flex flex-col p-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("settings.title")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 divide-y">
+              <div className="flex flex-col py-4 first:pt-0">
                 <FormSwitch name="rejectCall" label={t("settings.form.rejectCall.label")} className="w-full justify-between" helper={t("settings.form.rejectCall.description")} />
                 {isRejectCall && (
-                  <div className="mr-16 mt-2">
+                  <div className="mt-3 max-w-2xl">
                     <FormInput name="msgRejectCall">
                       <Textarea placeholder={t("settings.form.msgCall.description")} />
                     </FormInput>
@@ -138,7 +139,7 @@ function Settings() {
                 )}
               </div>
               {fields.map((field) => (
-                <div className="flex p-4" key={field.name}>
+                <div className="flex py-4" key={field.name}>
                   <FormSwitch name={field.name} label={field.label} className="w-full justify-between" helper={field.description} />
                 </div>
               ))}
@@ -147,8 +148,8 @@ function Settings() {
                   {updating ? t("settings.button.saving") : t("settings.button.save")}
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </form>
       </Form>
     </>

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -8,6 +7,7 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormInput, FormSwitch } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
@@ -101,10 +101,11 @@ function Proxy() {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-          <div>
-            <h3 className="mb-1 text-lg font-medium">{t("proxy.title")}</h3>
-            <Separator className="my-4" />
-            <div className="mx-4 space-y-2 divide-y [&>*]:p-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("proxy.title")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 divide-y [&>*]:py-4 [&>*:first-child]:pt-0">
               <FormSwitch name="enabled" label={t("proxy.form.enabled.label")} className="w-full justify-between" helper={t("proxy.form.enabled.description")} />
               <div className="grid gap-4 sm:grid-cols-[10rem_1fr_10rem] md:gap-8">
                 <FormInput name="protocol" label={t("proxy.form.protocol.label")}>
@@ -125,13 +126,13 @@ function Proxy() {
                   <Input type="password" />
                 </FormInput>
               </div>
-              <div className="flex justify-end px-4 pt-6">
+              <div className="flex justify-end pt-6">
                 <Button type="submit" disabled={loading}>
                   {loading ? t("proxy.button.saving") : t("proxy.button.save")}
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </form>
       </Form>
     </>

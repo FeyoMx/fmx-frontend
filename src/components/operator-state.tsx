@@ -9,7 +9,7 @@ function OperatorErrorState({
   title,
   description,
   onRetry,
-  retryLabel = "Try again",
+  retryLabel = "Reintentar",
   className,
 }: {
   title: string;
@@ -35,7 +35,7 @@ function OperatorErrorState({
 }
 
 function OperatorLoadingBlock({
-  title = "Loading",
+  title = "Cargando",
   description = "Cargando información disponible.",
   className,
 }: {

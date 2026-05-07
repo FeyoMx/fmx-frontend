@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { LoaderCircle, ShieldCheck } from "lucide-react";
 import logo from "/assets/images/fmxaiflowslogo2.png";
 
 import { Footer } from "@/components/footer";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormInput } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { login } from "@/lib/queries/auth/login";
 import { saveAuthTokens, saveUserData } from "@/lib/auth";
@@ -30,6 +32,7 @@ function Login() {
   const navigate = useNavigate();
   const { setTenant, setUser, setToken } = useTenant();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -42,6 +45,7 @@ function Login() {
 
   const handleLogin: SubmitHandler<LoginSchema> = async (data) => {
     setIsLoading(true);
+    setLoginError(null);
     try {
       const response = await login({
         email: data.email,
@@ -83,6 +87,7 @@ function Login() {
       navigate("/manager/");
     } catch (error: any) {
       const errorMessage = getApiErrorMessage(error, "Login failed");
+      setLoginError(errorMessage);
       toast.error(t("login.message.invalidCredentials") || errorMessage);
       loginForm.setError("password", {
         type: "manual",
@@ -94,19 +99,28 @@ function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <div className="flex items-center justify-center pt-2">
-        <img className="h-10" src={logo} alt="FMX AI logo" />
-      </div>
-      <div className="flex flex-1 items-center justify-center p-8">
-        <Card className="b-none w-[350px] shadow-none">
-          <CardHeader>
-            <CardTitle className="text-center">FMX Evolution</CardTitle>
-            <CardDescription className="text-center">{t("login.description")}</CardDescription>
+    <div className="flex min-h-screen flex-col bg-muted/20">
+      <div className="flex flex-1 items-center justify-center px-4 py-10">
+        <Card className="w-full max-w-md border-border/70 bg-background/95 shadow-lg">
+          <CardHeader className="items-center space-y-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border bg-background shadow-sm">
+              <img className="h-10" src={logo} alt="FMX AI logo" />
+            </div>
+            <div className="space-y-2">
+              <CardTitle className="text-2xl">FMX Evolution</CardTitle>
+              <CardDescription className="leading-6">{t("login.description") || "Accede al panel operativo de tus instancias."}</CardDescription>
+            </div>
           </CardHeader>
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(handleLogin)}>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {loginError ? (
+                  <Alert variant="destructive">
+                    <ShieldCheck className="h-4 w-4" />
+                    <AlertTitle>No pudimos iniciar sesión</AlertTitle>
+                    <AlertDescription>{loginError}</AlertDescription>
+                  </Alert>
+                ) : null}
                 <div className="grid w-full items-center gap-4">
                   <FormInput required name="email" label={t("login.form.email") || "Email"}>
                     <Input type="email" disabled={isLoading} />
@@ -116,10 +130,18 @@ function Login() {
                   </FormInput>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-center">
+              <CardFooter className="flex flex-col gap-3">
                 <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading ? t("login.button.loading") || "Logging in..." : t("login.button.login")}
+                  {isLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      {t("login.button.loading") || "Entrando..."}
+                    </span>
+                  ) : (
+                    t("login.button.login")
+                  )}
                 </Button>
+                <p className="text-center text-xs text-muted-foreground">Sesión segura para operadores FMX.</p>
               </CardFooter>
             </form>
           </Form>

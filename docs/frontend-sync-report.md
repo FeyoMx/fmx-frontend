@@ -125,6 +125,8 @@ Frontend handling after this sync:
 - API Keys, AI Settings, CRM, and Broadcast pages now better distinguish active MVP functionality from informational or backend-gated behavior.
 - Placeholder audit pass removed API Keys from the sidebar, rewrote guarded integration placeholders with short production copy, and replaced raw backend/501/legacy wording on normal operator paths with labels such as Disponible, En proceso, No disponible en esta versión, Requiere conexión activa, Historial parcial, and Última actualización.
 - Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, API Keys, UnsupportedInstanceFeature, Sidebar, and session/header-adjacent loading states were reviewed for user-visible placeholder or unsupported copy.
+- Final visual consistency pass added shared operator surface primitives for stat tiles, empty states, action bars, and status badges, then applied them to dashboard, instance dashboard, chat, broadcast, contacts, AI settings, login, and supported connector/settings pages.
+- Card radius/padding, responsive page-header actions, selected chat rows, message bubbles, runtime timeline rows, broadcast recipient rows, and connector form sections now follow a more consistent production MVP visual system without changing API behavior.
 
 ### API / adapter alignment
 

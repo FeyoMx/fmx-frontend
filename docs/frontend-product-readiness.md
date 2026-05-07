@@ -159,6 +159,10 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - API Keys is no longer exposed in the sidebar; the route remains safe for bookmarks and is labeled as Próximamente
 - guarded integration routes now use short operator copy such as En proceso, No disponible en esta versión, and Volver al panel instead of raw backend/501/legacy explanations
 - supported Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, and AI Settings surfaces now use clearer Spanish or neutral operator copy for partial history, active connection requirements, and unavailable actions
+- final visual consistency pass standardized card radius/padding, page header behavior, stat tiles, empty states, and status badges across the supported MVP surface
+- login now uses a branded production card with inline error/loading feedback instead of the previous minimal fork-style shell
+- supported connector/settings pages now share the same card-based form framing, event-list density, mobile action stacking, and long-event wrapping
+- chat and broadcast detail panels now use stronger selected states, clearer dense-row hierarchy, and safer wrapping for long JIDs, phone numbers, message previews, and errors
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 - instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly

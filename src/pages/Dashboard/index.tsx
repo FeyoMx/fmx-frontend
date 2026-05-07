@@ -8,6 +8,7 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis, YAxis } from "rec
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
 import { OperatorErrorState, SkeletonCard } from "@/components/operator-state";
+import { OperatorEmptyState, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -342,16 +343,7 @@ function Dashboard() {
                   icon: CircleUser,
                   tone: "text-slate-600",
                 },
-              ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-border/70 bg-background/85 p-4 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-muted-foreground">{item.label}</div>
-                    <item.icon className={`h-4 w-4 ${item.tone}`} />
-                  </div>
-                  <div className="mt-3 text-3xl font-semibold tracking-tight">{item.value}</div>
-                  <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
-                </div>
-              ))}
+              ].map((item) => <OperatorStatTile key={item.label} label={item.label} value={item.value} detail={item.detail} icon={item.icon} tone={item.tone} />)}
             </div>
           </CardHeader>
         </Card>
@@ -427,19 +419,18 @@ function Dashboard() {
               const value = metrics[metric.key];
 
               return (
-                <div key={metric.key} className="rounded-2xl border p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium">{metric.label}</div>
-                      <div className="text-2xl font-semibold">{metricsLoading ? "..." : (value ?? 0).toLocaleString()}</div>
-                    </div>
-                    <Icon className="mt-1 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">{metric.description}</p>
-                  <Badge variant={metric.caveat === "Trusted now" ? "default" : "outline"} className="mt-3">
-                    {metric.caveat}
-                  </Badge>
-                </div>
+                <OperatorStatTile
+                  key={metric.key}
+                  label={metric.label}
+                  value={metricsLoading ? "..." : (value ?? 0).toLocaleString()}
+                  detail={
+                    <span className="space-y-2">
+                      <span className="block">{metric.description}</span>
+                      <OperatorStatusBadge variant={metric.caveat === "Trusted now" ? "default" : "outline"}>{metric.caveat}</OperatorStatusBadge>
+                    </span>
+                  }
+                  icon={Icon}
+                />
               );
             })}
           </CardContent>
@@ -488,19 +479,15 @@ function Dashboard() {
             ))}
           </main>
         ) : filteredInstances.length === 0 ? (
-          <Card>
-            <CardContent className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
-              <CircleUser className="h-10 w-10 text-muted-foreground" />
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">{instances?.length ? "No instances match this filter" : "No instances yet"}</h3>
-                <p className="max-w-xl text-sm text-muted-foreground">
-                  {instances?.length
-                    ? "Prueba otra búsqueda o filtro de estado. El panel muestra solo flujos disponibles para operación diaria."
-                    : "Create the first instance to start pairing, runtime monitoring, chats, broadcasts, and outbound send workflows."}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <OperatorEmptyState
+            icon={CircleUser}
+            title={instances?.length ? "No hay instancias con este filtro" : "Aún no hay instancias"}
+            description={
+              instances?.length
+                ? "Prueba otra búsqueda o filtro de estado. El panel muestra solo flujos disponibles para operación diaria."
+                : "Crea la primera instancia para iniciar vinculación, monitoreo de runtime, chats, broadcasts y envíos salientes."
+            }
+          />
         ) : (
           <main className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filteredInstances.map((instance: Instance) => {
@@ -509,7 +496,7 @@ function Dashboard() {
 
               return (
                 <Card key={instance.id} className="border-border/70">
-                  <CardHeader className="space-y-4">
+                  <CardHeader className="space-y-4 pb-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
                         <Link to={`/manager/instance/${instance.id}/dashboard`} className="block">
@@ -519,7 +506,7 @@ function Dashboard() {
                         </Link>
                         <div className="flex flex-wrap items-center gap-2">
                           <InstanceStatus status={instance.connectionStatus} />
-                          <Badge variant={health.badge}>{health.label}</Badge>
+                          <OperatorStatusBadge variant={health.badge}>{health.label}</OperatorStatusBadge>
                         </div>
                       </div>
                       <TooltipWrapper content={t("dashboard.settings")} side="top">
@@ -572,7 +559,7 @@ function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-dashed p-3 text-xs text-muted-foreground">
+                    <div className="rounded-xl border border-dashed bg-muted/10 p-3 text-xs leading-5 text-muted-foreground">
                       {truncateOperatorText(
                         bucket === "healthy"
                           ? "This instance is the best candidate for active sends, chats, and queue-backed work."

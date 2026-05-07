@@ -5,8 +5,8 @@ import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
 import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
+import { OperatorEmptyState, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -184,13 +184,13 @@ function BroadcastRecipientDetailPanel({
             <CardTitle className="text-xl">Campaign detail</CardTitle>
             <CardDescription>{instanceName}</CardDescription>
           </div>
-          <Badge variant={getStatusBadgeVariant(broadcast.status)}>{formatOperatorStatusLabel(broadcast.status)}</Badge>
+          <OperatorStatusBadge variant={getStatusBadgeVariant(broadcast.status)}>{formatOperatorStatusLabel(broadcast.status)}</OperatorStatusBadge>
         </div>
         <div className="rounded-xl border bg-muted/20 p-4">
           <div className="whitespace-pre-wrap break-words font-medium">{truncateOperatorText(broadcast.message, 240)}</div>
           <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
             <div>Created: {formatOperatorTimestamp(broadcast.createdAt)}</div>
-            <div>Available: {formatOperatorTimestamp(broadcast.availableAt, "Not reported")}</div>
+            <div>Disponible: {formatOperatorTimestamp(broadcast.availableAt, "No reportado")}</div>
             <div>Started: {formatOperatorTimestamp(broadcast.startedAt, "Not started")}</div>
             <div>Completed: {formatOperatorTimestamp(broadcast.completedAt || broadcast.failedAt, "Not finished")}</div>
           </div>
@@ -206,11 +206,7 @@ function BroadcastRecipientDetailPanel({
             { label: "Pending", value: summary.pending, detail: "Still waiting", tone: "text-amber-600" },
             { label: "Scope", value: summary.partial ? "Parcial" : "Completo", detail: "Alcance del resumen", tone: summary.partial ? "text-amber-600" : "text-muted-foreground" },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border p-4">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
-              <div className={`mt-2 text-2xl font-semibold ${item.tone}`}>{item.value ?? "-"}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{item.detail}</div>
-            </div>
+            <OperatorStatTile key={item.label} label={item.label} value={item.value ?? "-"} detail={item.detail} className={item.tone} />
           ))}
         </div>
 
@@ -303,7 +299,7 @@ function BroadcastRecipientDetailPanel({
                       </div>
                     </TableCell>
                     <TableCell className="align-top">
-                      <Badge variant={getRecipientStatusBadgeVariant(recipient.status)}>{formatOperatorStatusLabel(recipient.status)}</Badge>
+                      <OperatorStatusBadge variant={getRecipientStatusBadgeVariant(recipient.status)}>{formatOperatorStatusLabel(recipient.status)}</OperatorStatusBadge>
                     </TableCell>
                     <TableCell className="align-top">{recipient.attemptCount}</TableCell>
                     <TableCell className="min-w-[220px] align-top">
@@ -642,17 +638,7 @@ function Broadcast() {
           { label: "Completed w/ failures", value: queueSummary.completedWithFailures, icon: AlertTriangle, tone: "text-amber-600" },
           { label: "Failed", value: queueSummary.failed, icon: XCircle, tone: "text-rose-600" },
           { label: "Con detalle", value: queueSummary.analyticsReady, icon: Users, tone: "text-violet-600" },
-        ].map((item) => (
-          <Card key={item.label}>
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">{item.label}</div>
-                <div className="mt-2 text-3xl font-semibold">{item.value}</div>
-              </div>
-              <item.icon className={`h-5 w-5 ${item.tone}`} />
-            </CardContent>
-          </Card>
-        ))}
+        ].map((item) => <OperatorStatTile key={item.label} label={item.label} value={item.value} icon={item.icon} tone={item.tone} />)}
       </section>
 
       {showForm && (
@@ -761,7 +747,7 @@ function Broadcast() {
               </Button>
               <Button onClick={requestBroadcastConfirmation} disabled={submitting}>
                 <Send size={18} className="mr-2" />
-                {submitting ? "Creating job..." : "Create queue job"}
+                {submitting ? "Creando trabajo..." : "Crear trabajo de cola"}
               </Button>
             </div>
           </CardContent>
@@ -792,7 +778,7 @@ function Broadcast() {
               Review again
             </Button>
             <Button type="button" onClick={() => void handleSendBroadcast()} disabled={submitting}>
-              {submitting ? "Creating job..." : "Confirm queue job"}
+              {submitting ? "Creando trabajo..." : "Confirmar trabajo"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -820,17 +806,15 @@ function Broadcast() {
           ) : null}
 
           {filteredBroadcasts.length === 0 && !isLoading ? (
-            <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed text-center">
-              <RadioTower className="h-10 w-10 text-muted-foreground" />
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">{historySearch.trim() ? "No jobs match this search" : "No broadcast jobs yet"}</h3>
-                <p className="max-w-xl text-sm text-muted-foreground">
-                  {historySearch.trim()
-                    ? "Prueba otro mensaje, instancia o estado. Esta pantalla muestra trabajos de cola disponibles para el tenant."
-                    : "El historial aparecerá después de crear el primer trabajo. La pantalla se enfoca en estado, programación y reintentos disponibles."}
-                </p>
-              </div>
-            </div>
+            <OperatorEmptyState
+              icon={RadioTower}
+              title={historySearch.trim() ? "No hay trabajos con esta búsqueda" : "Aún no hay broadcasts"}
+              description={
+                historySearch.trim()
+                  ? "Prueba otro mensaje, instancia o estado. Esta pantalla muestra trabajos de cola disponibles para el tenant."
+                  : "El historial aparecerá después de crear el primer trabajo. La pantalla se enfoca en estado, programación y reintentos disponibles."
+              }
+            />
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -863,10 +847,7 @@ function Broadcast() {
                               </div>
                             </TableCell>
                             <TableCell className="align-top">
-                              <Badge variant={getStatusBadgeVariant(broadcast.status)} className="gap-1.5">
-                                <StatusIcon className="h-3.5 w-3.5" />
-                                {formatOperatorStatusLabel(broadcast.status)}
-                              </Badge>
+                              <OperatorStatusBadge variant={getStatusBadgeVariant(broadcast.status)} icon={StatusIcon}>{formatOperatorStatusLabel(broadcast.status)}</OperatorStatusBadge>
                             </TableCell>
                             <TableCell className="align-top">
                               <div className="space-y-1 text-sm">
@@ -917,7 +898,7 @@ function Broadcast() {
       {selectedBroadcastId ? (
         selectedBroadcastLoading ? (
           <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">Loading campaign detail...</CardContent>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">Cargando detalle de campaña...</CardContent>
           </Card>
         ) : selectedBroadcastError ? (
           <Alert variant="warning">

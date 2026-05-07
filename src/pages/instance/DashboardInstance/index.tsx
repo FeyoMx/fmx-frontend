@@ -6,13 +6,13 @@ import QRCode from "react-qr-code";
 
 import { InstanceStatus } from "@/components/instance-status";
 import { InstanceToken } from "@/components/instance-token";
+import { OperatorActionBar, OperatorStatTile, OperatorStatusBadge } from "@/components/operator-surface";
 import { UnsupportedInstanceFeature } from "@/components/unsupported-instance-feature";
 import { useTheme } from "@/components/theme-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -228,7 +228,7 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
         const Icon = runtimeEventIcon(event.event);
 
         return (
-          <div key={event.id} className="flex items-start gap-3 rounded-xl border p-4">
+          <div key={event.id} className="flex items-start gap-3 rounded-xl border bg-background/80 p-4 shadow-sm">
             <div className="rounded-full border bg-muted/30 p-2">
               <Icon className={`h-4 w-4 ${event.event === "reconnect_requested" ? "animate-pulse" : ""}`} />
             </div>
@@ -237,14 +237,12 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="font-medium">{formatRuntimeLabel(event.event)}</div>
                   {event.status && (
-                    <Badge variant={getRuntimeBadgeVariant(event.status)}>
-                      {formatRuntimeLabel(event.status)}
-                    </Badge>
+                    <OperatorStatusBadge variant={getRuntimeBadgeVariant(event.status)}>{formatRuntimeLabel(event.status)}</OperatorStatusBadge>
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Not observed yet")}</div>
               </div>
-              {event.detail && <div className="break-words text-sm text-muted-foreground">{event.detail}</div>}
+              {event.detail && <div className="break-words text-sm leading-6 text-muted-foreground">{event.detail}</div>}
               <div className="text-xs text-muted-foreground">Observed: {formatOptionalTimestamp(event.timestamp)}</div>
             </div>
           </div>
@@ -721,12 +719,12 @@ function DashboardInstance() {
     },
     {
       label: "Runtime state",
-      value: runtimeState ? formatRuntimeLabel(runtimeState.state) : runtimeLoading ? "Loading" : "Not reported",
+      value: runtimeState ? formatRuntimeLabel(runtimeState.state) : runtimeLoading ? "Cargando" : "No reportado",
       detail: runtimeState?.lastUpdatedAt ? `Runtime updated ${formatCompactTimestamp(runtimeState.lastUpdatedAt)}` : "Runtime endpoint has not returned a timestamp yet",
     },
     {
       label: "Bridge signal",
-      value: runtimeState?.bridgeHealthy === undefined ? "Not reported" : runtimeState.bridgeHealthy ? "Healthy" : "Degraded",
+      value: runtimeState?.bridgeHealthy === undefined ? "No reportado" : runtimeState.bridgeHealthy ? "Saludable" : "Degradado",
       detail: runtimeState?.lastObservedStatus ? `Last observed ${formatRuntimeLabel(runtimeState.lastObservedStatus)}` : "No last observed runtime status returned yet",
     },
   ];
@@ -739,7 +737,7 @@ function DashboardInstance() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">Instance dashboard</Badge>
+                  <OperatorStatusBadge variant="outline">Panel de instancia</OperatorStatusBadge>
                   <InstanceStatus status={instance.connectionStatus} />
                 </div>
                 <h2 className="break-words text-2xl font-semibold tracking-tight">{instance.name}</h2>
@@ -749,13 +747,7 @@ function DashboardInstance() {
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              {runtimeSnapshot.map((item) => (
-                <div key={item.label} className="rounded-2xl border bg-background/85 p-4 shadow-sm">
-                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</div>
-                  <div className="mt-2 text-xl font-semibold">{item.value}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{item.detail}</div>
-                </div>
-              ))}
+              {runtimeSnapshot.map((item) => <OperatorStatTile key={item.label} label={item.label} value={item.value} detail={item.detail} />)}
             </div>
           </CardHeader>
           <CardContent className="flex flex-col items-start space-y-6">
@@ -764,9 +756,9 @@ function DashboardInstance() {
             </div>
 
             {instance.connectionStatus !== "open" && displayQRCode && (
-              <div className="flex flex-col items-center gap-4 p-4 border rounded-lg">
+              <div className="flex w-full flex-col items-center gap-4 rounded-xl border bg-background/80 p-4">
                 <h3 className="text-lg font-semibold">{t("instance.dashboard.qr.title") || "QR Code for Connection"}</h3>
-                <div className="flex items-center justify-center">
+                <div className="flex max-w-full items-center justify-center overflow-hidden rounded-xl bg-muted/20 p-3">
                   {isQRImage ? (
                     <img src={displayQRCode} alt="QR Code" className="max-w-64 max-h-64" />
                   ) : (
@@ -799,7 +791,7 @@ function DashboardInstance() {
                 </div>
 
                 <Dialog open={reconnectDialogOpen} onOpenChange={(open) => void (open ? setReconnectDialogOpen(true) : closeQRCodePopup())}>
-                  <Button variant="warning" disabled={isLifecycleRunning} onClick={() => void handleReconnect(instance.id)}>
+                  <Button variant="warning" className="w-full sm:w-auto" disabled={isLifecycleRunning} onClick={() => void handleReconnect(instance.id)}>
                     {activeLifecycleAction === "reconnect" ? "Requesting reconnect..." : "Reconnect with QR"}
                   </Button>
                   <DialogContent>
@@ -835,7 +827,7 @@ function DashboardInstance() {
 
                 {instance.number && (
                   <Dialog open={pairDialogOpen} onOpenChange={(open) => void (open ? setPairDialogOpen(true) : closeQRCodePopup())}>
-                    <Button type="button" className="connect-code-button" disabled={isLifecycleRunning} onClick={() => void handlePairingCode(instance.id)}>
+                    <Button type="button" className="connect-code-button w-full sm:w-auto" disabled={isLifecycleRunning} onClick={() => void handlePairingCode(instance.id)}>
                       {activeLifecycleAction === "pair" ? "Requesting code..." : "Pair with code"}
                     </Button>
                     <DialogContent>
@@ -874,19 +866,21 @@ function DashboardInstance() {
               </Alert>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap items-center justify-between gap-3">
+          <CardFooter className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
             <div className="text-xs text-muted-foreground">
               Created {formatOperatorTimestamp(instance.createdAt)}{instance.updatedAt ? ` · Updated ${formatOperatorTimestamp(instance.updatedAt)}` : ""}
             </div>
-            <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning || isRefreshingLifecycle}>
-              <RefreshCw size="20" className={isRefreshingLifecycle ? "animate-spin" : undefined} />
-            </Button>
-            <Button className="action-button" variant="secondary" onClick={() => void handleReconnect(instance.id)} disabled={isLifecycleRunning}>
-              {activeLifecycleAction === "reconnect" ? "Requesting..." : "Reconnect"}
-            </Button>
-            <Button variant="destructive" onClick={() => setLogoutDialogOpen(true)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
-              Log out instance
-            </Button>
+            <OperatorActionBar className="sm:justify-end">
+              <Button variant="outline" className="refresh-button" size="icon" onClick={handleReload} disabled={isLifecycleRunning || isBackfillRunning || isRefreshingLifecycle}>
+                <RefreshCw size="20" className={isRefreshingLifecycle ? "animate-spin" : undefined} />
+              </Button>
+              <Button className="action-button" variant="secondary" onClick={() => void handleReconnect(instance.id)} disabled={isLifecycleRunning}>
+                {activeLifecycleAction === "reconnect" ? "Solicitando..." : "Reconectar"}
+              </Button>
+              <Button variant="destructive" onClick={() => setLogoutDialogOpen(true)} disabled={instance.connectionStatus === "close" || isLifecycleRunning}>
+                Cerrar sesión
+              </Button>
+            </OperatorActionBar>
           </CardFooter>
         </Card>
 
@@ -940,7 +934,7 @@ function DashboardInstance() {
               {t("instance.dashboard.contacts")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{formatStat(stats.contacts)}</CardContent>
+          <CardContent className="text-2xl font-semibold">{formatStat(stats.contacts)}</CardContent>
         </Card>
         <Card className="instance-card">
           <CardHeader>
@@ -949,7 +943,7 @@ function DashboardInstance() {
               {t("instance.dashboard.chats")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{formatStat(stats.chats)}</CardContent>
+          <CardContent className="text-2xl font-semibold">{formatStat(stats.chats)}</CardContent>
         </Card>
         <Card className="instance-card">
           <CardHeader>
@@ -958,7 +952,7 @@ function DashboardInstance() {
               {t("instance.dashboard.messages")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{formatStat(stats.messages)}</CardContent>
+          <CardContent className="text-2xl font-semibold">{formatStat(stats.messages)}</CardContent>
         </Card>
       </section>
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -985,28 +979,26 @@ function DashboardInstance() {
               </div>
             ) : runtimeState ? (
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-lg border p-4">
+                <div className="rounded-xl border bg-background/80 p-4">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Current runtime state</div>
-                  <Badge variant={getRuntimeBadgeVariant(runtimeState.state)}>{formatRuntimeLabel(runtimeState.state)}</Badge>
+                  <OperatorStatusBadge variant={getRuntimeBadgeVariant(runtimeState.state)}>{formatRuntimeLabel(runtimeState.state)}</OperatorStatusBadge>
                   <div className="mt-2 text-xs text-muted-foreground">{formatOperatorTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
-                <div className="rounded-lg border p-4">
+                <div className="rounded-xl border bg-background/80 p-4">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Last observed status</div>
-                  <Badge variant={getRuntimeBadgeVariant(runtimeState.lastObservedStatus || "unknown")}>
-                    {formatRuntimeLabel(runtimeState.lastObservedStatus)}
-                  </Badge>
+                  <OperatorStatusBadge variant={getRuntimeBadgeVariant(runtimeState.lastObservedStatus || "unknown")}>{formatRuntimeLabel(runtimeState.lastObservedStatus)}</OperatorStatusBadge>
                 </div>
-                <div className="rounded-lg border p-4">
+                <div className="rounded-xl border bg-background/80 p-4">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Bridge signal</div>
                   {runtimeState.bridgeHealthy === undefined ? (
-                    <Badge variant="outline">Not reported</Badge>
+                    <OperatorStatusBadge variant="outline">No reportado</OperatorStatusBadge>
                   ) : runtimeState.bridgeHealthy ? (
-                    <Badge variant="default">Healthy</Badge>
+                    <OperatorStatusBadge variant="default">Saludable</OperatorStatusBadge>
                   ) : (
-                    <Badge variant="warning">Degraded</Badge>
+                    <OperatorStatusBadge variant="warning">Degradado</OperatorStatusBadge>
                   )}
                 </div>
-                <div className="rounded-lg border p-4 md:col-span-3">
+                <div className="rounded-xl border bg-background/80 p-4 md:col-span-3">
                   <div className="mb-2 text-xs font-medium text-muted-foreground">Last updated</div>
                   <div className="text-sm">{formatOptionalTimestamp(runtimeState.lastUpdatedAt)}</div>
                 </div>
@@ -1037,12 +1029,12 @@ function DashboardInstance() {
             <p className="text-sm text-muted-foreground">
               Recent lifecycle events help explain why an instance is connected, disconnected, pairing, or recovering. Event completeness still depends on bridge availability.
             </p>
-            <div className="rounded-lg border p-4">
+            <div className="rounded-xl border bg-background/80 p-4">
               <div className="mb-2 text-sm font-medium">Bounded history recovery</div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Request a bounded history backfill for one WhatsApp chat JID. This is a recovery tool, not a guaranteed full replay, and it only works when the live bridge can return a sync blob.
               </p>
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_auto]">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_8rem_auto]">
                 <div className="grid gap-2">
                   <Label htmlFor="history-backfill-chat-jid">Chat JID</Label>
                   <Input
@@ -1069,7 +1061,7 @@ function DashboardInstance() {
                   <Button
                     type="button"
                     variant="secondary"
-                    className="w-full md:w-auto"
+                    className="w-full"
                     onClick={handleHistoryBackfill}
                     disabled={isBackfillRunning || instance.connectionStatus !== "open"}>
                     {isBackfillRunning ? "Requesting..." : "Request bounded backfill"}
@@ -1119,7 +1111,7 @@ function DashboardInstance() {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Send text message</CardTitle>
+              <CardTitle>Enviar mensaje de texto</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -1177,7 +1169,7 @@ function DashboardInstance() {
             </CardContent>
             <CardFooter className="justify-end">
               <Button onClick={handleSendTextMessage} disabled={instance.connectionStatus !== "open" || isSendingText || !recipientNumber.trim() || !messageText.trim()}>
-                {isSendingText ? "Sending..." : "Send text"}
+                {isSendingText ? "Enviando..." : "Enviar texto"}
               </Button>
             </CardFooter>
           </Card>

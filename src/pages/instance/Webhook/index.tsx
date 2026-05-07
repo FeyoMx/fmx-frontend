@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -8,6 +7,7 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormInput, FormItem, FormLabel, FormSwitch } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -129,17 +129,18 @@ function Webhook() {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-          <div>
-            <h3 className="mb-1 text-lg font-medium">{t("webhook.title")}</h3>
-            <Separator className="my-4" />
-            <div className="mx-4 space-y-2 divide-y [&>*]:p-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("webhook.title")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 divide-y [&>*]:py-4 [&>*:first-child]:pt-0">
               <FormSwitch name="enabled" label={t("webhook.form.enabled.label")} className="w-full justify-between" helper={t("webhook.form.enabled.description")} />
               <FormInput name="url" label="URL">
                 <Input />
               </FormInput>
               <FormSwitch name="byEvents" label={t("webhook.form.byEvents.label")} className="w-full justify-between" helper={t("webhook.form.byEvents.description")} />
               <FormSwitch name="base64" label={t("webhook.form.base64.label")} className="w-full justify-between" helper={t("webhook.form.base64.description")} />
-              <div className="mb-4 flex justify-between">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:justify-between">
                 <Button variant="outline" type="button" onClick={handleSelectAll}>
                   {t("button.markAll")}
                 </Button>
@@ -154,7 +155,7 @@ function Webhook() {
                   <FormItem className="flex flex-col">
                     <FormLabel className="my-2 text-lg">{t("webhook.form.events.label")}</FormLabel>
                     <FormControl>
-                      <div className="flex flex-col gap-2 space-y-1 divide-y">
+                      <div className="flex flex-col gap-2 space-y-1 divide-y rounded-xl border bg-muted/10 p-3">
                         {events
                           .sort((a, b) => a.localeCompare(b))
                           .map((event) => (
@@ -177,14 +178,14 @@ function Webhook() {
                   </FormItem>
                 )}
               />
-            </div>
+            </CardContent>
 
-            <div className="mx-4 flex justify-end pt-6">
+            <div className="flex justify-end p-5 pt-0 sm:p-6 sm:pt-0">
               <Button type="submit" disabled={loading}>
                 {loading ? t("webhook.button.saving") : t("webhook.button.save")}
               </Button>
             </div>
-          </div>
+          </Card>
         </form>
       </Form>
     </>

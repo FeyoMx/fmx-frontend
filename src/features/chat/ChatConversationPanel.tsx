@@ -2,8 +2,8 @@ import { History, MessagesSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OperatorEmptyState, OperatorStatusBadge } from "@/components/operator-surface";
 
 import { getChatHistoryCapabilityMessage } from "@/lib/queries/chat/tenantChat";
 import { ChatCapabilities, ChatHistoryMessage, ChatHistoryResponse, ChatThread } from "@/lib/queries/chat/types";
@@ -65,9 +65,10 @@ function ChatConversationPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <ChatCapabilityStatus capabilities={capabilities} />
-          <ChatEmptyState
-            title="Choose a conversation to continue"
-            description="Pick a chat from the list to load persisted history for that remote JID."
+          <OperatorEmptyState
+            icon={MessagesSquare}
+            title="Elige una conversación"
+            description="Selecciona un chat de la lista para cargar el historial guardado de ese JID."
           />
         </CardContent>
       </Card>
@@ -93,8 +94,8 @@ function ChatConversationPanel({
               <p className="break-all text-sm text-muted-foreground">{activeThread.remoteJid}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {activeThread.unreadCount ? <Badge variant="warning">{activeThread.unreadCount} unread</Badge> : <Badge variant="outline">No unread marker</Badge>}
-              <Badge variant="outline">{lastPersistedAt ? `Last persisted ${formatCompactTimestamp(lastPersistedAt)}` : "No persisted messages yet"}</Badge>
+              {activeThread.unreadCount ? <OperatorStatusBadge variant="warning">{activeThread.unreadCount} sin leer</OperatorStatusBadge> : <OperatorStatusBadge variant="outline">Sin marcador pendiente</OperatorStatusBadge>}
+              <OperatorStatusBadge variant="outline">{lastPersistedAt ? `Último guardado ${formatCompactTimestamp(lastPersistedAt)}` : "Sin mensajes guardados"}</OperatorStatusBadge>
             </div>
           </div>
           <Alert variant="info">
@@ -113,15 +114,16 @@ function ChatConversationPanel({
           ) : historyError ? (
             <Alert variant="warning">
               <MessagesSquare className="h-4 w-4" />
-              <AlertTitle>Conversation history unavailable</AlertTitle>
+              <AlertTitle>Historial no disponible</AlertTitle>
               <AlertDescription>{getChatHistoryCapabilityMessage(historyError)}</AlertDescription>
             </Alert>
           ) : mergedMessages.length > 0 ? (
             <ChatMessageList messages={mergedMessages} />
           ) : (
-            <ChatEmptyState
-              title="No persisted history yet"
-              description="This conversation is active, but there is no stored thread data yet for this remote JID. Send a new message here or wait for future runtime-captured events; older sessions are not backfilled automatically."
+            <OperatorEmptyState
+              icon={MessagesSquare}
+              title="Sin historial guardado"
+              description="Esta conversación está disponible, pero todavía no hay mensajes guardados para este JID. Envía un mensaje o espera nuevos eventos capturados por la instancia."
             />
           )}
         </CardContent>

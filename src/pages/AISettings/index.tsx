@@ -4,13 +4,13 @@ import { RefreshCw, Save, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
+import { OperatorStatusBadge } from "@/components/operator-surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 import { useTenant } from "@/contexts/TenantContext";
 import { getApiErrorMessage } from "@/lib/queries/errors";
@@ -119,8 +119,8 @@ export function AISettings() {
           <CardDescription>{t("aiSettings.tenant.description") || "Configure AI settings for your entire tenant"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-            <div>
+          <div className="flex flex-col gap-4 rounded-xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <label className="font-medium">{t("aiSettings.enableAI") || "Enable AI"}</label>
               <p className="text-sm text-gray-600">{t("aiSettings.enableAIDescription") || "Enable AI features for this tenant"}</p>
             </div>
@@ -129,7 +129,7 @@ export function AISettings() {
 
           {aiSettings.enabled && (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium mb-2">Provider</label>
                   <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" disabled={isSaving} />
@@ -140,7 +140,7 @@ export function AISettings() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium mb-2">Base URL</label>
                   <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" disabled={isSaving} />
@@ -202,7 +202,7 @@ export function AISettings() {
                     <TableRow key={instance.instanceId}>
                       <TableCell className="font-medium">{instance.instanceName}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{instance.model || "Predeterminado del tenant"}</Badge>
+                        <OperatorStatusBadge variant="outline">{instance.model || "Predeterminado del tenant"}</OperatorStatusBadge>
                       </TableCell>
                       <TableCell>
                         <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} disabled={isSaving || isLoading} />

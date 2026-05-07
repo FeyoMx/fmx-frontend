@@ -59,7 +59,7 @@ const buildSendResultFeedback = (result: ChatSendResult, fallbackTitle: string):
 
 const formatFileSize = (bytes: number): string => {
   if (!Number.isFinite(bytes) || bytes <= 0) {
-    return "size unavailable";
+    return "tamaño no disponible";
   }
 
   if (bytes < 1024 * 1024) {
@@ -145,7 +145,7 @@ function ChatComposer({
 
     const trimmedText = text.trim();
     if (!trimmedText) {
-      toast.error("Write a message before sending.");
+      toast.error("Escribe un mensaje antes de enviar.");
       return;
     }
 
@@ -162,7 +162,7 @@ function ChatComposer({
       setIsSending(true);
       setFeedback({
         status: "queued",
-        title: "Queued for send",
+        title: "En cola",
         detail: "Esperando confirmación de envío.",
       });
 
@@ -192,7 +192,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "error",
-              title: "Send failed",
+              title: "Envío fallido",
               detail: status.error || "La solicitud de envío fue rechazada.",
             });
             return;
@@ -209,8 +209,8 @@ function ChatComposer({
             );
             setFeedback({
               status: "read",
-              title: "Read",
-              detail: status.read_at ? `Read at ${new Date(status.read_at).toLocaleString()}` : "The recipient opened the message.",
+              title: "Leído",
+              detail: status.read_at ? `Leído ${new Date(status.read_at).toLocaleString()}` : "El destinatario abrió el mensaje.",
             });
             setText("");
             return;
@@ -227,8 +227,8 @@ function ChatComposer({
             );
             setFeedback({
               status: "delivered",
-              title: "Delivered",
-              detail: status.delivered_at ? `Delivered at ${new Date(status.delivered_at).toLocaleString()}` : "Delivery confirmed by the provider.",
+              title: "Entregado",
+              detail: status.delivered_at ? `Entregado ${new Date(status.delivered_at).toLocaleString()}` : "Entrega confirmada por el proveedor.",
             });
             setText("");
             return;
@@ -244,8 +244,8 @@ function ChatComposer({
             );
             setFeedback({
               status: "provider_sent",
-              title: "Sent to provider",
-              detail: "Still waiting for delivery confirmation.",
+              title: "Enviado al proveedor",
+              detail: "Esperando confirmación de entrega.",
             });
             continue;
           }
@@ -260,7 +260,7 @@ function ChatComposer({
             );
             setFeedback({
               status: "sending",
-              title: "Sending",
+          title: "Enviando",
               detail: "El envío está en proceso.",
             });
             continue;
@@ -269,7 +269,7 @@ function ChatComposer({
 
         setFeedback({
           status: "provider_sent",
-          title: "Tracking still in progress",
+          title: "Seguimiento en proceso",
           detail: "El envío sigue en proceso. La conversación se actualizará cuando haya nuevo estado.",
         });
         setText("");
@@ -286,7 +286,7 @@ function ChatComposer({
       );
       setFeedback({
         status: "success",
-        title: "Message accepted",
+        title: "Mensaje aceptado",
         detail: response.message,
       });
       setText("");
@@ -301,8 +301,8 @@ function ChatComposer({
       );
       setFeedback({
         status: "error",
-        title: "Send failed",
-        detail: getApiErrorMessage(error, "Unable to send text message."),
+        title: "Envío fallido",
+        detail: getApiErrorMessage(error, "No fue posible enviar el texto."),
       });
       void invalidateHistory();
     } finally {
@@ -316,7 +316,7 @@ function ChatComposer({
     }
 
     if (!mediaFile) {
-      toast.error("Choose a file before sending media.");
+      toast.error("Selecciona un archivo antes de enviar media.");
       return;
     }
 
@@ -359,8 +359,8 @@ function ChatComposer({
     } catch (error) {
       setFeedback({
         status: "error",
-        title: "Media send failed",
-        detail: getApiErrorMessage(error, "Unable to send media."),
+        title: "Media no enviada",
+        detail: getApiErrorMessage(error, "No fue posible enviar media."),
       });
     } finally {
       setIsSending(false);
@@ -373,7 +373,7 @@ function ChatComposer({
     }
 
     if (!audioFile) {
-      toast.error("Choose an audio file before sending.");
+      toast.error("Selecciona un archivo de audio antes de enviar.");
       return;
     }
 
@@ -408,8 +408,8 @@ function ChatComposer({
     } catch (error) {
       setFeedback({
         status: "error",
-        title: "Audio send failed",
-        detail: getApiErrorMessage(error, "Unable to send audio."),
+        title: "Audio no enviado",
+        detail: getApiErrorMessage(error, "No fue posible enviar audio."),
       });
     } finally {
       setIsSending(false);
@@ -421,18 +421,18 @@ function ChatComposer({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border p-4">
+    <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Composer</h3>
-          <p className="text-xs text-muted-foreground">Thread target: {recipientNumber}</p>
+          <h3 className="text-sm font-semibold">Redactar mensaje</h3>
+          <p className="break-all text-xs text-muted-foreground">Destino: {recipientNumber}</p>
         </div>
         <div className="grid gap-1">
           <Label htmlFor="chat-send-delay" className="text-xs">
-            Send delay (ms)
+            Retraso (ms)
           </Label>
           <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" disabled={isSending} />
-          <p className="text-[11px] text-muted-foreground">0 sends immediately.</p>
+          <p className="text-[11px] text-muted-foreground">0 envía de inmediato.</p>
         </div>
       </div>
 
@@ -447,7 +447,7 @@ function ChatComposer({
       <Tabs value={mode} onValueChange={(value) => setMode(value as "text" | "media" | "audio")}>
         <TabsList>
           <TabsTrigger value="text" disabled={capabilities.textSend !== "available" || isSending}>
-            Text
+            Texto
           </TabsTrigger>
           <TabsTrigger value="media" disabled={capabilities.mediaSend !== "available" || isSending}>
             Media
@@ -460,10 +460,10 @@ function ChatComposer({
         <TabsContent value="text" className="space-y-3">
           <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Escribe un mensaje para esta conversación" className="min-h-24" disabled={isSending} />
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-muted-foreground">{text.trim().length} character{text.trim().length === 1 ? "" : "s"} ready to send.</div>
+            <div className="text-xs text-muted-foreground">{text.trim().length} caracter{text.trim().length === 1 ? "" : "es"} listo{text.trim().length === 1 ? "" : "s"} para enviar.</div>
             <Button onClick={handleTextSend} disabled={!text.trim() || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {isSending ? "Sending text..." : "Send text"}
+              {isSending ? "Enviando texto..." : "Enviar texto"}
             </Button>
           </div>
         </TabsContent>
@@ -476,7 +476,7 @@ function ChatComposer({
                 <Paperclip className="h-3.5 w-3.5" />
                 <span className="min-w-0">
                   <span className="block truncate">{mediaFile.name}</span>
-                  <span className="block truncate text-muted-foreground">{mediaFile.type || "Unknown type"} - {formatFileSize(mediaFile.size)}</span>
+                  <span className="block truncate text-muted-foreground">{mediaFile.type || "Tipo no reportado"} - {formatFileSize(mediaFile.size)}</span>
                 </span>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMediaFile(null)} disabled={isSending}>
@@ -488,7 +488,7 @@ function ChatComposer({
           <div className="flex justify-end">
             <Button onClick={handleMediaSend} disabled={!mediaFile || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {isSending ? "Sending media..." : "Send media"}
+              {isSending ? "Enviando media..." : "Enviar media"}
             </Button>
           </div>
         </TabsContent>
@@ -501,7 +501,7 @@ function ChatComposer({
                 <Mic className="h-3.5 w-3.5" />
                 <span className="min-w-0">
                   <span className="block truncate">{audioFile.name}</span>
-                  <span className="block truncate text-muted-foreground">{audioFile.type || "Unknown type"} - {formatFileSize(audioFile.size)}</span>
+                  <span className="block truncate text-muted-foreground">{audioFile.type || "Tipo no reportado"} - {formatFileSize(audioFile.size)}</span>
                 </span>
               </div>
               <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAudioFile(null)} disabled={isSending}>
@@ -512,7 +512,7 @@ function ChatComposer({
           <div className="flex justify-end">
             <Button onClick={handleAudioSend} disabled={!audioFile || isSending} className="gap-2">
               {isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {isSending ? "Sending audio..." : "Send audio"}
+              {isSending ? "Enviando audio..." : "Enviar audio"}
             </Button>
           </div>
         </TabsContent>

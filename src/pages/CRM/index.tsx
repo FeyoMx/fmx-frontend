@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 import { OperatorPageHeader } from "@/components/operator-page-header";
 import { OperatorErrorState, SkeletonTableRows } from "@/components/operator-state";
+import { OperatorStatusBadge } from "@/components/operator-surface";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ export function CRM() {
             />
           ) : null}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
               <Input
@@ -199,7 +200,9 @@ export function CRM() {
                 ) : filteredContacts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center">
-                      {searchQuery.trim() || selectedTag ? "No contacts match the current filters." : t("crm.noContacts") || "No contacts found"}
+                      <div className="py-6">
+                        {searchQuery.trim() || selectedTag ? "No hay contactos con estos filtros." : t("crm.noContacts") || "No hay contactos todavía"}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -211,9 +214,7 @@ export function CRM() {
                       <TableCell className="max-w-[220px]">
                         <div className="flex flex-wrap gap-1">
                           {contact.tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="max-w-[10rem] truncate text-xs" title={tag}>
-                              {tag}
-                            </Badge>
+                            <OperatorStatusBadge key={tag} variant="secondary" className="max-w-[10rem] truncate text-xs" title={tag}>{tag}</OperatorStatusBadge>
                           ))}
                         </div>
                       </TableCell>
@@ -251,9 +252,9 @@ export function CRM() {
             <DialogDescription>{t("crm.dialog.addContactDescription") || "Crea un contacto con nombre y teléfono."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Input type="text" placeholder="Name*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} disabled={isSubmitting} />
+            <Input type="text" placeholder="Nombre*" value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: event.target.value })} disabled={isSubmitting} />
             <Input type="email" placeholder="Email" value={newContact.email} onChange={(event) => setNewContact({ ...newContact, email: event.target.value })} disabled={isSubmitting} />
-            <Input type="tel" placeholder="Phone*" value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: event.target.value })} disabled={isSubmitting} />
+            <Input type="tel" placeholder="Teléfono*" value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: event.target.value })} disabled={isSubmitting} />
           </div>
           <DialogFooter>
             <Button onClick={() => setShowAddContact(false)} variant="outline" disabled={isSubmitting}>

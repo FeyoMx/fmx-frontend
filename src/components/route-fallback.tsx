@@ -8,7 +8,7 @@ type RouteFallbackProps = {
 };
 
 function RouteFallback({
-  title = "Loading operator surface",
+  title = "Cargando superficie operativa",
   description = "Preparing the requested page and data-heavy UI modules.",
 }: RouteFallbackProps) {
   return (

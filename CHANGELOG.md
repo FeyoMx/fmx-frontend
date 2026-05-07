@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Shared operator surface primitives for stat tiles, empty states, status badges, action bars, and mobile-friendly full-width actions.
 - Open source preparation with comprehensive documentation
 - GitHub issue templates and PR templates
 - Security policy and vulnerability reporting process
@@ -50,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RC1 operator-experience validation notes covering login, dashboard, instance management, chat, broadcast, logout, remaining friction, and readiness verdict
 
 ### Changed
+- Polished visual consistency across Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, Login, and supported connector/settings pages without adding new features.
+- Standardized card radius, card padding, page-header action wrapping, status badges, empty states, dense table/list spacing, and long identifier wrapping across the production MVP surface.
+- Improved the login screen with branded production framing, inline error feedback, and clearer loading state.
 - Hid API Keys del sidebar normal y lo mantuvo como ruta informativa marcada Próximamente / No disponible en esta versión.
 - Reescribió placeholders guardados de integraciones no disponibles con copy corto de producto, sin exponer `501`, legacy routes ni detalles técnicos al operador.
 - Pulió copy de Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings y estados compartidos para usar etiquetas operativas como Disponible, En proceso, Historial parcial y Última actualización.

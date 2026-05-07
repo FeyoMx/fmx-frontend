@@ -133,7 +133,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <img src={message.mediaUrl} alt={message.caption || message.fileName || "Image message"} className="max-h-72 w-full object-cover" loading="lazy" />
           </a>
         ) : (
-          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <ImageIcon className="h-4 w-4 shrink-0" />
             Imagen recibida con historial parcial. No hay vista previa disponible.
           </div>
@@ -149,7 +149,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         {message.mediaUrl ? (
           <video src={message.mediaUrl} controls className="max-h-72 w-full rounded-xl border bg-black/80" />
         ) : (
-          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <Video className="h-4 w-4 shrink-0" />
             Video recibido con historial parcial. No hay reproducción disponible.
           </div>
@@ -167,7 +167,7 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             <source src={message.mediaUrl} type={message.mimeType || "audio/mpeg"} />
           </audio>
         ) : (
-          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <Mic className="h-4 w-4 shrink-0" />
             Audio recibido con historial parcial. No hay reproducción disponible.
           </div>
@@ -265,7 +265,7 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
 
   return (
     <div className="relative">
-      <div ref={scrollRef} onScroll={handleScroll} className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-lg border bg-muted/20 p-4">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 sm:p-4">
         {groups.map((entry) => {
           if (entry.type === "day") {
             return (
@@ -280,12 +280,12 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
           return (
             <div
               key={entry.key}
-              className={`max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm shadow-sm sm:max-w-[85%] ${
+              className={`min-w-0 max-w-[92%] overflow-hidden break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm sm:max-w-[85%] ${
                 message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background"
               } ${entry.groupedWithPrevious ? "mt-1" : "mt-3"}`}>
               {!entry.groupedWithPrevious && (
                 <div className="mb-1 flex items-center justify-between gap-3 text-[11px] opacity-70">
-                  <span>{message.fromMe ? "You" : message.pushName || message.remoteJid.split("@")[0] || "Unknown"}</span>
+                  <span className="min-w-0 truncate">{message.fromMe ? "Tú" : message.pushName || message.remoteJid.split("@")[0] || "Contacto"}</span>
                   {message.status && <StatusMeta status={message.status} />}
                 </div>
               )}
