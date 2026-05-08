@@ -105,6 +105,7 @@ Frontend handling after this sync:
 - Active chat message rendering now uses a flex-owned scroll pane with unclipped bubbles, preserved multiline whitespace, safe URL/JID wrapping, wrapped metadata, and a composer that no longer competes with the last messages for visibility.
 - Active chat conversation panels now keep header, message timeline, and composer in one bounded flex card; only the message timeline scrolls, and the embedded composer footer remains visible without overlaying bubbles, timestamps, media placeholders, or optimistic messages.
 - Instance route layout now provides a proper `min-h-0`/`flex-1` height chain for chat, so the chat shell can keep desktop conversations viewport-bound while allowing stacked mobile layouts enough height for visible, scrollable messages.
+- Chat shell height is now explicitly bounded to `calc(100vh - 56px)`, matching the app header, so the conversation panel and its message scroller do not depend on fragile inherited `h-full` calculations.
 - Heavy operator routes now lazy-load behind the same auth guards and layouts, including dashboard, broadcast, chat, instance dashboard, and AI settings.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
