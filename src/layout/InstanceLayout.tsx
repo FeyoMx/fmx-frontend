@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -14,6 +14,8 @@ interface LayoutProps {
 
 function InstanceLayout({ children }: LayoutProps) {
   const { instanceId } = useParams<{ instanceId: string }>();
+  const location = useLocation();
+  const isChatRoute = /^\/manager\/instance\/[^/]+\/chat(?:\/|$)/.test(location.pathname);
 
   return (
     <InstanceProvider>
@@ -26,12 +28,18 @@ function InstanceLayout({ children }: LayoutProps) {
               <Sidebar />
             </div>
           </ScrollArea>
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="flex min-h-full flex-col">
-              <div className="my-2 flex min-h-0 flex-1 flex-col gap-2 pl-2 pr-4">{children}</div>
-              <Footer />
-            </div>
-          </ScrollArea>
+          {isChatRoute ? (
+            <main className="min-h-0 flex-1 overflow-hidden">
+              <div className="flex h-full min-h-0 flex-col py-2 pl-2 pr-4">{children}</div>
+            </main>
+          ) : (
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="flex min-h-full flex-col">
+                <div className="my-2 flex min-h-0 flex-1 flex-col gap-2 pl-2 pr-4">{children}</div>
+                <Footer />
+              </div>
+            </ScrollArea>
+          )}
         </div>
       </div>
     </InstanceProvider>

@@ -424,7 +424,7 @@ function ChatComposer({
   };
 
   return (
-    <div className={cn("space-y-4 bg-card p-4", embedded ? "border-0 shadow-none" : "rounded-xl border shadow-sm")}>
+    <div className={cn("bg-card", embedded ? "space-y-3 border-0 p-3 shadow-none" : "space-y-4 rounded-xl border p-4 shadow-sm")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Redactar mensaje</h3>
@@ -435,17 +435,19 @@ function ChatComposer({
             Retraso (ms)
           </Label>
           <Input id="chat-send-delay" type="number" min="0" step="1" value={delay} onChange={(event) => setDelay(event.target.value)} className="h-8 w-28" disabled={isSending} />
-          <p className="text-[11px] text-muted-foreground">0 envía de inmediato.</p>
+          {!embedded && <p className="text-[11px] text-muted-foreground">0 envía de inmediato.</p>}
         </div>
       </div>
 
-      <Alert variant="info">
-        <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Estado de envío según la información disponible.</AlertTitle>
-        <AlertDescription>
-          Los textos pueden pasar por cola, envío, entregado y leído. Media y audio se aceptan aquí; la vista en historial puede quedar parcial hasta que la instancia reporte más detalle.
-        </AlertDescription>
-      </Alert>
+      {!embedded && (
+        <Alert variant="info">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Estado de envío según la información disponible.</AlertTitle>
+          <AlertDescription>
+            Los textos pueden pasar por cola, envío, entregado y leído. Media y audio se aceptan aquí; la vista en historial puede quedar parcial hasta que la instancia reporte más detalle.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs value={mode} onValueChange={(value) => setMode(value as "text" | "media" | "audio")}>
         <TabsList>
@@ -461,7 +463,7 @@ function ChatComposer({
         </TabsList>
 
         <TabsContent value="text" className="space-y-3">
-          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Escribe un mensaje para esta conversación" className="min-h-24" disabled={isSending} />
+          <Textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Escribe un mensaje para esta conversación" className={cn(embedded ? "min-h-16" : "min-h-24")} disabled={isSending} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-muted-foreground">{text.trim().length} caracter{text.trim().length === 1 ? "" : "es"} listo{text.trim().length === 1 ? "" : "s"} para enviar.</div>
             <Button onClick={handleTextSend} disabled={!text.trim() || isSending} className="gap-2">

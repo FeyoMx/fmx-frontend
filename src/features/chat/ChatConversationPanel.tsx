@@ -100,7 +100,7 @@ function ChatConversationPanel({
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <Card className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <CardHeader className="shrink-0 space-y-4">
+        <CardHeader className="shrink-0 space-y-3 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <CardTitle className="break-words">{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
@@ -111,20 +111,16 @@ function ChatConversationPanel({
               <OperatorStatusBadge variant="outline">{lastPersistedAt ? `Último guardado ${formatCompactTimestamp(lastPersistedAt)}` : "Sin mensajes guardados"}</OperatorStatusBadge>
             </div>
           </div>
-          <Alert variant="info">
+          <Alert variant="info" className="py-2 text-xs">
             <History className="h-4 w-4" />
             <AlertTitle>Historial parcial cuando la instancia no tiene todo guardado.</AlertTitle>
-            <AlertDescription>
+            <AlertDescription className="line-clamp-2">
               El historial guardado está disponible para este chat. Conversaciones antiguas o archivos de media pueden quedar incompletos si no fueron capturados por la instancia.
               {devMessageCount !== null ? ` Mensajes normalizados: ${devMessageCount}.` : ""}
             </AlertDescription>
           </Alert>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-          <div className="shrink-0">
-            <ChatCapabilityStatus capabilities={capabilities} />
-          </div>
-
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-0 sm:p-5 sm:pt-0">
           {historyLoading ? (
             <div className="min-h-0 flex-1 overflow-y-auto">
               <ChatEmptyState title="Cargando conversación" description="Consultando historial guardado de este chat." />

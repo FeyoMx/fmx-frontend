@@ -264,53 +264,51 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
   };
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
-      <div ref={scrollRef} onScroll={handleScroll} className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 pb-6 sm:p-4 sm:pb-6">
-        {groups.map((entry) => {
-          if (entry.type === "day") {
-            return (
-              <div key={entry.key} className="sticky top-0 z-10 mx-auto rounded-full border bg-background/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
-                {entry.label}
-              </div>
-            );
-          }
-
-          const message = entry.message!;
-
+    <div ref={scrollRef} onScroll={handleScroll} className="relative flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 pb-6 sm:p-4 sm:pb-6">
+      {groups.map((entry) => {
+        if (entry.type === "day") {
           return (
-            <div
-              key={entry.key}
-              className={`min-w-0 max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm [overflow-wrap:anywhere] sm:max-w-[85%] ${
-                message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background text-foreground"
-              } ${entry.groupedWithPrevious ? "mt-1" : "mt-3"}`}>
-              {!entry.groupedWithPrevious && (
-                <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] opacity-70">
-                  <span className="min-w-0 break-words [overflow-wrap:anywhere]">{message.fromMe ? "Tú" : message.pushName || message.remoteJid.split("@")[0] || "Contacto"}</span>
-                  {message.status && (
-                    <span className="shrink-0">
-                      <StatusMeta status={message.status} />
-                    </span>
-                  )}
-                </div>
-              )}
-              <MessageBody message={message} />
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] opacity-70">
-                <span title={formatTimestamp(message.timestamp)}>{formatBubbleTime(message.timestamp)}</span>
-                <span className="inline-flex flex-wrap items-center justify-end gap-2">
-                  {message.isPartial && <span>Historial parcial</span>}
-                  {message.status && entry.groupedWithPrevious && <StatusMeta status={message.status} />}
-                </span>
-              </div>
+            <div key={entry.key} className="sticky top-0 z-10 mx-auto rounded-full border bg-background/95 px-3 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur">
+              {entry.label}
             </div>
           );
-        })}
-        <div ref={bottomRef} />
-      </div>
+        }
+
+        const message = entry.message!;
+
+        return (
+          <div
+            key={entry.key}
+            className={`min-w-0 max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm [overflow-wrap:anywhere] sm:max-w-[85%] ${
+              message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background text-foreground"
+            } ${entry.groupedWithPrevious ? "mt-1" : "mt-3"}`}>
+            {!entry.groupedWithPrevious && (
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] opacity-70">
+                <span className="min-w-0 break-words [overflow-wrap:anywhere]">{message.fromMe ? "Tú" : message.pushName || message.remoteJid.split("@")[0] || "Contacto"}</span>
+                {message.status && (
+                  <span className="shrink-0">
+                    <StatusMeta status={message.status} />
+                  </span>
+                )}
+              </div>
+            )}
+            <MessageBody message={message} />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] opacity-70">
+              <span title={formatTimestamp(message.timestamp)}>{formatBubbleTime(message.timestamp)}</span>
+              <span className="inline-flex flex-wrap items-center justify-end gap-2">
+                {message.isPartial && <span>Historial parcial</span>}
+                {message.status && entry.groupedWithPrevious && <StatusMeta status={message.status} />}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
       {!isNearBottom && (
         <button
           type="button"
           onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}
-          className="absolute bottom-4 right-4 inline-flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs shadow-sm">
+          className="sticky bottom-4 ml-auto inline-flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs shadow-sm">
           <ChevronDown className="h-3.5 w-3.5" />
           Newest
         </button>

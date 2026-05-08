@@ -44,7 +44,7 @@ function CapabilityBadge({ state }: { state: ChatCapabilityState }) {
   );
 }
 
-function ChatCapabilityStatus({ capabilities }: { capabilities: ChatCapabilities }) {
+function ChatCapabilityStatus({ capabilities, compact = false }: { capabilities: ChatCapabilities; compact?: boolean }) {
   const rows = [
     { label: "Lista de chats", state: capabilities.chatList },
     { label: "Historial", state: capabilities.messageHistory },
@@ -52,6 +52,19 @@ function ChatCapabilityStatus({ capabilities }: { capabilities: ChatCapabilities
     { label: "Media", state: capabilities.mediaSend },
     { label: "Audio", state: capabilities.audioSend },
   ];
+
+  if (compact) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {rows.map((row) => (
+          <div key={row.label} className="inline-flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs">
+            <span className="text-muted-foreground">{row.label}</span>
+            <CapabilityBadge state={row.state} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
