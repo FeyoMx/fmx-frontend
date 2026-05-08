@@ -103,6 +103,7 @@ Frontend handling after this sync:
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, stronger unread/preview emphasis, faster-feeling thread filtering, and clearer in-thread caveats when history is partial.
 - Active chat message rendering now uses a flex-owned scroll pane with unclipped bubbles, preserved multiline whitespace, safe URL/JID wrapping, wrapped metadata, and a composer that no longer competes with the last messages for visibility.
+- Active chat conversation panels now keep header, message timeline, and composer in one bounded flex card; only the message timeline scrolls, and the embedded composer footer remains visible without overlaying bubbles, timestamps, media placeholders, or optimistic messages.
 - Heavy operator routes now lazy-load behind the same auth guards and layouts, including dashboard, broadcast, chat, instance dashboard, and AI settings.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
@@ -186,6 +187,7 @@ Remaining frontend-only work is mostly presentational:
 - `npm run type-check`
 - `npm run build`
 - Chat conversation rendering/layout was validated during the 2026-05-08 pass to ensure fetched non-empty histories render in the message pane instead of falling through to the empty state or being clipped by nested overflow.
+- Chat conversation layout was revalidated during the 2026-05-08 overlap fix to ensure the composer stays outside the scroll region and the final message remains readable above it.
 - Browser data refresh was attempted with `npx update-browserslist-db@latest`, but the updater timed out after partially touching the lockfile. No package update was kept; the final build no longer emitted stale browser-data warnings in this workspace. If warnings recur, rerun the updater with reliable npm registry access.
 
 ## Current Bundle Snapshot

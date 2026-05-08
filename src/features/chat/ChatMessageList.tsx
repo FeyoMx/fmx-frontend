@@ -264,8 +264,8 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
   };
 
   return (
-    <div className="relative flex min-h-0 flex-1">
-      <div ref={scrollRef} onScroll={handleScroll} className="flex min-h-[240px] flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 sm:p-4">
+    <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 pb-6 sm:p-4 sm:pb-6">
         {groups.map((entry) => {
           if (entry.type === "day") {
             return (

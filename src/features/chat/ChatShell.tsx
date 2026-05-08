@@ -206,8 +206,8 @@ function ChatShell() {
 
   return (
     <div className="h-[calc(100vh-160px)] min-h-[680px] min-w-0 overflow-hidden lg:min-h-0">
-      <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full">
-        <ResizablePanel defaultSize={32} minSize={25}>
+      <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full min-h-0 min-w-0 overflow-hidden">
+        <ResizablePanel defaultSize={32} minSize={25} className="min-h-0 min-w-0">
           <Card className="flex h-full min-h-0 min-w-0 flex-col lg:rounded-r-none lg:border-r-0">
             <CardHeader className="space-y-4 border-b">
               <div className="space-y-2">
@@ -353,8 +353,8 @@ function ChatShell() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={68}>
-          <div className="h-full min-h-0 min-w-0 overflow-hidden pt-4 lg:pl-4 lg:pt-0">
+        <ResizablePanel defaultSize={68} className="min-h-0 min-w-0">
+          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pt-4 lg:pl-4 lg:pt-0">
             {!instance?.id ? (
               <Card className="h-full">
                 <CardContent className="flex h-full items-center justify-center">

@@ -98,8 +98,8 @@ function ChatConversationPanel({
   const devMessageCount = import.meta.env.DEV ? mergedMessages.length : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <Card className="min-h-0 flex-1">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+      <Card className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
         <CardHeader className="shrink-0 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
@@ -120,34 +120,40 @@ function ChatConversationPanel({
             </AlertDescription>
           </Alert>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-          <ChatCapabilityStatus capabilities={capabilities} />
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+          <div className="shrink-0">
+            <ChatCapabilityStatus capabilities={capabilities} />
+          </div>
 
           {historyLoading ? (
-            <div className="min-h-[240px]">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <ChatEmptyState title="Cargando conversación" description="Consultando historial guardado de este chat." />
             </div>
           ) : historyError ? (
-            <Alert variant="warning">
-              <MessagesSquare className="h-4 w-4" />
-              <AlertTitle>Historial no disponible</AlertTitle>
-              <AlertDescription>{getChatHistoryCapabilityMessage(historyError)}</AlertDescription>
-            </Alert>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <Alert variant="warning">
+                <MessagesSquare className="h-4 w-4" />
+                <AlertTitle>Historial no disponible</AlertTitle>
+                <AlertDescription>{getChatHistoryCapabilityMessage(historyError)}</AlertDescription>
+              </Alert>
+            </div>
           ) : mergedMessages.length > 0 ? (
             <ChatMessageList messages={mergedMessages} />
           ) : (
-            <OperatorEmptyState
-              icon={MessagesSquare}
-              title="Aún no hay mensajes guardados para este chat"
-              description="Esta conversación está disponible, pero el historial persistido todavía no tiene mensajes para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
-            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <OperatorEmptyState
+                icon={MessagesSquare}
+                title="Aún no hay mensajes guardados para este chat"
+                description="Esta conversación está disponible, pero el historial persistido todavía no tiene mensajes para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
+              />
+            </div>
           )}
         </CardContent>
-      </Card>
 
-      <div className="shrink-0">
-        <ChatComposer instanceId={instanceId} remoteJid={activeThread.remoteJid} capabilities={capabilities} onMessageSent={handleLocalAppend} />
-      </div>
+        <div className="shrink-0 border-t bg-card">
+          <ChatComposer instanceId={instanceId} remoteJid={activeThread.remoteJid} capabilities={capabilities} onMessageSent={handleLocalAppend} embedded />
+        </div>
+      </Card>
     </div>
   );
 }

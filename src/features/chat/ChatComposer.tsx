@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { chatHistoryKey, fetchTenantChatTextStatus, useTenantChatAudio, useTenantChatMedia, useTenantChatText } from "@/lib/queries/chat/tenantChat";
 import { ChatCapabilities, ChatHistoryMessage, ChatHistoryResponse, ChatSendResult } from "@/lib/queries/chat/types";
 import { getApiErrorMessage } from "@/lib/queries/errors";
+import { cn } from "@/lib/utils";
 
 type ComposerFeedbackStatus = "queued" | "sending" | "provider_sent" | "delivered" | "read" | "success" | "error";
 
@@ -74,11 +75,13 @@ function ChatComposer({
   remoteJid,
   capabilities,
   onMessageSent,
+  embedded = false,
 }: {
   instanceId: string;
   remoteJid: string;
   capabilities: ChatCapabilities;
   onMessageSent?: (message: ChatHistoryMessage) => void;
+  embedded?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<"text" | "media" | "audio">("text");
@@ -421,7 +424,7 @@ function ChatComposer({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
+    <div className={cn("space-y-4 bg-card p-4", embedded ? "border-0 shadow-none" : "rounded-xl border shadow-sm")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">Redactar mensaje</h3>
