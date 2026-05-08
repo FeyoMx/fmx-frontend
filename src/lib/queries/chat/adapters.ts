@@ -70,9 +70,17 @@ const normalizeChatListMetadata = (payload: unknown): ChatListMetadata => {
 
 const extractMessageRecord = (message: unknown): Record<string, unknown> => asRecord(message) ?? {};
 
+const textFieldCandidates = (record?: Record<string, unknown>): unknown[] => {
+  if (!record) {
+    return [];
+  }
+
+  return [record.text, record.body, record.message, record.content, record.caption, record.message_text, record.text_message];
+};
+
 const extractMessageText = (message: unknown, fallback?: Record<string, unknown>): string => {
   if (!message) {
-    return firstString(fallback?.text, fallback?.body, fallback?.caption);
+    return firstString(...textFieldCandidates(fallback));
   }
 
   if (typeof message === "string") {
@@ -84,55 +92,62 @@ const extractMessageText = (message: unknown, fallback?: Record<string, unknown>
     return "";
   }
 
-  const conversation = readString(record.conversation);
-  if (conversation) {
-    return conversation;
-  }
+  const directText = firstString(record.conversation, ...textFieldCandidates(record));
 
   const extended = asRecord(record.extendedTextMessage);
   if (extended) {
-    return readString(extended.text);
+    const extendedText = firstString(extended.text, extended.body, extended.caption);
+    if (extendedText) {
+      return extendedText;
+    }
   }
 
   const image = asRecord(record.imageMessage);
   if (image) {
-    return readString(image.caption);
+    return firstString(image.caption, directText, ...textFieldCandidates(fallback));
   }
 
   const video = asRecord(record.videoMessage);
   if (video) {
-    return readString(video.caption);
+    return firstString(video.caption, directText, ...textFieldCandidates(fallback));
   }
 
   const document = asRecord(record.documentMessage);
   if (document) {
-    return readString(document.caption) || readString(document.fileName);
+    return firstString(document.caption, directText, document.fileName, ...textFieldCandidates(fallback));
   }
 
-  return firstString(record.text, record.body, record.caption, fallback?.text, fallback?.body, fallback?.caption);
+  const audio = asRecord(record.audioMessage);
+  if (audio) {
+    return firstString(audio.caption, directText, ...textFieldCandidates(fallback));
+  }
+
+  return firstString(directText, ...textFieldCandidates(fallback));
 };
 
-const detectContentType = (messageType: string, message: unknown): ChatHistoryMessage["contentType"] => {
+const detectContentType = (messageType: string, message: unknown, fallback?: Record<string, unknown>): ChatHistoryMessage["contentType"] => {
   const record = extractMessageRecord(message);
   const normalizedType = messageType.toLowerCase();
+  const mimeType = firstString(record.mimetype, record.mimeType, fallback?.mimetype, fallback?.mimeType).toLowerCase();
+  const mediaType = firstString(record.mediatype, record.mediaType, fallback?.mediatype, fallback?.mediaType).toLowerCase();
 
-  if (record.imageMessage || normalizedType === "imagemessage" || normalizedType === "image") {
+  if (record.imageMessage || normalizedType === "imagemessage" || normalizedType === "image" || mediaType === "image" || mimeType.startsWith("image/")) {
     return "image";
   }
 
-  if (record.videoMessage || normalizedType === "videomessage" || normalizedType === "video") {
+  if (record.videoMessage || normalizedType === "videomessage" || normalizedType === "video" || mediaType === "video" || mimeType.startsWith("video/")) {
     return "video";
   }
 
-  if (record.audioMessage || normalizedType === "audiomessage" || normalizedType === "audio") {
+  if (record.audioMessage || normalizedType === "audiomessage" || normalizedType === "audio" || normalizedType === "ptt" || mediaType === "audio" || mimeType.startsWith("audio/")) {
     return "audio";
   }
 
-  if (record.documentMessage || normalizedType === "documentmessage" || normalizedType === "document") {
+  if (record.documentMessage || normalizedType === "documentmessage" || normalizedType === "document" || mediaType === "document" || !!mimeType) {
     return "document";
   }
 
-  if (extractMessageText(message)) {
+  if (extractMessageText(message, fallback)) {
     return "text";
   }
 
@@ -142,6 +157,7 @@ const detectContentType = (messageType: string, message: unknown): ChatHistoryMe
 const extractMediaDetails = (
   messageType: string,
   message: unknown,
+  fallback?: Record<string, unknown>,
 ): Pick<ChatHistoryMessage, "caption" | "fileName" | "mimeType" | "mediaUrl" | "isPartial"> => {
   const record = extractMessageRecord(message);
   const image = asRecord(record.imageMessage);
@@ -150,30 +166,48 @@ const extractMediaDetails = (
   const document = asRecord(record.documentMessage);
   const selected = image ?? video ?? audio ?? document ?? {};
 
-  const mimeType = firstString(selected.mimetype, selected.mimeType, record.mimetype, record.mimeType);
+  const mediaType = firstString(record.mediatype, record.mediaType, fallback?.mediatype, fallback?.mediaType).toLowerCase();
+  const mimeType = firstString(selected.mimetype, selected.mimeType, record.mimetype, record.mimeType, fallback?.mimetype, fallback?.mimeType);
   const mediaUrl = firstString(
     record.mediaUrl,
     record.media_url,
     record.url,
+    fallback?.mediaUrl,
+    fallback?.media_url,
+    fallback?.url,
     selected.url,
     selected.mediaUrl,
     selected.media_url,
     selected.directPath,
     selected.thumbnailDirectPath,
   );
-  const caption = firstString(selected.caption, record.caption);
-  const fileName = firstString(selected.fileName, selected.file_name, selected.title, record.fileName, record.file_name, messageType === "audioMessage" ? "Audio" : undefined);
+  const caption = firstString(selected.caption, record.caption, fallback?.caption);
+  const fileName = firstString(selected.fileName, selected.file_name, selected.title, record.fileName, record.file_name, fallback?.fileName, fallback?.file_name, messageType === "audioMessage" ? "Audio" : undefined);
+  const normalizedType = messageType.toLowerCase();
   const hasPartialMedia =
-    messageType === "imageMessage" || messageType === "videoMessage" || messageType === "audioMessage" || messageType === "documentMessage"
-      ? !mediaUrl
-      : false;
+    !!image ||
+    !!video ||
+    !!audio ||
+    !!document ||
+    mediaType === "image" ||
+    mediaType === "video" ||
+    mediaType === "audio" ||
+    mediaType === "document" ||
+    normalizedType === "imagemessage" ||
+    normalizedType === "videomessage" ||
+    normalizedType === "audiomessage" ||
+    normalizedType === "documentmessage" ||
+    normalizedType === "image" ||
+    normalizedType === "video" ||
+    normalizedType === "audio" ||
+    normalizedType === "document";
 
   return {
     caption: caption || undefined,
     fileName: fileName || undefined,
     mimeType: mimeType || undefined,
     mediaUrl: mediaUrl || undefined,
-    isPartial: hasPartialMedia,
+    isPartial: hasPartialMedia && !mediaUrl,
   };
 };
 
@@ -224,7 +258,7 @@ const normalizeChatThreadArray = (payload: unknown): ChatThreadsResponse => {
   return payload.map((item, index) => {
     const record = asRecord(item) ?? {};
     const lastMessage = asRecord(record.lastMessage);
-    const previewType = detectContentType(readString(lastMessage?.messageType) || "unknown", lastMessage?.message);
+    const previewType = detectContentType(readString(lastMessage?.messageType) || "unknown", lastMessage?.message, lastMessage ?? undefined);
     const unreadCount = readNumber(record.unreadCount) ?? readNumber(record.unreadMessages) ?? readNumber(record.unread);
     const remoteJid = firstString(record.remoteJid, record.remote_jid, record.chat_jid, record.chatJid, record.jid);
 
@@ -270,9 +304,11 @@ const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {
   return payload.map((item, index) => {
     const record = asRecord(item) ?? {};
     const key = asRecord(record.key) ?? {};
-    const message = record.message ?? record;
-    const messageType = firstString(record.messageType, record.message_type, record.type) || (firstString(record.body, record.text) ? "conversation" : "unknown");
-    const media = extractMediaDetails(messageType, message);
+    const message = record.message ?? record.content ?? record;
+    const messageType =
+      firstString(record.messageType, record.message_type, record.type, record.mediatype, record.mediaType) ||
+      (firstString(...textFieldCandidates(record)) ? "conversation" : "unknown");
+    const media = extractMediaDetails(messageType, message, record);
     const text = extractMessageText(message, record);
     const remoteJid = firstString(key.remoteJid, record.remoteJid, record.remote_jid, record.chat_jid, record.chatJid, record.jid);
     const id = firstString(record.id, record.message_id, record.messageId, key.id) || `message-${index}`;
@@ -285,7 +321,7 @@ const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {
       fromMe,
       pushName: firstString(record.pushName, record.push_name, record.sender_name) || remoteJid.split("@")[0],
       messageType,
-      contentType: detectContentType(messageType, message),
+      contentType: detectContentType(messageType, message, record),
       text,
       caption: media.caption,
       fileName: media.fileName,

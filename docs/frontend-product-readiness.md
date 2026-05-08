@@ -1,6 +1,6 @@
 # Frontend Product Readiness
 
-Updated on 2026-05-07.
+Updated on 2026-05-08.
 
 ## Summary
 
@@ -101,6 +101,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - selected route JIDs are decoded before matching/querying so `@s.whatsapp.net` and `@g.us` are preserved in history search
   - message history requests include legacy `where.key.remoteJid` plus backend-safe aliases, with ID-scoped search attempted before the registered `/instance/:id/messages/search` route
   - grouped conversation timeline with clearer timestamps, delivery indicators, and scroll-to-latest behavior
+  - message bubbles now preserve multiline text, wrap long URLs/JIDs safely, avoid body truncation/clipping, and keep timestamps/status below the body without overlap
   - faster-feeling thread filtering via deferred search updates
   - stronger unread/preview emphasis when the backend exposes them
   - quick filters for unread and recent conversations make long daily chat sessions easier to scan
@@ -110,6 +111,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
   - sparse message records now normalize common aliases such as `message_id`, `remote_jid`, `chat_jid`, `body`, `message`, `created_at`, `direction`, and `message_type`
+  - message body normalization now covers `text`, `body`, `message`, `content`, `caption`, `message_text`, and `text_message`, with media/audio placeholders when the backend has media metadata but no text
   - incremental thread rendering keeps larger chat lists responsive without pretending full virtualization is necessary yet
   - search/history queries now keep previous data visible during slow refetches, cold chat loads use skeleton cards, chat-list failures are retryable, and optimistic sends update the same local row on failure instead of leaving duplicate queued ghosts
 
@@ -166,6 +168,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - bridge-unavailable failures are now handled gracefully whether the backend reports them as the current `500 internal_error` or a future `409 conflict`
 - inbound history completeness depends on runtime event capture
 - media history may be partial when preview/download metadata is missing
+- media/audio messages without preview/download metadata remain visible as explicit partial-history placeholders instead of disappearing from the conversation timeline
 
 ### MVP polish pass
 
@@ -184,6 +187,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - login now uses a branded production card with inline error/loading feedback instead of the previous minimal fork-style shell
 - supported connector/settings pages now share the same card-based form framing, event-list density, mobile action stacking, and long-event wrapping
 - chat and broadcast detail panels now use stronger selected states, clearer dense-row hierarchy, and safer wrapping for long JIDs, phone numbers, message previews, and errors
+- chat conversation layout now gives the history list its own scrollable flex area so the composer does not cover or push the last fetched messages out of view
 - operators now enter chat only through the tenant-safe instance chat flow; the old embed chat/messages path is no longer part of normal navigation
 - instance lifecycle wording now matches backend semantics directly: reconnect, pair, logout, and history backfill
 - dashboard, broadcast, chat, and instance detail pages now distinguish reliable operational status from sparse analytics more clearly

@@ -1,6 +1,6 @@
 # Frontend Sync Report
 
-Updated on 2026-05-07.
+Updated on 2026-05-08.
 
 ## Scope
 
@@ -99,8 +99,10 @@ Frontend handling after this sync:
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
 - Chat history now preserves decoded selected JIDs through navigation and sends history search with `where.key.remoteJid` plus remote/chat JID aliases so stored `@s.whatsapp.net` and `@g.us` threads are not missed.
 - Chat history adapters now accept both legacy message envelopes and sparse database-style aliases such as `message_id`, `remote_jid`, `chat_jid`, `body`, `created_at`, `direction`, and `message_type`.
+- Chat history adapters now preserve visible message bodies from additional backend aliases (`text`, `body`, `message`, `content`, `caption`, `message_text`, and `text_message`) and keep media/audio records visible with explicit partial-history placeholders when no text is present.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, stronger unread/preview emphasis, faster-feeling thread filtering, and clearer in-thread caveats when history is partial.
+- Active chat message rendering now uses a flex-owned scroll pane with unclipped bubbles, preserved multiline whitespace, safe URL/JID wrapping, wrapped metadata, and a composer that no longer competes with the last messages for visibility.
 - Heavy operator routes now lazy-load behind the same auth guards and layouts, including dashboard, broadcast, chat, instance dashboard, and AI settings.
 - Sidebar navigation now exposes a single chat entrypoint for operators. The older legacy `Messages` embed path has been removed from normal navigation and gated behind an unsupported placeholder.
 - Instance dashboard lifecycle controls now map directly to backend semantics: reconnect, pair, logout, and history backfill.
@@ -139,6 +141,7 @@ Frontend handling after this sync:
 - Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
 - Chat list responses can now surface backend cache/staleness metadata (`cached`, `stale`, `source`, `refreshed_at`) without breaking search or thread navigation.
 - Chat history now attempts the ID-scoped search path first and falls back to the registered tenant-safe `POST /instance/:id/messages/search` route, sending remote JID, optional message ID, optional text query, optional limit, and optional cursor with compatibility aliases.
+- Chat history normalization no longer drops or hides sparse messages just because optional text/media fields are missing; media type, mime type, captions, file names, and URLs are read from both nested message envelopes and top-level records.
 - Lifecycle/runtime/backfill bridge-unavailable interpretation is centralized under `src/lib/queries/instance/bridgeAvailability.ts`.
 - Broadcast adapters now align with the backend DTOs for:
   - `recipient_total`
@@ -182,6 +185,7 @@ Remaining frontend-only work is mostly presentational:
 
 - `npm run type-check`
 - `npm run build`
+- Chat conversation rendering/layout was validated during the 2026-05-08 pass to ensure fetched non-empty histories render in the message pane instead of falling through to the empty state or being clipped by nested overflow.
 - Browser data refresh was attempted with `npx update-browserslist-db@latest`, but the updater timed out after partially touching the lockfile. No package update was kept; the final build no longer emitted stale browser-data warnings in this workspace. If warnings recur, rerun the updater with reliable npm registry access.
 
 ## Current Bundle Snapshot

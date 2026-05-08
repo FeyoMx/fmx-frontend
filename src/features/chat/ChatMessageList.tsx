@@ -135,10 +135,10 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <ImageIcon className="h-4 w-4 shrink-0" />
-            Imagen recibida con historial parcial. No hay vista previa disponible.
+            <span className="min-w-0 break-words [overflow-wrap:anywhere]">Imagen recibida con historial parcial. No hay vista previa disponible.</span>
           </div>
         )}
-        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -151,10 +151,10 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <Video className="h-4 w-4 shrink-0" />
-            Video recibido con historial parcial. No hay reproducción disponible.
+            <span className="min-w-0 break-words [overflow-wrap:anywhere]">Video recibido con historial parcial. No hay reproducción disponible.</span>
           </div>
         )}
-        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -169,10 +169,10 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         ) : (
           <div className="flex min-w-0 items-center gap-2 rounded-xl border border-dashed bg-muted/20 px-3 py-4 text-xs leading-5 text-muted-foreground">
             <Mic className="h-4 w-4 shrink-0" />
-            Audio recibido con historial parcial. No hay reproducción disponible.
+            <span className="min-w-0 break-words [overflow-wrap:anywhere]">Audio recibido con historial parcial. No hay reproducción disponible.</span>
           </div>
         )}
-        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.caption || message.text}</div>}
       </div>
     );
   }
@@ -183,8 +183,8 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
         <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border bg-background/60 px-3 py-3">
           <FileText className="h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="truncate font-medium">{message.fileName || "Documento"}</div>
-            {message.mimeType && <div className="truncate text-xs opacity-70">{message.mimeType}</div>}
+            <div className="break-words font-medium [overflow-wrap:anywhere]">{message.fileName || "Documento"}</div>
+            {message.mimeType && <div className="break-words text-xs opacity-70 [overflow-wrap:anywhere]">{message.mimeType}</div>}
           </div>
           {message.mediaUrl && (
             <a href={message.mediaUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs underline">
@@ -193,12 +193,12 @@ function MessageBody({ message }: { message: ChatHistoryMessage }) {
             </a>
           )}
         </div>
-        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words">{message.caption || message.text}</div>}
+        {(message.caption || message.text) && <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.caption || message.text}</div>}
       </div>
     );
   }
 
-  return <div className="whitespace-pre-wrap break-words">{message.text || `Mensaje ${message.messageType || "sin tipo"} guardado sin texto visible.`}</div>;
+  return <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.text || `Mensaje ${message.messageType || "sin tipo"} guardado sin texto visible.`}</div>;
 }
 
 type MessageGroup = {
@@ -264,8 +264,8 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
   };
 
   return (
-    <div className="relative">
-      <div ref={scrollRef} onScroll={handleScroll} className="flex max-h-[560px] flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 sm:p-4">
+    <div className="relative flex min-h-0 flex-1">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex min-h-[240px] flex-1 flex-col gap-3 overflow-y-auto rounded-xl border bg-muted/20 p-3 sm:p-4">
         {groups.map((entry) => {
           if (entry.type === "day") {
             return (
@@ -280,19 +280,23 @@ function ChatMessageList({ messages }: { messages: ChatHistoryMessage[] }) {
           return (
             <div
               key={entry.key}
-              className={`min-w-0 max-w-[92%] overflow-hidden break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm sm:max-w-[85%] ${
-                message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background"
+              className={`min-w-0 max-w-[92%] break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm [overflow-wrap:anywhere] sm:max-w-[85%] ${
+                message.fromMe ? "ml-auto bg-primary text-primary-foreground" : "bg-background text-foreground"
               } ${entry.groupedWithPrevious ? "mt-1" : "mt-3"}`}>
               {!entry.groupedWithPrevious && (
-                <div className="mb-1 flex items-center justify-between gap-3 text-[11px] opacity-70">
-                  <span className="min-w-0 truncate">{message.fromMe ? "Tú" : message.pushName || message.remoteJid.split("@")[0] || "Contacto"}</span>
-                  {message.status && <StatusMeta status={message.status} />}
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] opacity-70">
+                  <span className="min-w-0 break-words [overflow-wrap:anywhere]">{message.fromMe ? "Tú" : message.pushName || message.remoteJid.split("@")[0] || "Contacto"}</span>
+                  {message.status && (
+                    <span className="shrink-0">
+                      <StatusMeta status={message.status} />
+                    </span>
+                  )}
                 </div>
               )}
               <MessageBody message={message} />
-              <div className="mt-2 flex items-center justify-between gap-3 text-[10px] opacity-70">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] opacity-70">
                 <span title={formatTimestamp(message.timestamp)}>{formatBubbleTime(message.timestamp)}</span>
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex flex-wrap items-center justify-end gap-2">
                   {message.isPartial && <span>Historial parcial</span>}
                   {message.status && entry.groupedWithPrevious && <StatusMeta status={message.status} />}
                 </span>

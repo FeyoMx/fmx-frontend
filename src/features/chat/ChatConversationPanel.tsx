@@ -57,6 +57,18 @@ function ChatConversationPanel({
     });
   }, [historyMessages, localMessages]);
 
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.debug("[chat] conversation render", {
+        remoteJid: activeRemoteJid,
+        fetched: historyMessages?.length ?? 0,
+        local: localMessages.length,
+        rendered: mergedMessages.length,
+        visibleText: mergedMessages.filter((message) => message.text || message.caption || message.mediaUrl || message.contentType !== "unknown").length,
+      });
+    }
+  }, [activeRemoteJid, historyMessages?.length, localMessages.length, mergedMessages]);
+
   if (!activeThread) {
     return (
       <Card className="h-full">
@@ -86,9 +98,9 @@ function ChatConversationPanel({
   const devMessageCount = import.meta.env.DEV ? mergedMessages.length : null;
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="space-y-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <Card className="min-h-0 flex-1">
+        <CardHeader className="shrink-0 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <CardTitle className="break-words">{activeThread.pushName || activeThread.remoteJid.split("@")[0]}</CardTitle>
@@ -108,11 +120,13 @@ function ChatConversationPanel({
             </AlertDescription>
           </Alert>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
           <ChatCapabilityStatus capabilities={capabilities} />
 
           {historyLoading ? (
-            <ChatEmptyState title="Cargando conversación" description="Consultando historial guardado de este chat." />
+            <div className="min-h-[240px]">
+              <ChatEmptyState title="Cargando conversación" description="Consultando historial guardado de este chat." />
+            </div>
           ) : historyError ? (
             <Alert variant="warning">
               <MessagesSquare className="h-4 w-4" />
@@ -122,16 +136,18 @@ function ChatConversationPanel({
           ) : mergedMessages.length > 0 ? (
             <ChatMessageList messages={mergedMessages} />
           ) : (
-          <OperatorEmptyState
-            icon={MessagesSquare}
-            title="Aún no hay mensajes guardados para este chat"
-            description="Esta conversación está disponible, pero el historial persistido todavía no tiene mensajes para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
-          />
+            <OperatorEmptyState
+              icon={MessagesSquare}
+              title="Aún no hay mensajes guardados para este chat"
+              description="Esta conversación está disponible, pero el historial persistido todavía no tiene mensajes para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
+            />
           )}
         </CardContent>
       </Card>
 
-      <ChatComposer instanceId={instanceId} remoteJid={activeThread.remoteJid} capabilities={capabilities} onMessageSent={handleLocalAppend} />
+      <div className="shrink-0">
+        <ChatComposer instanceId={instanceId} remoteJid={activeThread.remoteJid} capabilities={capabilities} onMessageSent={handleLocalAppend} />
+      </div>
     </div>
   );
 }
