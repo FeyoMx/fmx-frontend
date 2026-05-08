@@ -5,11 +5,27 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 };
 
 const readString = (value: unknown): string => {
-  return typeof value === "string" ? value : "";
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return "";
 };
 
 const readBoolean = (value: unknown): boolean => {
-  return typeof value === "boolean" ? value : false;
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value.toLowerCase() === "true";
+  }
+
+  return false;
 };
 
 const readNumber = (value: unknown): number | undefined => {
@@ -27,6 +43,19 @@ const firstString = (...values: unknown[]): string => {
   return "";
 };
 
+const readPath = (value: unknown, ...path: string[]): unknown => {
+  let current: unknown = value;
+  for (const segment of path) {
+    const record = asRecord(current);
+    if (!record) {
+      return undefined;
+    }
+    current = record[segment];
+  }
+
+  return current;
+};
+
 const normalizeChatListMetadata = (payload: unknown): ChatListMetadata => {
   const root = asRecord(payload) ?? {};
   const meta = asRecord(root.meta) ?? asRecord(root.metadata) ?? {};
@@ -41,9 +70,9 @@ const normalizeChatListMetadata = (payload: unknown): ChatListMetadata => {
 
 const extractMessageRecord = (message: unknown): Record<string, unknown> => asRecord(message) ?? {};
 
-const extractMessageText = (message: unknown): string => {
+const extractMessageText = (message: unknown, fallback?: Record<string, unknown>): string => {
   if (!message) {
-    return "";
+    return firstString(fallback?.text, fallback?.body, fallback?.caption);
   }
 
   if (typeof message === "string") {
@@ -80,25 +109,26 @@ const extractMessageText = (message: unknown): string => {
     return readString(document.caption) || readString(document.fileName);
   }
 
-  return readString(record.text);
+  return firstString(record.text, record.body, record.caption, fallback?.text, fallback?.body, fallback?.caption);
 };
 
 const detectContentType = (messageType: string, message: unknown): ChatHistoryMessage["contentType"] => {
   const record = extractMessageRecord(message);
+  const normalizedType = messageType.toLowerCase();
 
-  if (record.imageMessage || messageType === "imageMessage") {
+  if (record.imageMessage || normalizedType === "imagemessage" || normalizedType === "image") {
     return "image";
   }
 
-  if (record.videoMessage || messageType === "videoMessage") {
+  if (record.videoMessage || normalizedType === "videomessage" || normalizedType === "video") {
     return "video";
   }
 
-  if (record.audioMessage || messageType === "audioMessage") {
+  if (record.audioMessage || normalizedType === "audiomessage" || normalizedType === "audio") {
     return "audio";
   }
 
-  if (record.documentMessage || messageType === "documentMessage") {
+  if (record.documentMessage || normalizedType === "documentmessage" || normalizedType === "document") {
     return "document";
   }
 
@@ -123,14 +153,16 @@ const extractMediaDetails = (
   const mimeType = firstString(selected.mimetype, selected.mimeType, record.mimetype, record.mimeType);
   const mediaUrl = firstString(
     record.mediaUrl,
+    record.media_url,
     record.url,
     selected.url,
     selected.mediaUrl,
+    selected.media_url,
     selected.directPath,
     selected.thumbnailDirectPath,
   );
   const caption = firstString(selected.caption, record.caption);
-  const fileName = firstString(selected.fileName, selected.title, record.fileName, messageType === "audioMessage" ? "Audio" : undefined);
+  const fileName = firstString(selected.fileName, selected.file_name, selected.title, record.fileName, record.file_name, messageType === "audioMessage" ? "Audio" : undefined);
   const hasPartialMedia =
     messageType === "imageMessage" || messageType === "videoMessage" || messageType === "audioMessage" || messageType === "documentMessage"
       ? !mediaUrl
@@ -146,7 +178,7 @@ const extractMediaDetails = (
 };
 
 const normalizeStatus = (record: Record<string, unknown>): string | undefined => {
-  const status = firstString(record.status, record.delivery_status, record.messageStatus);
+  const status = firstString(record.status, record.delivery_status, record.messageStatus, record.deliveryStatus);
   if (status) {
     return status;
   }
@@ -194,20 +226,21 @@ const normalizeChatThreadArray = (payload: unknown): ChatThreadsResponse => {
     const lastMessage = asRecord(record.lastMessage);
     const previewType = detectContentType(readString(lastMessage?.messageType) || "unknown", lastMessage?.message);
     const unreadCount = readNumber(record.unreadCount) ?? readNumber(record.unreadMessages) ?? readNumber(record.unread);
+    const remoteJid = firstString(record.remoteJid, record.remote_jid, record.chat_jid, record.chatJid, record.jid);
 
     return {
-      id: readString(record.id) || readString(record.remoteJid) || `chat-${index}`,
-      remoteJid: readString(record.remoteJid),
-      pushName: readString(record.pushName) || readString(record.remoteJid).split("@")[0] || "Contacto pendiente",
-      profilePicUrl: readString(record.profilePicUrl),
+      id: firstString(record.id, record.chat_id, remoteJid) || `chat-${index}`,
+      remoteJid,
+      pushName: firstString(record.pushName, record.push_name, record.name) || remoteJid.split("@")[0] || "Contacto pendiente",
+      profilePicUrl: firstString(record.profilePicUrl, record.profile_pic_url),
       labels: Array.isArray(record.labels) ? record.labels.filter((value): value is string => typeof value === "string") : [],
-      previewText: extractMessageText(lastMessage?.message) || readString(record.lastMessageText) || undefined,
+      previewText: extractMessageText(lastMessage?.message, lastMessage ?? undefined) || firstString(record.lastMessageText, record.last_message_text, record.body, record.text) || undefined,
       previewType,
       unreadCount,
-      createdAt: readString(record.createdAt),
-      updatedAt: readString(record.updatedAt),
-      instanceId: readString(record.instanceId),
-      lastMessageAt: normalizeTimestamp(lastMessage?.messageTimestamp || record.updatedAt),
+      createdAt: firstString(record.createdAt, record.created_at),
+      updatedAt: firstString(record.updatedAt, record.updated_at),
+      instanceId: firstString(record.instanceId, record.instance_id),
+      lastMessageAt: normalizeTimestamp(lastMessage?.messageTimestamp || record.lastMessageAt || record.last_message_at || record.updatedAt || record.updated_at),
     } satisfies ChatThread;
   });
 };
@@ -237,16 +270,20 @@ const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {
   return payload.map((item, index) => {
     const record = asRecord(item) ?? {};
     const key = asRecord(record.key) ?? {};
-    const message = record.message;
-    const messageType = readString(record.messageType) || "unknown";
+    const message = record.message ?? record;
+    const messageType = firstString(record.messageType, record.message_type, record.type) || (firstString(record.body, record.text) ? "conversation" : "unknown");
     const media = extractMediaDetails(messageType, message);
-    const text = extractMessageText(message);
+    const text = extractMessageText(message, record);
+    const remoteJid = firstString(key.remoteJid, record.remoteJid, record.remote_jid, record.chat_jid, record.chatJid, record.jid);
+    const id = firstString(record.id, record.message_id, record.messageId, key.id) || `message-${index}`;
+    const direction = firstString(record.direction, record.from);
+    const fromMe = readBoolean(key.fromMe) || readBoolean(record.fromMe) || readBoolean(record.from_me) || direction.toLowerCase() === "outbound";
 
     return {
-      id: readString(record.id) || readString(key.id) || `message-${index}`,
-      remoteJid: readString(key.remoteJid),
-      fromMe: readBoolean(key.fromMe),
-      pushName: readString(record.pushName),
+      id,
+      remoteJid,
+      fromMe,
+      pushName: firstString(record.pushName, record.push_name, record.sender_name) || remoteJid.split("@")[0],
       messageType,
       contentType: detectContentType(messageType, message),
       text,
@@ -255,7 +292,7 @@ const normalizeChatHistoryArray = (payload: unknown): ChatHistoryResponse => {
       mimeType: media.mimeType,
       mediaUrl: media.mediaUrl,
       status: normalizeStatus(record),
-      timestamp: normalizeTimestamp(record.messageTimestamp),
+      timestamp: normalizeTimestamp(firstString(record.messageTimestamp, record.message_timestamp, record.timestamp, record.created_at, record.createdAt) || readPath(record, "timestamp")),
       isPartial: media.isPartial || (!text && messageType === "unknown"),
       raw: item,
     } satisfies ChatHistoryMessage;
@@ -277,6 +314,18 @@ export const normalizeChatHistory = (payload: unknown): ChatHistoryResponse => {
     if (Array.isArray(nestedMessages.items)) {
       return normalizeChatHistoryArray(nestedMessages.items);
     }
+  }
+
+  if (Array.isArray(root.messages)) {
+    return normalizeChatHistoryArray(root.messages);
+  }
+
+  if (Array.isArray(root.records)) {
+    return normalizeChatHistoryArray(root.records);
+  }
+
+  if (Array.isArray(root.items)) {
+    return normalizeChatHistoryArray(root.items);
   }
 
   if (Array.isArray(root.data)) {

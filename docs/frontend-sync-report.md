@@ -97,6 +97,8 @@ Frontend handling after this sync:
 - Dashboard now keeps the shell stable through empty, partial, metrics-only, and instance-list error states with skeleton cards, retryable warnings, disabled refresh while fetching, and last-known metric visibility.
 - Unsupported legacy deep links now land on explanatory placeholder pages instead of redirecting away without context.
 - Chat routes now use a real list/detail conversation flow backed by tenant-safe chat list and message history data.
+- Chat history now preserves decoded selected JIDs through navigation and sends history search with `where.key.remoteJid` plus remote/chat JID aliases so stored `@s.whatsapp.net` and `@g.us` threads are not missed.
+- Chat history adapters now accept both legacy message envelopes and sparse database-style aliases such as `message_id`, `remote_jid`, `chat_jid`, `body`, `created_at`, `direction`, and `message_type`.
 - Chat composer now refreshes or appends text, media, and audio sends safely inside the active thread while exposing partial-history caveats honestly.
 - Active chat UX now includes grouped messages, clearer timestamps and delivery indicators, scroll-to-latest behavior, stronger unread/preview emphasis, faster-feeling thread filtering, and clearer in-thread caveats when history is partial.
 - Heavy operator routes now lazy-load behind the same auth guards and layouts, including dashboard, broadcast, chat, instance dashboard, and AI settings.
@@ -136,7 +138,7 @@ Frontend handling after this sync:
 - Text-message delivery state stays aligned with the async backend contract introduced on the instance dashboard flow.
 - Chat list, message history, and chat send adapters are centralized under `src/lib/queries/chat`.
 - Chat list responses can now surface backend cache/staleness metadata (`cached`, `stale`, `source`, `refreshed_at`) without breaking search or thread navigation.
-- Chat history now uses the registered tenant-safe `POST /instance/:id/messages/search` route directly and only sends backend-supported filters: remote JID, optional message ID, optional text query, optional limit, and optional cursor.
+- Chat history now attempts the ID-scoped search path first and falls back to the registered tenant-safe `POST /instance/:id/messages/search` route, sending remote JID, optional message ID, optional text query, optional limit, and optional cursor with compatibility aliases.
 - Lifecycle/runtime/backfill bridge-unavailable interpretation is centralized under `src/lib/queries/instance/bridgeAvailability.ts`.
 - Broadcast adapters now align with the backend DTOs for:
   - `recipient_total`

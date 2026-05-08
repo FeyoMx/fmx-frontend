@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operator-facing labels now make logout, new instance creation, unsupported-route exits, and broadcast job creation clearer during real usage validation
 
 ### Fixed
+- Chat history now decodes selected JIDs, sends the backend search payload with canonical and legacy remote-JID aliases, and renders sparse backend message records instead of falling through to an empty conversation.
 - AI Settings now treats missing first-use tenant or instance AI settings as `Sin configurar` instead of surfacing raw `404 ai settings not found` backend text.
 - FormInput component invalid onCheckedChange props
 - ResizablePanel defaultSize values not summing to 100
@@ -136,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build output now ships major operator pages in separate route chunks, reducing the initial main bundle even though one large vendor chunk warning still remains
 - Broadcast detail now aligns with backend status names such as `completed_with_failures` and recipient fields such as `attempted` and `partial`
 - Logout now calls the stateless backend acknowledgement best-effort while always clearing local auth, tenant context, and cached session state
-- Chat history now uses the registered `POST /instance/:id/messages/search` route directly with only backend-supported filters instead of probing an unregistered ID-style route first
+- Chat history now tries the ID-scoped search path first and falls back to the registered `POST /instance/:id/messages/search` route while keeping backend-supported filters in the payload
 - Chat failed-send statuses now render as failures instead of using a generic sent/check indicator
 - Narrow-width overflow risks in supported MVP tables, chat panels, dashboard cards, broadcast recipient detail, and runtime history cards
 - Full-viewport loading spinner behavior inside nested panels that caused chat, runtime, dialog, and table sections to jump during slow backend responses

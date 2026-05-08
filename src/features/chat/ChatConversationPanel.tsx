@@ -83,6 +83,7 @@ function ChatConversationPanel({
   };
 
   const lastPersistedAt = mergedMessages[mergedMessages.length - 1]?.timestamp;
+  const devMessageCount = import.meta.env.DEV ? mergedMessages.length : null;
 
   return (
     <div className="space-y-4">
@@ -103,6 +104,7 @@ function ChatConversationPanel({
             <AlertTitle>Historial parcial cuando la instancia no tiene todo guardado.</AlertTitle>
             <AlertDescription>
               El historial guardado está disponible para este chat. Conversaciones antiguas o archivos de media pueden quedar incompletos si no fueron capturados por la instancia.
+              {devMessageCount !== null ? ` Mensajes normalizados: ${devMessageCount}.` : ""}
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -122,8 +124,8 @@ function ChatConversationPanel({
           ) : (
           <OperatorEmptyState
             icon={MessagesSquare}
-            title="Sin historial guardado"
-            description="Esta conversación está disponible, pero todavía no hay mensajes guardados para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
+            title="Aún no hay mensajes guardados para este chat"
+            description="Esta conversación está disponible, pero el historial persistido todavía no tiene mensajes para este JID. Puedes enviar un mensaje, esperar nuevos eventos capturados o solicitar recuperación acotada desde el panel de la instancia."
           />
           )}
         </CardContent>

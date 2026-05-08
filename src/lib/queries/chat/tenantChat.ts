@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { InstanceTextMessageInput, InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 
 import { apiGlobal } from "../api";
-import { getApiErrorMessage, isApiStatus } from "../errors";
+import { isApiStatus } from "../errors";
 import { useManageMutation } from "../mutateQuery";
 import { UseQueryParams } from "../types";
 import { normalizeChatHistory, normalizeChatSendResult, normalizeChatThreads } from "./adapters";
@@ -58,12 +58,20 @@ const buildChatHistoryPayload = ({
   query,
   messageId,
 }: Omit<ChatHistoryParams, "instanceId">): ChatHistorySearchPayload => {
+  const normalizedRemoteJid = remoteJid.trim();
   const payload: ChatHistorySearchPayload = {
     where: {
       key: {
-        remoteJid,
+        remoteJid: normalizedRemoteJid,
+        jid: normalizedRemoteJid,
         ...(messageId ? { id: messageId } : {}),
       },
+      remoteJid: normalizedRemoteJid,
+      remote_jid: normalizedRemoteJid,
+      chatJid: normalizedRemoteJid,
+      chat_jid: normalizedRemoteJid,
+      chatId: normalizedRemoteJid,
+      jid: normalizedRemoteJid,
       ...(query?.trim() ? { query: query.trim() } : {}),
     },
   };
@@ -86,8 +94,17 @@ export const fetchChatThreads = async ({ instanceId, search = "" }: ChatQueryPar
 
 export const fetchChatHistory = async ({ instanceId, remoteJid, limit, cursor, query, messageId }: ChatHistoryParams): Promise<ChatHistoryResponse> => {
   const payload = buildChatHistoryPayload({ remoteJid, limit, cursor, query, messageId });
-  const response = await apiGlobal.post(`/instance/${instanceId}/messages/search`, payload);
-  return normalizeChatHistory(response.data);
+  try {
+    const response = await apiGlobal.post(`/instance/id/${instanceId}/messages/search`, payload);
+    return normalizeChatHistory(response.data);
+  } catch (error) {
+    if (!isApiStatus(error, 404) && !isApiStatus(error, 405)) {
+      throw error;
+    }
+
+    const response = await apiGlobal.post(`/instance/${instanceId}/messages/search`, payload);
+    return normalizeChatHistory(response.data);
+  }
 };
 
 export const sendTenantChatText = async ({ instanceId, data }: { instanceId: string; data: InstanceTextMessageInput }): Promise<SendTextResponse> => {
@@ -234,8 +251,16 @@ export const useTenantChatAudio = () => {
 
 export const getChatHistoryCapabilityMessage = (error: unknown): string => {
   if (!error) {
-    return "Persisted conversation history is active for this route. Older or inbound messages may still be missing when the runtime never captured them.";
+    return "El historial guardado está activo para este chat. Algunos mensajes antiguos pueden faltar si la instancia no los capturó.";
   }
 
-  return getApiErrorMessage(error, "Persisted conversation history is unavailable right now.");
+  if (isApiStatus(error, 404)) {
+    return "Aún no hay mensajes guardados para este chat.";
+  }
+
+  if (isApiStatus(error, 409) || isApiStatus(error, 429) || isApiStatus(error, 501)) {
+    return "El historial de este chat no está disponible en este momento. Intenta actualizar más tarde o revisa el estado de la instancia.";
+  }
+
+  return "No se pudo cargar el historial guardado de este chat. Intenta actualizar o revisa el estado de la instancia.";
 };

@@ -58,11 +58,24 @@ const PreviewIcon = ({ type }: { type?: ChatThread["previewType"] }) => {
   return null;
 };
 
+const decodeRouteParam = (value?: string): string => {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 function ChatShell() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const navigate = useNavigate();
   const { instance } = useInstance();
   const { remoteJid } = useParams<{ remoteJid: string }>();
+  const selectedRemoteJid = useMemo(() => decodeRouteParam(remoteJid), [remoteJid]);
   const [search, setSearch] = useState("");
   const [threadFilter, setThreadFilter] = useState<ThreadFilter>("all");
   const deferredSearch = useDeferredValue(search);
@@ -75,19 +88,19 @@ function ChatShell() {
   const chatListMetadata = threadData?.metadata;
 
   const activeThread = useMemo<ChatThread | null>(() => {
-    const matched = threads.find((thread) => thread.remoteJid === remoteJid) ?? null;
-    if (matched || !remoteJid) {
+    const matched = threads.find((thread) => thread.remoteJid === selectedRemoteJid) ?? null;
+    if (matched || !selectedRemoteJid) {
       return matched;
     }
 
     return {
-      id: remoteJid,
-      remoteJid,
-      pushName: remoteJid.split("@")[0] || "Contacto pendiente",
+      id: selectedRemoteJid,
+      remoteJid: selectedRemoteJid,
+      pushName: selectedRemoteJid.split("@")[0] || "Contacto pendiente",
       profilePicUrl: "",
       labels: [],
     };
-  }, [remoteJid, threads]);
+  }, [selectedRemoteJid, threads]);
 
   const {
     data: historyMessages,
@@ -95,12 +108,12 @@ function ChatShell() {
     error: historyError,
   } = useChatHistory({
     instanceId: instance?.id,
-    remoteJid,
+    remoteJid: selectedRemoteJid,
   });
 
   const capabilities = useChatCapabilities({
     threadsAvailable: !threadsLoading && !threadsError,
-    historyEnabled: !!instance?.id && !!remoteJid,
+    historyEnabled: !!instance?.id && !!selectedRemoteJid,
     historyLoading,
     historyError,
     historyMessages,
@@ -261,7 +274,7 @@ function ChatShell() {
                     </div>
                   ) : null}
                   {visibleThreads.visibleItems.map((thread) => {
-                    const isActive = thread.remoteJid === remoteJid;
+                    const isActive = thread.remoteJid === selectedRemoteJid;
                     const hasUnread = (thread.unreadCount ?? 0) > 0;
 
                     return (

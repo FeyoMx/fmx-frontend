@@ -98,6 +98,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - real tenant-safe chat list
   - real conversation detail route on `/manager/instance/:instanceId/chat/:remoteJid`
   - normalized history loaded from `POST /instance/:id/messages/search`
+  - selected route JIDs are decoded before matching/querying so `@s.whatsapp.net` and `@g.us` are preserved in history search
+  - message history requests include legacy `where.key.remoteJid` plus backend-safe aliases, with ID-scoped search attempted before the registered `/instance/:id/messages/search` route
   - grouped conversation timeline with clearer timestamps, delivery indicators, and scroll-to-latest behavior
   - faster-feeling thread filtering via deferred search updates
   - stronger unread/preview emphasis when the backend exposes them
@@ -107,6 +109,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
   - text, media, and audio composers already pointed at SaaS routes, with clearer send feedback
   - failed send statuses now render as failures, and long message/media metadata wraps instead of overflowing narrow panels
   - honest empty/error states when persisted history is missing or partial
+  - sparse message records now normalize common aliases such as `message_id`, `remote_jid`, `chat_jid`, `body`, `message`, `created_at`, `direction`, and `message_type`
   - incremental thread rendering keeps larger chat lists responsive without pretending full virtualization is necessary yet
   - search/history queries now keep previous data visible during slow refetches, cold chat loads use skeleton cards, chat-list failures are retryable, and optimistic sends update the same local row on failure instead of leaving duplicate queued ghosts
 
