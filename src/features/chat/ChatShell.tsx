@@ -205,7 +205,7 @@ function ChatShell() {
   };
 
   return (
-    <div className="h-[calc(100vh-160px)] min-h-[680px] min-w-0 overflow-hidden lg:min-h-0">
+    <div className="h-[calc(100vh-96px)] min-h-[900px] min-w-0 overflow-hidden md:min-h-[760px] lg:h-[calc(100vh-88px)] lg:min-h-0">
       <ResizablePanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="h-full min-h-0 min-w-0 overflow-hidden">
         <ResizablePanel defaultSize={32} minSize={25} className="min-h-0 min-w-0">
           <Card className="flex h-full min-h-0 min-w-0 flex-col lg:rounded-r-none lg:border-r-0">

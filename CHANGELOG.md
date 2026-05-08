@@ -117,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operator-facing labels now make logout, new instance creation, unsupported-route exits, and broadcast job creation clearer during real usage validation
 
 ### Fixed
+- Chat message scrolling after the composer layout fix by restoring a valid instance route height chain and giving stacked chat layouts enough intrinsic height for an accessible message scroller.
 - Chat composer overlap in conversation detail views by removing the competing card/composer sibling layout and eliminating forced message-list minimum height inside short panes.
 - Chat message rendering now preserves fetched body text from `text`, `body`, `message`, `content`, `caption`, `message_text`, and `text_message`, and keeps media/audio-only records visible with partial-history placeholders instead of rendering blank or clipped bubbles.
 - Chat history now decodes selected JIDs, sends the backend search payload with canonical and legacy remote-JID aliases, and renders sparse backend message records instead of falling through to an empty conversation.
