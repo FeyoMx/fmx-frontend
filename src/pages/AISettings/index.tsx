@@ -14,26 +14,67 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { useTenant } from "@/contexts/TenantContext";
 import { getApiErrorMessage } from "@/lib/queries/errors";
-import { getTenantAISettings, getInstanceAISettings, updateInstanceAISettings, updateTenantAISettings } from "@/lib/queries/ai/settings";
+import { createDefaultTenantAISettings, getTenantAISettings, getInstanceAISettings, updateInstanceAISettings, updateTenantAISettings } from "@/lib/queries/ai/settings";
 import { InstanceAISettingsView, TenantAISettingsView } from "@/lib/queries/ai/types";
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
+
+type AISettingsStatus = {
+  label: "Sin configurar" | "Desactivada" | "Activa" | "Error de configuración";
+  variant: "outline" | "secondary" | "default" | "warning";
+  title: string;
+  description: string;
+};
+
+function getAISettingsStatus(settings: TenantAISettingsView): AISettingsStatus {
+  const hasProvider = settings.provider.trim().length > 0;
+  const hasModel = settings.model.trim().length > 0;
+
+  if (!settings.configured) {
+    return {
+      label: "Sin configurar",
+      variant: "outline",
+      title: "IA aún no configurada",
+      description: "Configura un proveedor y guarda para activarla.",
+    };
+  }
+
+  if (settings.enabled && (!hasProvider || !hasModel)) {
+    return {
+      label: "Error de configuración",
+      variant: "warning",
+      title: "Configuración incompleta",
+      description: "Completa proveedor y modelo antes de depender de respuestas automáticas.",
+    };
+  }
+
+  if (!settings.enabled) {
+    return {
+      label: "Desactivada",
+      variant: "secondary",
+      title: "IA desactivada",
+      description: "Los valores del tenant están guardados, pero la IA no está activa.",
+    };
+  }
+
+  return {
+    label: "Activa",
+    variant: "default",
+    title: "IA activa",
+    description: "Las instancias habilitadas pueden usar la configuración guardada del tenant.",
+  };
+}
 
 export function AISettings() {
   const { t } = useTranslation();
   const { tenant } = useTenant();
-  const [aiSettings, setAISettings] = useState<TenantAISettingsView>({
-    enabled: false,
-    autoReply: false,
-    provider: "openai",
-    model: "",
-    baseUrl: "",
-    systemPrompt: "",
-  });
+  const [aiSettings, setAISettings] = useState<TenantAISettingsView>(createDefaultTenantAISettings);
 
   const [instanceSettings, setInstanceSettings] = useState<InstanceAISettingsView[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { data: instances } = useFetchInstances();
+  const settingsStatus = getAISettingsStatus(aiSettings);
 
   useEffect(() => {
     void fetchSettings();
@@ -41,6 +82,7 @@ export function AISettings() {
 
   const fetchSettings = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const tenantSettings = await getTenantAISettings();
       const perInstance = await Promise.all(
@@ -59,7 +101,9 @@ export function AISettings() {
       setAISettings(tenantSettings);
       setInstanceSettings(perInstance);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("aiSettings.error.fetch") || "Failed to fetch AI settings"));
+      const message = getApiErrorMessage(error, "No se pudieron cargar los ajustes de IA");
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -68,10 +112,16 @@ export function AISettings() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      await updateTenantAISettings(aiSettings);
-      toast.success(t("aiSettings.message.saved") || "AI settings saved successfully");
+      const savedSettings = await updateTenantAISettings({
+        ...aiSettings,
+        provider: aiSettings.provider.trim(),
+        model: aiSettings.model.trim(),
+        baseUrl: aiSettings.baseUrl.trim(),
+      });
+      setAISettings(savedSettings);
+      toast.success("Ajustes de IA guardados");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("aiSettings.error.save") || "Failed to save AI settings"));
+      toast.error(getApiErrorMessage(error, "No se pudieron guardar los ajustes de IA"));
     } finally {
       setIsSaving(false);
     }
@@ -89,7 +139,7 @@ export function AISettings() {
       );
       toast.success(t("aiSettings.message.updated") || "Instance settings updated");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, t("aiSettings.error.updateInstance") || "Failed to update instance settings"));
+      toast.error(getApiErrorMessage(error, "No se pudo actualizar la instancia"));
     }
   };
 
@@ -107,65 +157,74 @@ export function AISettings() {
 
       <Alert variant="info">
         <Sparkles className="h-4 w-4" />
-        <AlertTitle>Tenant AI controls are active</AlertTitle>
-        <AlertDescription>
-          Usa esta pantalla para valores predeterminados del tenant y activación por instancia. Los editores avanzados de bots no están disponibles en esta versión.
-        </AlertDescription>
+        <AlertTitle className="flex flex-wrap items-center gap-2">
+          {settingsStatus.title}
+          <OperatorStatusBadge variant={settingsStatus.variant}>{settingsStatus.label}</OperatorStatusBadge>
+        </AlertTitle>
+        <AlertDescription>{settingsStatus.description}</AlertDescription>
       </Alert>
+
+      {loadError ? (
+        <Alert variant="warning">
+          <AlertTitle>Error de configuración</AlertTitle>
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("aiSettings.tenant.title") || "Tenant AI Configuration"}</CardTitle>
-          <CardDescription>{t("aiSettings.tenant.description") || "Configure AI settings for your entire tenant"}</CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle>{t("aiSettings.tenant.title") || "Tenant AI Configuration"}</CardTitle>
+              <CardDescription>{t("aiSettings.tenant.description") || "Configure AI settings for your entire tenant"}</CardDescription>
+            </div>
+            <OperatorStatusBadge variant={settingsStatus.variant}>{settingsStatus.label}</OperatorStatusBadge>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col gap-4 rounded-xl border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <label className="font-medium">{t("aiSettings.enableAI") || "Enable AI"}</label>
-              <p className="text-sm text-gray-600">{t("aiSettings.enableAIDescription") || "Enable AI features for this tenant"}</p>
+              <p className="text-sm text-muted-foreground">Configura un proveedor y guarda para activarla.</p>
             </div>
             <Switch checked={aiSettings.enabled} onCheckedChange={(checked) => setAISettings({ ...aiSettings, enabled: checked })} disabled={isLoading || isSaving} />
           </div>
 
-          {aiSettings.enabled && (
-            <>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Provider</label>
-                  <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" disabled={isSaving} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Model</label>
-                  <Input value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} placeholder="gpt-4o-mini" disabled={isSaving} />
-                </div>
-              </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium mb-2">Proveedor</label>
+              <Input value={aiSettings.provider} onChange={(e) => setAISettings({ ...aiSettings, provider: e.target.value })} placeholder="openai" disabled={isLoading || isSaving} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Modelo</label>
+              <Input value={aiSettings.model} onChange={(e) => setAISettings({ ...aiSettings, model: e.target.value })} placeholder="gpt-4o-mini" disabled={isLoading || isSaving} />
+            </div>
+          </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Base URL</label>
-                  <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" disabled={isSaving} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Tenant auto reply</label>
-                  <div className="flex h-10 items-center rounded border px-3">
-                    <Switch checked={aiSettings.autoReply} onCheckedChange={(checked) => setAISettings({ ...aiSettings, autoReply: checked })} disabled={isSaving} />
-                  </div>
-                </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium mb-2">Base URL</label>
+              <Input value={aiSettings.baseUrl} onChange={(e) => setAISettings({ ...aiSettings, baseUrl: e.target.value })} placeholder="https://api.openai.com/v1" disabled={isLoading || isSaving} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Respuesta automática del tenant</label>
+              <div className="flex h-10 items-center rounded border px-3">
+                <Switch checked={aiSettings.autoReply} onCheckedChange={(checked) => setAISettings({ ...aiSettings, autoReply: checked })} disabled={isLoading || isSaving} />
               </div>
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">System prompt</label>
-                  <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Prompt del sistema opcional" disabled={isSaving} />
-              </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Prompt del sistema</label>
+            <Input value={aiSettings.systemPrompt} onChange={(e) => setAISettings({ ...aiSettings, systemPrompt: e.target.value })} placeholder="Prompt del sistema opcional" disabled={isLoading || isSaving} />
+          </div>
 
-              <div className="flex justify-end">
-                <Button onClick={handleSaveSettings} disabled={isSaving || isLoading}>
-                  <Save size={20} className="mr-2" />
-                  {isSaving ? t("common.saving") || "Saving..." : t("common.save") || "Save"}
-                </Button>
-              </div>
-            </>
-          )}
+          <div className="flex justify-end">
+            <Button onClick={handleSaveSettings} disabled={isSaving || isLoading}>
+              <Save size={20} className="mr-2" />
+              {isSaving ? "Guardando..." : "Guardar"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -202,7 +261,7 @@ export function AISettings() {
                     <TableRow key={instance.instanceId}>
                       <TableCell className="font-medium">{instance.instanceName}</TableCell>
                       <TableCell>
-                        <OperatorStatusBadge variant="outline">{instance.model || "Predeterminado del tenant"}</OperatorStatusBadge>
+                        <OperatorStatusBadge variant={aiSettings.configured ? "outline" : "secondary"}>{aiSettings.configured ? instance.model || "Predeterminado del tenant" : "Sin configurar"}</OperatorStatusBadge>
                       </TableCell>
                       <TableCell>
                         <Switch checked={instance.enabled} onCheckedChange={(checked) => handleToggleInstance(instance.instanceId, checked, instance.autoReply)} disabled={isSaving || isLoading} />

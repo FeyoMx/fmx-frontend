@@ -114,6 +114,7 @@ Frontend handling after this sync:
 - Broadcast now handles empty queues, large campaigns, partial analytics, recipient endpoint errors, and shrinking backend totals with skeleton table rows, retryable warnings, disabled duplicate actions, and pagination clamping.
 - Contacts, chat, and broadcast now use incremental list rendering for larger datasets instead of eagerly painting every row/card at once.
 - Contacts and AI settings now expose clearer refresh/loading/disabled states for the backend-supported actions.
+- AI Settings now normalizes first-use `404 ai settings not found` responses into editable disabled defaults, with `IA aún no configurada` and status labels for `Sin configurar`, `Desactivada`, `Activa`, and `Error de configuración`.
 - Contacts now preserves a stable table layout on cold load, exposes retryable fetch failures, prevents duplicate creates, disables dialog controls while submitting, and tolerates missing contact names/tags/phones more gracefully.
 - Instance dashboard now has clearer timestamp framing, stronger lifecycle/operator guidance, and more readable runtime-history cards.
 - Instance dashboard runtime history and bounded history recovery copy now wrap long backend details and explain disabled recovery states more plainly.

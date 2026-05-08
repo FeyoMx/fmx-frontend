@@ -64,6 +64,8 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - `/manager/ai-settings`
   - clearer tenant-default versus per-instance operator guidance
   - safer disabled/loading states while tenant and per-instance settings are refreshing or saving
+  - first-use missing settings now render as `IA aún no configurada` / `Sin configurar` with editable defaults instead of raw backend `404` copy
+  - tenant AI availability now distinguishes `Sin configurar`, `Desactivada`, `Activa`, and `Error de configuración`
   - now safe to lazy-load without changing route behavior or auth handling
 - `/manager/api-keys`
   - informational by design and hidden from primary navigation

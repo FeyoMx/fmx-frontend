@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Operator-facing labels now make logout, new instance creation, unsupported-route exits, and broadcast job creation clearer during real usage validation
 
 ### Fixed
+- AI Settings now treats missing first-use tenant or instance AI settings as `Sin configurar` instead of surfacing raw `404 ai settings not found` backend text.
 - FormInput component invalid onCheckedChange props
 - ResizablePanel defaultSize values not summing to 100
 - Navigation URL generation with double slashes

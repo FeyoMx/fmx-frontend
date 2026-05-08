@@ -22,6 +22,7 @@ export interface TenantAISettingsView {
   model: string;
   baseUrl: string;
   systemPrompt: string;
+  configured: boolean;
 }
 
 export interface InstanceAISettingsView {
