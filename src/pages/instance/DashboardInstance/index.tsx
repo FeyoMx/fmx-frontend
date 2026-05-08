@@ -26,7 +26,7 @@ import { isBridgeUnavailableError } from "@/lib/queries/instance/bridgeAvailabil
 import { useInstanceRuntime, useInstanceRuntimeHistory } from "@/lib/queries/instance/runtime";
 import { TOKEN_ID } from "@/lib/queries/token";
 import { getApiErrorMessage, isApiNotImplementedError, NOT_IMPLEMENTED_MESSAGE } from "@/lib/queries/errors";
-import { formatCompactTimestamp, formatOperatorTimestamp, formatUnknown } from "@/lib/operator-format";
+import { formatCompactTimestamp, formatOperatorTimestamp } from "@/lib/operator-format";
 import { InstanceTextMessageJobStatus, InstanceTextMessageResult } from "@/types/evolution.types";
 import { toast } from "react-toastify";
 import { FetchInstanceRuntimeHistoryResponse } from "@/lib/queries/instance/types";
@@ -674,10 +674,7 @@ function DashboardInstance() {
     };
   }, [instance]);
 
-  const formatStat = (value: number | null) => {
-    if (value === null) {
-      return formatUnknown(null);
-    }
+  const formatStat = (value: number) => {
     return numberFormatter.format(value);
   };
 
@@ -728,7 +725,7 @@ function DashboardInstance() {
     {
       label: "Estado de conexión",
       value: formatRuntimeLabel(instance.connectionStatus),
-      detail: instance.updatedAt ? `Última actualización ${formatCompactTimestamp(instance.updatedAt)}` : "Última actualización pendiente",
+      detail: instance.updatedAt ? `Última actualización ${formatCompactTimestamp(instance.updatedAt)}` : undefined,
     },
     {
       label: "Estado runtime",
@@ -741,6 +738,26 @@ function DashboardInstance() {
       detail: runtimeState?.lastObservedStatus ? `Último observado ${formatRuntimeLabel(runtimeState.lastObservedStatus)}` : "Sin último estado observado",
     },
   ];
+  const availableStats = [
+    {
+      key: "contacts",
+      label: "Contactos",
+      icon: CircleUser,
+      value: stats.contacts,
+    },
+    {
+      key: "chats",
+      label: "Chats",
+      icon: UsersRound,
+      value: stats.chats,
+    },
+    {
+      key: "messages",
+      label: "Mensajes",
+      icon: MessageCircle,
+      value: stats.messages,
+    },
+  ].filter((stat): stat is { key: string; label: string; icon: typeof CircleUser; value: number } => stat.value !== null);
 
   return (
     <main className="flex flex-col gap-8">
@@ -940,35 +957,30 @@ function DashboardInstance() {
         </Card>
       </section>
 
-      <section className="grid grid-cols-[repeat(auto-fit,_minmax(15rem,_1fr))] gap-6">
-        <Card className="instance-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CircleUser size="20" />
-              Contactos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{formatStat(stats.contacts)}</CardContent>
-        </Card>
-        <Card className="instance-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UsersRound size="20" />
-              Chats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{formatStat(stats.chats)}</CardContent>
-        </Card>
-        <Card className="instance-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle size="20" />
-              Mensajes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{formatStat(stats.messages)}</CardContent>
-        </Card>
-      </section>
+      {availableStats.length > 0 ? (
+        <section className="grid grid-cols-[repeat(auto-fit,_minmax(15rem,_1fr))] gap-6">
+          {availableStats.map((stat) => {
+            const Icon = stat.icon;
+
+            return (
+              <Card key={stat.key} className="instance-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon size="20" />
+                    {stat.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-2xl font-semibold">{formatStat(stat.value)}</CardContent>
+              </Card>
+            );
+          })}
+        </section>
+      ) : (
+        <Alert variant="info">
+          <AlertTitle>Algunas métricas aún se están calculando</AlertTitle>
+          <AlertDescription>El estado de conexión y runtime sigue disponible para operar la instancia.</AlertDescription>
+        </Alert>
+      )}
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <Card>
           <CardHeader>

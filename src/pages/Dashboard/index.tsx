@@ -25,7 +25,7 @@ import { getDashboardMetrics } from "@/lib/queries/dashboard/getMetrics";
 import { getApiErrorMessage } from "@/lib/queries/errors";
 import { useFetchInstances } from "@/lib/queries/instance/fetchInstances";
 import { useManageInstance } from "@/lib/queries/instance/manageInstance";
-import { formatCompactTimestamp, formatOwnerJid, formatProfileName, formatRelativeTime, formatUnknown, truncateOperatorText } from "@/lib/operator-format";
+import { formatCompactTimestamp, truncateOperatorText } from "@/lib/operator-format";
 import { Instance } from "@/types/evolution.types";
 
 import { NewInstance } from "./NewInstance";
@@ -531,6 +531,23 @@ function Dashboard() {
             {filteredInstances.map((instance: Instance) => {
               const bucket = getInstanceHealthBucket(instance.connectionStatus);
               const health = getInstanceHealthCopy(bucket);
+              const profileName = instance.profileName?.trim();
+              const ownerJid = instance.ownerJid?.trim();
+              const hasProfileMetadata = Boolean(profileName || ownerJid || instance.profilePicUrl);
+              const availableStats = [
+                {
+                  key: "contacts",
+                  label: "Contactos",
+                  icon: CircleUser,
+                  value: instance.stats.contacts,
+                },
+                {
+                  key: "messages",
+                  label: "Mensajes",
+                  icon: MessageCircle,
+                  value: instance.stats.messages,
+                },
+              ].filter((stat): stat is { key: string; label: string; icon: typeof CircleUser; value: number } => stat.value !== null);
 
               return (
                 <Card key={instance.id} className="border-border/70">
@@ -560,42 +577,40 @@ function Dashboard() {
                   <CardContent className="space-y-5">
                     <InstanceToken token={instance.token} />
 
-                    <div className="flex items-start gap-3 rounded-xl border bg-muted/20 p-3">
-                      <Avatar className="h-11 w-11">
-                        <AvatarImage src={instance.profilePicUrl} alt={instance.profileName || instance.name} />
-                        <AvatarFallback>{(instance.profileName || instance.name).slice(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="truncate font-medium">{formatProfileName(instance.profileName)}</div>
-                        <div className="truncate text-xs text-muted-foreground">
-                          {formatOwnerJid(instance.ownerJid)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Actualizado {formatRelativeTime(instance.updatedAt || instance.createdAt)}
+                    {hasProfileMetadata ? (
+                      <div className="flex items-start gap-3 rounded-xl border bg-muted/20 p-3">
+                        <Avatar className="h-11 w-11">
+                          <AvatarImage src={instance.profilePicUrl} alt={profileName || instance.name} />
+                          <AvatarFallback>{(profileName || instance.name).slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          {profileName ? <div className="truncate font-medium">{profileName}</div> : null}
+                          {ownerJid ? <div className="truncate text-xs text-muted-foreground">{ownerJid.split("@")[0] || ownerJid}</div> : null}
                         </div>
                       </div>
-                    </div>
+                    ) : null}
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="rounded-xl border p-3">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <CircleUser className="h-3.5 w-3.5" />
-                          Contactos
-                        </div>
-                        <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.contacts === null ? formatUnknown(null) : new Intl.NumberFormat("es-MX").format(instance.stats.contacts)}
-                        </div>
+                    {availableStats.length > 0 ? (
+                      <div className={`grid gap-3 ${availableStats.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                        {availableStats.map((stat) => {
+                          const Icon = stat.icon;
+
+                          return (
+                            <div key={stat.key} className="rounded-xl border p-3">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Icon className="h-3.5 w-3.5" />
+                                {stat.label}
+                              </div>
+                              <div className="mt-2 text-xl font-semibold">{new Intl.NumberFormat("es-MX").format(stat.value)}</div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="rounded-xl border p-3">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          Mensajes
-                        </div>
-                        <div className="mt-2 text-xl font-semibold">
-                          {instance.stats.messages === null ? formatUnknown(null) : new Intl.NumberFormat("es-MX").format(instance.stats.messages)}
-                        </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed bg-muted/10 p-3 text-xs leading-5 text-muted-foreground">
+                        Algunas métricas aún se están calculando.
                       </div>
-                    </div>
+                    )}
 
                     <div className="rounded-xl border border-dashed bg-muted/10 p-3 text-xs leading-5 text-muted-foreground">
                       {truncateOperatorText(
