@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production API configuration now prefers `VITE_API_URL`, keeps `VITE_API_BASE_URL` only as a compatibility fallback, and uses same-origin `/api` instead of a hardcoded local backend default
 - Docker builds now accept Vite API URL build arguments so generated static bundles can target the intended backend origin
 - Operator-facing labels now make logout, new instance creation, unsupported-route exits, and broadcast job creation clearer during real usage validation
+- Instance dashboard copy now uses Spanish operator labels for runtime empty states and direct-send fields, and supported send/lifecycle failures no longer emit duplicate console errors when the UI already surfaces them.
 
 ### Fixed
 - Chat route height now uses an explicit viewport calculation below the app header so message scrolling no longer depends on inherited full-height behavior from the route layout.

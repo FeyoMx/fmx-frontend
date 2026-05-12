@@ -197,6 +197,7 @@ It is not yet a full replacement for the upstream Evolution Manager v2 experienc
 - error/loading robustness pass added consistent skeletons, retryable warnings, duplicate-click guards, stable previous-data rendering during slow refetches, and safer handling for empty/partial backend payloads across dashboard, instance dashboard, chat, broadcast, and contacts
 - broadcast campaign monitoring now supports a practical operator workflow for larger campaigns: searchable job history, explicit inspect action, paginated recipient detail, and status filtering
 - Vite now splits shared frontend dependencies into focused vendor chunks so the remaining build output stays below the old single-chunk 762 kB warning threshold without changing supported product behavior
+- instance dashboard runtime and direct-send empty states now avoid leftover English operator labels, and expected lifecycle/send failures are handled through visible UI feedback without duplicate console noise
 
 ## What Is Intentionally Gated
 

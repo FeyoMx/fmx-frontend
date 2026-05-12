@@ -135,6 +135,7 @@ Frontend handling after this sync:
 - Dashboard, Instance Dashboard, Chat, Broadcast, Contacts, AI Settings, API Keys, UnsupportedInstanceFeature, Sidebar, and session/header-adjacent loading states were reviewed for user-visible placeholder or unsupported copy.
 - Final visual consistency pass added shared operator surface primitives for stat tiles, empty states, action bars, and status badges, then applied them to dashboard, instance dashboard, chat, broadcast, contacts, AI settings, login, and supported connector/settings pages.
 - Card radius/padding, responsive page-header actions, selected chat rows, message bubbles, runtime timeline rows, broadcast recipient rows, and connector form sections now follow a more consistent production MVP visual system without changing API behavior.
+- Instance dashboard runtime/direct-send copy and shared slow-query feedback now use Spanish operator wording, and supported lifecycle/chat-send failures no longer duplicate handled UI errors in the browser console.
 
 ### API / adapter alignment
 

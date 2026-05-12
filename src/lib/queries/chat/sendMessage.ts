@@ -32,54 +32,44 @@ const sendText = async ({ instanceName, token, data }: SendTextParams) => {
 };
 
 const sendMedia = async ({ instanceName, token, data }: SendMediaParams) => {
-  try {
-    // Send as flat structure as required by the newer API
-    const jsonData = {
-      number: data.number,
-      mediatype: data.mediaMessage.mediatype,
-      mimetype: data.mediaMessage.mimetype,
-      caption: data.mediaMessage.caption,
-      media: data.mediaMessage.media, // Base64 string
-      fileName: data.mediaMessage.fileName,
-    };
+  // Send as flat structure as required by the newer API
+  const jsonData = {
+    number: data.number,
+    mediatype: data.mediaMessage.mediatype,
+    mimetype: data.mediaMessage.mimetype,
+    caption: data.mediaMessage.caption,
+    media: data.mediaMessage.media, // Base64 string
+    fileName: data.mediaMessage.fileName,
+  };
 
-    const response = await api.post(`/message/sendMedia/${instanceName}`, jsonData, {
-      headers: {
-        apikey: token,
-        "content-type": "application/json",
-      },
-    });
+  const response = await api.post(`/message/sendMedia/${instanceName}`, jsonData, {
+    headers: {
+      apikey: token,
+      "content-type": "application/json",
+    },
+  });
 
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao enviar mídia:", error);
-    throw error;
-  }
+  return response.data;
 };
 
 const sendAudio = async ({ instanceName, token, data }: SendAudioParams) => {
-  try {
-    // Always send as JSON with base64 audio
-    const jsonData = {
-      number: data.number,
-      audioMessage: {
-        audio: data.audioMessage.audio, // Base64 string
-      },
-      options: data.options,
-    };
+  // Always send as JSON with base64 audio
+  const jsonData = {
+    number: data.number,
+    audioMessage: {
+      audio: data.audioMessage.audio, // Base64 string
+    },
+    options: data.options,
+  };
 
-    const response = await api.post(`/message/sendWhatsAppAudio/${instanceName}`, jsonData, {
-      headers: {
-        apikey: token,
-        "content-type": "application/json",
-      },
-    });
+  const response = await api.post(`/message/sendWhatsAppAudio/${instanceName}`, jsonData, {
+    headers: {
+      apikey: token,
+      "content-type": "application/json",
+    },
+  });
 
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao enviar áudio:", error);
-    throw error;
-  }
+  return response.data;
 };
 
 export function useSendMessage() {

@@ -256,7 +256,7 @@ function RuntimeHistoryList({ events }: { events: FetchInstanceRuntimeHistoryRes
                 <div className="text-xs text-muted-foreground">{formatCompactTimestamp(event.timestamp, "Sin reporte todavía")}</div>
               </div>
               {event.detail && <div className="break-words text-sm leading-6 text-muted-foreground">{event.detail}</div>}
-              <div className="text-xs text-muted-foreground">Observed: {formatOptionalTimestamp(event.timestamp)}</div>
+              <div className="text-xs text-muted-foreground">Observado: {formatOptionalTimestamp(event.timestamp)}</div>
             </div>
           </div>
         );
@@ -374,7 +374,6 @@ function DashboardInstance() {
         tone: "success",
       });
     } catch (error) {
-      console.error("Error:", error);
       const detail = getApiErrorMessage(error, "No se pudo solicitar reconexión.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
@@ -414,7 +413,6 @@ function DashboardInstance() {
         tone: "success",
       });
     } catch (error) {
-      console.error("Error:", error);
       const detail = getApiErrorMessage(error, "No se pudo cerrar sesión de la instancia.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
@@ -464,7 +462,6 @@ function DashboardInstance() {
         tone: "success",
       });
     } catch (error) {
-      console.error("Error:", error);
       const detail = getApiErrorMessage(error, "No se pudo solicitar código de vinculación.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setLifecycleFeedback({
@@ -547,7 +544,6 @@ function DashboardInstance() {
         toast.warn(detail);
       }
     } catch (error) {
-      console.error("Error:", error);
       const detail = getApiErrorMessage(error, "No se pudo solicitar recuperación de historial.");
       const bridgeUnavailable = isBridgeUnavailableError(error);
       setBackfillFeedback({
@@ -650,7 +646,6 @@ function DashboardInstance() {
         toast.error(initialFeedback.detail || initialFeedback.title);
       }
     } catch (error) {
-      console.error("Error:", error);
       if (isApiNotImplementedError(error)) {
         setTextMessagingUnsupported(true);
         return;
@@ -935,7 +930,7 @@ function DashboardInstance() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Operator notes</CardTitle>
+            <CardTitle>Notas operativas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant={instance.connectionStatus === "open" ? "success" : "warning"}>
@@ -943,7 +938,7 @@ function DashboardInstance() {
               <AlertDescription>
                 {instance.connectionStatus === "open"
                   ? "Chat, broadcast y envío directo pueden usar esta instancia si la conexión y la cola se mantienen saludables."
-                  : "Reconnect, QR scan, or pairing may still be required before queue-backed sends and chat operations can complete."}
+                  : "Puede requerir reconexión, escaneo de QR o vinculación antes de completar chats, envíos directos y broadcasts."}
               </AlertDescription>
             </Alert>
             <Alert variant="info">
@@ -1031,7 +1026,7 @@ function DashboardInstance() {
               </div>
             ) : !runtimeError ? (
               <Alert variant="warning">
-                <AlertTitle>No runtime status returned</AlertTitle>
+                <AlertTitle>Sin estado de runtime reportado</AlertTitle>
                 <AlertDescription>Runtime está disponible, pero todavía no hay estado actual para esta instancia.</AlertDescription>
               </Alert>
             ) : null}
@@ -1124,8 +1119,8 @@ function DashboardInstance() {
               </div>
             ) : !runtimeHistoryError ? (
               <Alert variant="warning">
-                <AlertTitle>No runtime history yet</AlertTitle>
-                <AlertDescription>The runtime history endpoint is active, but there are no recent lifecycle events stored for this instance yet.</AlertDescription>
+                <AlertTitle>Sin historial de runtime todavía</AlertTitle>
+                <AlertDescription>El historial de runtime está activo, pero todavía no hay eventos recientes guardados para esta instancia.</AlertDescription>
               </Alert>
             ) : null}
           </CardContent>
@@ -1144,7 +1139,7 @@ function DashboardInstance() {
                 Esta acción envía texto directo desde la instancia. Para contexto completo usa Chat y sus conversaciones.
               </p>
               <div className="grid gap-2">
-                <Label htmlFor="instance-send-number">Recipient number</Label>
+                <Label htmlFor="instance-send-number">Número destinatario</Label>
                 <Input
                   id="instance-send-number"
                   value={recipientNumber}
@@ -1154,7 +1149,7 @@ function DashboardInstance() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="instance-send-message">Message</Label>
+                <Label htmlFor="instance-send-message">Mensaje</Label>
                 <Textarea
                   id="instance-send-message"
                   value={messageText}
@@ -1164,7 +1159,7 @@ function DashboardInstance() {
                 />
               </div>
               <div className="grid gap-2 md:max-w-40">
-                <Label htmlFor="instance-send-delay">Delay (ms)</Label>
+                <Label htmlFor="instance-send-delay">Retraso (ms)</Label>
                 <Input
                   id="instance-send-delay"
                   type="number"
@@ -1189,7 +1184,7 @@ function DashboardInstance() {
               </Alert>
               {instance.connectionStatus !== "open" && (
                 <Alert variant="warning">
-                  <AlertTitle>Connect the instance before sending text messages.</AlertTitle>
+                  <AlertTitle>Conecta la instancia antes de enviar mensajes de texto.</AlertTitle>
                 </Alert>
               )}
             </CardContent>
